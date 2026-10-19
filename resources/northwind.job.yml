@@ -1,0 +1,17 @@
+resources:
+  jobs:
+    northwind_deploy:
+      name: genie-claims-ref · Northwind deploy
+      max_concurrent_runs: 1
+      parameters:
+        - {name: example, default: northwind}
+        - {name: catalog, default: "${var.catalog}"}
+        - {name: create_catalog, default: "${var.create_catalog}"}
+        - {name: warehouse_id, default: "${var.warehouse_id}"}
+        - {name: secret_scope, default: "${var.secret_scope}"}
+        - {name: view_owner, default: "${var.view_owner}"}
+        - {name: include_genie, default: "true"}
+      tasks:
+        - task_key: check_availability
+          notebook_task:
+            notebook_path: ../notebooks/01_check_availability.py

@@ -1,0 +1,34 @@
+name: larkspur
+title: Larkspur Pharmacy Benefits
+claim_prefix: rx-
+schemas:
+  base: larkspur_base
+  governance: larkspur_governance
+  portal: larkspur_portal
+sql:
+  schemas: sql/01_schemas.sql
+  base_tables: sql/02_base_tables.sql
+  governance: sql/03_governance.sql
+  seed_entitlements: sql/04_seed_entitlements.sql
+  policy_views: sql/10_policy_views.sql
+  portal_views: sql/11_portal_views.sql
+  public_views: sql/12_public_views.sql
+  runtime_grants: sql/20_runtime_grants.sql
+# Created from a claim-carrying session when the workspace raises without a claim. Order matters.
+claim_views:
+  - governance.my_effective_grants
+  - governance.my_members
+  - portal.my_access
+  - portal.my_claims
+  - portal.my_accumulators
+  - portal.sponsor_spend_summary
+  - portal.pharmacy_remittance
+public_views:
+  - portal.drug_reference
+grant_roles: [subscriber, member, sponsor_admin, consultant, pharmacy]
+scope_types: [member, sponsor, pharmacy]
+role_policy_fields:
+  include_minor_dependents: boolean
+  mask_identity: boolean
+  min_cell_size: int
+base_probe_table: pharmacy_claims

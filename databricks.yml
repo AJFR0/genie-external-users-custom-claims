@@ -1,0 +1,29 @@
+# Genie for external users with OAuth custom identity claims: reference bundle.
+# Deploy:  databricks bundle deploy -p <profile> --var warehouse_id=<id>
+# Use an existing catalog instead of creating one:  --var catalog=<catalog> --var create_catalog=false
+bundle:
+  name: genie-claims-ref
+
+include:
+  - resources/*.yml
+
+variables:
+  catalog:
+    description: Unity Catalog catalog that holds both examples. Created if missing and create_catalog is "true".
+    default: genie_claims_ref
+  create_catalog:
+    description: '"true" runs CREATE CATALOG IF NOT EXISTS (needs the CREATE CATALOG privilege). Use "false" with an existing catalog.'
+    default: "true"
+  warehouse_id:
+    description: SQL warehouse used by the portal service principals, the Statement API and Genie
+  secret_scope:
+    description: Secret scope with each portal service principal's OAuth client id and secret
+    default: genie-claims-ref
+  view_owner:
+    description: Owner of the claim-keyed views. Use an account group in production. Empty means the deploying user.
+    default: ""
+
+targets:
+  dev:
+    mode: development
+    default: true

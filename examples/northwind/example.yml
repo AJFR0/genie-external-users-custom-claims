@@ -1,0 +1,34 @@
+name: northwind
+title: Northwind Retirement Services
+claim_prefix: pu-
+schemas:
+  base: northwind_base
+  governance: northwind_governance
+  portal: northwind_portal
+sql:
+  schemas: sql/01_schemas.sql
+  base_tables: sql/02_base_tables.sql
+  governance: sql/03_governance.sql
+  seed_entitlements: sql/04_seed_entitlements.sql
+  policy_views: sql/10_policy_views.sql
+  portal_views: sql/11_portal_views.sql
+  public_views: sql/12_public_views.sql
+  runtime_grants: sql/20_runtime_grants.sql
+# Created from a claim-carrying session when the workspace raises without a claim. Order matters.
+claim_views:
+  - governance.my_effective_grants
+  - portal.my_access
+  - portal.my_accounts
+  - portal.my_contributions
+  - portal.plan_summary
+  - portal.plan_roster
+public_views:
+  - portal.fund_lineup
+grant_roles: [participant, sponsor, advisor]
+scope_types: [participant, plan]
+role_policy_fields:
+  can_view_own_accounts: boolean
+  can_view_plan_aggregates: boolean
+  can_view_roster: boolean
+  mask_dob: boolean
+base_probe_table: account_balances
