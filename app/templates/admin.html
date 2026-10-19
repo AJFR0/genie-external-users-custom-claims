@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="admin" data-examples='{{ examples_json }}'>
+  {% if not admin_ready %}<div class="banner warn">Set ADMIN_PROFILE in .env to a Databricks CLI profile to use the admin console. It uses your own identity, never a portal service principal.</div>{% endif %}
+  <p class="dim">You are working as yourself, not as the portal. Changes apply on each user's next question: no new identities, secrets or group memberships.</p>
+  <nav class="tabs" id="tabs">{% for name, rt in examples.items() %}<button data-ex="{{ name }}">{{ rt.example.title }}</button>{% endfor %}</nav>
+  <section>
+    <h2>Per-user grants <small>governance.portal_user_grants</small></h2>
+    <form id="add-grant" class="row">
+      <input name="portal_user_id" placeholder="portal user id (the claim)" required>
+      <select name="role"></select>
+      <select name="scope_type"></select>
+      <input name="scope_id" placeholder="scope id" required>
+      <input name="valid_to" type="date" title="optional last day">
+      <button>Add grant</button>
+    </form>
+    <div id="grants" class="dim">Loading grants from the governance schema…</div>
+  </section>
+  <section>
+    <h2>Per-role policies <small>governance.role_policies</small></h2>
+    <p class="dim">One change applies to every user with that role on their next question.</p>
+    <div id="policies" class="dim">Loading role policies…</div>
+  </section>
+  <section>
+    <h2>Portal audit log <small>local JSON lines</small></h2>
+    <div id="audit"></div>
+  </section>
+</div>
+{% endblock %}
+{% block scripts %}<script src="/static/admin.js"></script>{% endblock %}
