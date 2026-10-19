@@ -35,13 +35,13 @@ class FakeProvider:
 
 
 class FakeGenie:
-    def __init__(self, status="COMPLETED"):
-        self.asked, self.deleted, self.status, self.n = [], [], status, 0
+    def __init__(self, status="COMPLETED", sql="SELECT 1"):
+        self.asked, self.deleted, self.status, self.n, self.sql = [], [], status, 0, sql
 
     def ask(self, question, conversation_id=None):
         self.n += 1
         self.asked.append((question, conversation_id))
-        queries = [GenieQuery("SELECT 1", None, "stmt-1", ["balance"], [["10.00"]])] if self.status == "COMPLETED" else []
+        queries = [GenieQuery(self.sql, None, "stmt-1", ["balance"], [["10.00"]])] if self.status == "COMPLETED" else []
         return GenieAnswer(conversation_id or f"conv-{self.n}", f"msg-{self.n}", self.status, ["Your balance is $10.00"], queries,
                            [(0.5, "EXECUTING_QUERY"), (1.0, self.status)])
 

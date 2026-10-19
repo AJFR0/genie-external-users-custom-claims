@@ -61,3 +61,21 @@ def token_view(token: str, *, redact_ids: bool, now=time.time) -> dict:
     if "exp" in payload:
         out["expires_in_s"] = int(payload["exp"] - now())
     return out
+
+
+def replace_identifier(obj, name: str, placeholder: str):
+    """Replace a whole-word identifier (for example a catalog name) in every string inside obj."""
+    import re
+
+    pattern = re.compile(rf"(?<![\w]){re.escape(name)}(?![\w])")
+
+    def walk(v):
+        if isinstance(v, str):
+            return pattern.sub(placeholder, v)
+        if isinstance(v, list):
+            return [walk(x) for x in v]
+        if isinstance(v, dict):
+            return {k: walk(x) for k, x in v.items()}
+        return v
+
+    return walk(obj)

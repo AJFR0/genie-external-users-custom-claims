@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Genie custom-claims reference</title>
+  <link rel="stylesheet" href="/static/app.css">
+</head>
+<body>
+  <header class="topbar">
+    <span class="brand">Genie for external users <span class="dim">· custom identity claims reference</span></span>
+    <nav>
+      <a href="/portal" class="{{ 'active' if page == 'portal' }}">Portal</a>
+      <a href="/admin" class="{{ 'active' if page == 'admin' }}">Admin</a>
+    </nav>
+  </header>
+  <div class="banner">Local demo. Sign-in is simulated: in your application the user id comes from your identity provider session.</div>
+  <main>{% block content %}{% endblock %}</main>
+  {% block scripts %}{% endblock %}
+</body>
+</html>

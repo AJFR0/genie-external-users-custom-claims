@@ -35,3 +35,10 @@ def test_token_view_keeps_claim_and_redacts_ids():
 
 def test_redact():
     assert redact(None) is None and redact("ab") == "…" and redact("abcdef") == "abcd…"
+
+
+def test_replace_identifier_is_whole_word_and_recursive():
+    from claims_kit.trace import replace_identifier
+    obj = {"sql": ["SELECT * FROM `cat`.`s`.`v`", "cat.s.v"], "note": "catalog cats", "n": 3}
+    assert replace_identifier(obj, "cat", "<catalog>") == {"sql": ["SELECT * FROM `<catalog>`.`s`.`v`", "<catalog>.s.v"],
+                                                            "note": "catalog cats", "n": 3}

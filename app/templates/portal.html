@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="portal">
+  <aside class="people">
+    {% for name, rt in examples.items() %}
+    <section class="example">
+      <h2>{{ rt.example.title }}</h2>
+      {% for p in rt.personas %}
+      <form method="post" action="/portal/sign-in" class="persona{% if current and current[0].example.name == name and current[1].id == p.id %} current{% endif %}">
+        <input type="hidden" name="example" value="{{ name }}">
+        <input type="hidden" name="persona" value="{{ p.id }}">
+        <button type="submit"><strong>{{ p.name }}</strong><span>{{ p.label }}</span><code>{{ p.claim }}</code></button>
+        <p class="blurb">{{ p.blurb }}</p>
+      </form>
+      {% endfor %}
+    </section>
+    {% endfor %}
+  </aside>
+  <section class="chat">
+    {% if current %}
+    <div class="who">
+      <div>Signed in as <strong>{{ current[1].name }}</strong> · {{ current[1].label }}<br><span class="dim">{{ current[0].example.title }} · portal user id <code>{{ current[1].claim }}</code></span></div>
+      <form method="post" action="/portal/sign-out"><button class="ghost">Sign out</button></form>
+    </div>
+    <div id="messages" class="messages"></div>
+    <div class="suggest">{% for q in current[1].genie %}<button class="chip" data-q="{{ q.question }}">{{ q.question }}</button>{% endfor %}</div>
+    <form id="ask" class="ask">
+      <input id="question" autocomplete="off" placeholder="Ask about your data" required>
+      <label class="dim"><input type="checkbox" id="new_conversation"> new conversation</label>
+      <button>Ask</button>
+    </form>
+    {% else %}
+    <div class="empty">Pick a persona on the left to sign in.</div>
+    {% endif %}
+  </section>
+  <aside class="trace">
+    <h2>Request trace</h2>
+    <ol id="trace" class="steps"><li class="hint">Ask a question to see every step: session, claim, token, Genie, SQL, entitlements, rows and audit.</li></ol>
+  </aside>
+</div>
+{% endblock %}
+{% block scripts %}<script src="/static/portal.js"></script>{% endblock %}
