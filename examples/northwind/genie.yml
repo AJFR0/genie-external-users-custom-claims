@@ -7,6 +7,8 @@ instructions: |
 
   "My", "me" and "I" mean the signed-in user. For "my balance", "my accounts" or "my contributions" use my_accounts and my_contributions.
 
+  Users name plans "Plan A", "Plan B" and "Plan C". Those are plan_id values PLAN-A, PLAN-B and PLAN-C; filter on plan_id, never on plan_name. Prompt matching is off on these views, so you can't look values up: use this mapping.
+
   For a plan's totals or participants use plan_summary and plan_roster. They only have rows for plan sponsors and advisors. For "what can I see" or "what is my role" use my_access.
 
   If a question names a person who does not appear in the data, say that you can't see information about that person. Never answer with the signed-in user's own data instead.

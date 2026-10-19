@@ -35,3 +35,7 @@ resources:
           depends_on: [{task_key: runtime_grants}]
           notebook_task:
             notebook_path: ../notebooks/06_genie_agent.py
+        - task_key: validate_isolation
+          depends_on: [{task_key: genie_agent}]
+          notebook_task:
+            notebook_path: ../notebooks/07_validate_isolation.py

@@ -19,8 +19,8 @@ FROM `{{catalog}}`.`{{gov}}`.my_effective_grants;
 
 CREATE VIEW `{{catalog}}`.`{{portal}}`.my_accounts (
   participant_id COMMENT 'Participant who owns the balance: the signed-in user',
-  plan_id COMMENT 'Plan identifier',
-  plan_name COMMENT 'Plan name',
+  plan_id COMMENT 'Plan identifier: PLAN-A, PLAN-B or PLAN-C. Users call these Plan A, Plan B and Plan C.',
+  plan_name COMMENT 'Plan name (the sponsor plan name, not Plan A or Plan B)',
   fund_name COMMENT 'Fund the money is invested in',
   asset_class COMMENT 'Fund asset class',
   balance COMMENT 'Market value in US dollars',
@@ -41,8 +41,8 @@ JOIN `{{catalog}}`.`{{base}}`.funds AS f ON f.fund_id = b.fund_id;
 
 CREATE VIEW `{{catalog}}`.`{{portal}}`.my_contributions (
   participant_id COMMENT 'Participant the contribution belongs to: the signed-in user',
-  plan_id COMMENT 'Plan identifier',
-  plan_name COMMENT 'Plan name',
+  plan_id COMMENT 'Plan identifier: PLAN-A, PLAN-B or PLAN-C. Users call these Plan A, Plan B and Plan C.',
+  plan_name COMMENT 'Plan name (the sponsor plan name, not Plan A or Plan B)',
   contribution_date COMMENT 'Payroll date',
   source COMMENT 'employee_pretax, employee_roth or employer_match',
   amount COMMENT 'Amount in US dollars'
@@ -60,8 +60,8 @@ JOIN my_participants AS m ON m.participant_id = c.participant_id
 JOIN `{{catalog}}`.`{{base}}`.plans AS pl ON pl.plan_id = c.plan_id;
 
 CREATE VIEW `{{catalog}}`.`{{portal}}`.plan_summary (
-  plan_id COMMENT 'Plan identifier',
-  plan_name COMMENT 'Plan name',
+  plan_id COMMENT 'Plan identifier: PLAN-A, PLAN-B or PLAN-C. Users call these Plan A, Plan B and Plan C.',
+  plan_name COMMENT 'Plan name (the sponsor plan name, not Plan A or Plan B)',
   sponsor_name COMMENT 'Employer that sponsors the plan',
   fund_name COMMENT 'Fund',
   asset_class COMMENT 'Fund asset class',
@@ -90,8 +90,8 @@ GROUP BY b.plan_id, pl.plan_name, pl.sponsor_name, f.fund_name, f.asset_class;
 
 CREATE VIEW `{{catalog}}`.`{{portal}}`.plan_roster (
   participant_id COMMENT 'Participant identifier',
-  plan_id COMMENT 'Plan identifier',
-  plan_name COMMENT 'Plan name',
+  plan_id COMMENT 'Plan identifier: PLAN-A, PLAN-B or PLAN-C. Users call these Plan A, Plan B and Plan C.',
+  plan_name COMMENT 'Plan name (the sponsor plan name, not Plan A or Plan B)',
   first_name COMMENT 'First name',
   last_name COMMENT 'Last name',
   date_of_birth COMMENT 'Date of birth. NULL when the role of the signed-in user masks it.',
