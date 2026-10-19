@@ -1,0 +1,24 @@
+[build-system]
+requires = ["hatchling>=1.24"]
+build-backend = "hatchling.build"
+
+[project]
+name = "genie-claims-ref"
+version = "0.1.0"
+description = "Reference framework: Genie Agents for external users with OAuth custom identity claims"
+readme = "README.md"
+requires-python = ">=3.10"
+license = "Apache-2.0"
+dependencies = ["requests>=2.31", "pyyaml>=6.0"]
+
+[project.optional-dependencies]
+app = ["fastapi>=0.110", "uvicorn>=0.29", "jinja2>=3.1", "itsdangerous>=2.1", "python-multipart>=0.0.9", "databricks-sdk>=0.40"]
+docs = ["markdown>=3.5", "pygments>=2.17", "weasyprint>=61", "jinja2>=3.1"]
+dev = ["pytest>=8", "httpx>=0.27"]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/claims_kit"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src", "."]
