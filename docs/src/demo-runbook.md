@@ -49,8 +49,8 @@ Alder's unsuppressed total, [[ values.larkspur.alder_total_plan_paid ]], is neve
 
 ### Act 2: Larkspur (4 minutes)
 
-6. **Ana.** Ask about what she paid. *Say:* "She sees her 12-year-old's claims, computed from a date of birth. Not her spouse's, not her 19-year-old's."
-7. **Dana.** Ask about Alder's spend. *Say:* "Benefits administrators see totals, never members, and small groups are hidden."
+6. **Ana.** Ask about what she paid. *Say:* "She sees her 12-year-old's claims, computed from a date of birth. Her spouse's and her 19-year-old's claims stay private."
+7. **Dana.** Ask about Alder's spend. *Say:* "Benefits administrators see totals only, and small groups are hidden."
 8. **Theo.** Ask about Cedar Logistics, then Alder. *Say:* "His Cedar engagement ended June 30, so that grant stopped matching. His role hides groups under 20, so he sees less of Alder than Dana does."
 
 ### Act 3: Admin (3 minutes)
@@ -84,7 +84,7 @@ Alder's unsuppressed total, [[ values.larkspur.alder_total_plan_paid ]], is neve
 | Symptom | What to do |
 |---|---|
 | Genie is slow | Keep talking through trace steps 1 to 3 while it runs. Step 6 shows the user's grants straight from the Statement API. |
-| Genie answers without the expected number | It is an answer-quality issue, not an isolation issue. Show step 5 (the SQL) and step 7 (the rows). |
+| Genie answers without the expected number | That is about answer quality; isolation still held. Show step 5 (the SQL) and step 7 (the rows). |
 | A token request fails | Run notebook 01 or `python -m claims_kit.availability`. |
 | The warehouse is cold | Ask a warm-up question before you share your screen. |
 

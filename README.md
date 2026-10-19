@@ -33,7 +33,7 @@ SELECT current_oauth_custom_identity_claim() AS claim;
 -- claim-keyed views must be created from a session that carries one (the bundle handles it).
 ```
 
-The third check is a test token request with `custom_claim` set. See [Step 1 of the Implementation Guide](docs/src/implementation-guide.md#step-1-check-availability); the bundle's first task runs all three checks before it deploys anything.
+The third check is a test token request with `custom_claim` set. See Step 1 of the [Implementation Guide](docs/pdf/implementation-guide.pdf); the bundle's first task runs all three checks before it deploys anything.
 
 ## What's in the repo
 
@@ -65,12 +65,12 @@ databricks bundle run northwind_deploy -p <profile> --var warehouse_id=<warehous
 databricks bundle run larkspur_deploy -p <profile> --var warehouse_id=<warehouse-id>
 
 # 4. Run the local app against your workspace.
-.venv/bin/python scripts/export_local_env.py --profile <profile> --warehouse-id <warehouse-id>
+.venv/bin/python scripts/export_local_env.py --profile <profile> --warehouse-id <warehouse-id> --catalog <catalog>
 .venv/bin/python -m claims_kit.validate --example northwind
 .venv/bin/uvicorn app.main:create_app --factory --port 8765   # open http://127.0.0.1:8765
 ```
 
-`export_local_env.py` writes a gitignored `.env` with the service principal credentials from the secret scope. Set `APP_REDACT_IDS=true` before sharing your screen.
+`export_local_env.py` writes a gitignored `.env` with the service principal credentials from the secret scope. Pass the same catalog you deployed to (`genie_claims_ref` by default), and `--scope` if you changed `secret_scope`. Set `APP_REDACT_IDS=true` before sharing your screen.
 
 ## The two examples
 
@@ -126,17 +126,17 @@ The admin console: per-user grants (Theo's expired Cedar grant is struck through
 
 ## Guides
 
-| Guide | PDF | Source |
-|---|---|---|
-| Overview: who it is for, what teams did before, what changes | [overview.pdf](docs/pdf/overview.pdf) | [overview.md](docs/src/overview.md) |
-| Implementation Guide: availability, deployment, every object, the pattern catalog, backend integration, checklist | [implementation-guide.pdf](docs/pdf/implementation-guide.pdf) | [implementation-guide.md](docs/src/implementation-guide.md) |
-| Demo Runbook: a 12-minute script with exact expected numbers | [demo-runbook.pdf](docs/pdf/demo-runbook.pdf) | [demo-runbook.md](docs/src/demo-runbook.md) |
+| Guide | Read it |
+|---|---|
+| Overview: who it is for, what teams did before, what changes | [overview.pdf](docs/pdf/overview.pdf) |
+| Implementation Guide: availability, deployment, every object, the pattern catalog, backend integration, checklist | [implementation-guide.pdf](docs/pdf/implementation-guide.pdf) |
+| Demo Runbook: a 12-minute script with exact expected numbers | [demo-runbook.pdf](docs/pdf/demo-runbook.pdf) |
 
-Self-contained HTML versions are in `docs/site/`. Rebuild everything with `.venv/bin/python -m docs.build`.
+Self-contained HTML versions are in `docs/site/` (open them locally). The sources in `docs/src/` are templates that pull in the real SQL, diagrams, expected numbers and live evidence; rebuild everything with `.venv/bin/python -m docs.build`.
 
 ## What was validated
 
-On a live workspace on 2026-10-19, the isolation suite passed **55 of 55** checks for Northwind and **61 of 61** for Larkspur: per-persona visibility in every view, masking, no-claim and forged-claim attacks, privilege probes, another application's service principal, a mistaken grant, edited and unsigned tokens, and Genie answers checked for the persona's own numbers and nobody else's. The scrubbed results are in [`docs/evidence/`](docs/evidence/).
+On a live workspace on 2026-10-19, the isolation suite passed **72 of 72** checks for Northwind and **78 of 78** for Larkspur: per-persona visibility in every view with no duplicated rows, masking, a CHECK constraint that rejects malformed claims, no-claim and forged-claim attacks, privilege probes, another application's service principal, a mistaken grant, edited and unsigned tokens, and Genie answers checked for the persona's own numbers and nobody else's. Every result records the reason it passed; the scrubbed results are in [`docs/evidence/`](docs/evidence/).
 
 ## Notes and limits
 

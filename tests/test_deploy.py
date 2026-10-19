@@ -106,3 +106,44 @@ def test_runtime_grants_only_portal_views():
     text = "\n".join(admin.statements)
     assert "northwind_base" not in text and "northwind_governance" not in text
     assert text.count("GRANT SELECT ON VIEW") == len(EX.portal_views) + len(EX.public_views)
+
+
+def _failing_admin(predicate, message):
+    statements = []
+
+    def admin(stmt):
+        statements.append(stmt)
+        if predicate(stmt):
+            raise RuntimeError(message)
+    return admin, statements
+
+
+def test_grant_failure_still_attempts_every_owner_transfer_and_revoke():
+    admin, statements = _failing_admin(lambda s: s.startswith("GRANT USE SCHEMA, SELECT, CREATE TABLE"), "[PERMISSION_DENIED] grant 3")
+    with pytest.raises(RuntimeError, match="grant 3"):
+        deploy_claim_views(EX, mode="throws", admin_sql=admin, sp_runner=FakeSP(), **KW)
+    assert sum(s.startswith("ALTER VIEW") for s in statements) == len(EX.claim_views)
+    assert statements[-3:] == revoke_temporary_grants(EX, "cat", "app-id")
+
+
+def test_owner_transfer_error_still_attempts_every_view():
+    admin, statements = _failing_admin(lambda s: s.startswith("ALTER VIEW") and "my_accounts" in s, "[PERMISSION_DENIED] owner")
+    with pytest.raises(RuntimeError, match="owner"):
+        deploy_claim_views(EX, mode="throws", admin_sql=admin, sp_runner=FakeSP(), **KW)
+    assert sum(s.startswith("ALTER VIEW") for s in statements) == len(EX.claim_views)
+
+
+def test_revoke_failure_still_attempts_remaining_revokes():
+    first_revoke = revoke_temporary_grants(EX, "cat", "app-id")[0]
+    admin, statements = _failing_admin(lambda s: s == first_revoke, "[INTERNAL_ERROR] revoke")
+    with pytest.raises(RuntimeError, match="revoke"):
+        deploy_claim_views(EX, mode="throws", admin_sql=admin, sp_runner=FakeSP(), **KW)
+    assert statements[-3:] == revoke_temporary_grants(EX, "cat", "app-id")
+
+
+def test_several_cleanup_errors_are_reported_together():
+    from claims_kit.deploy import DeployError
+    admin, _ = _failing_admin(lambda s: s.startswith("ALTER VIEW") or s.startswith("REVOKE"), "[PERMISSION_DENIED] nope")
+    with pytest.raises(DeployError) as err:
+        deploy_claim_views(EX, mode="throws", admin_sql=admin, sp_runner=FakeSP(fail_at=1), **KW)
+    assert len(err.value.errors) == 1 + len(EX.claim_views) + 3

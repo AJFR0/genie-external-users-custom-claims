@@ -97,7 +97,7 @@ CREATE VIEW `{{catalog}}`.`{{portal}}`.plan_roster (
   date_of_birth COMMENT 'Date of birth. NULL when the role of the signed-in user masks it.',
   hire_date COMMENT 'Hire date',
   status COMMENT 'active or terminated',
-  total_balance COMMENT 'Total balance across funds in US dollars'
+  total_balance COMMENT 'Total balance across funds in this plan, in US dollars'
 )
 COMMENT 'Participants of the plans the signed-in user sponsors or advises. Date of birth is masked for roles whose policy says so.'
 AS
@@ -108,9 +108,9 @@ WITH roster_plans AS (
   GROUP BY scope_id
 ),
 balances AS (
-  SELECT participant_id, SUM(balance) AS total_balance
+  SELECT participant_id, plan_id, SUM(balance) AS total_balance
   FROM `{{catalog}}`.`{{base}}`.account_balances
-  GROUP BY participant_id
+  GROUP BY participant_id, plan_id
 )
 SELECT p.participant_id, p.plan_id, pl.plan_name, p.first_name, p.last_name,
        CASE WHEN r.mask_dob THEN NULL ELSE p.date_of_birth END,
@@ -118,4 +118,4 @@ SELECT p.participant_id, p.plan_id, pl.plan_name, p.first_name, p.last_name,
 FROM `{{catalog}}`.`{{base}}`.participants AS p
 JOIN roster_plans AS r ON r.plan_id = p.plan_id
 JOIN `{{catalog}}`.`{{base}}`.plans AS pl ON pl.plan_id = p.plan_id
-LEFT JOIN balances AS b ON b.participant_id = p.participant_id;
+LEFT JOIN balances AS b ON b.participant_id = p.participant_id AND b.plan_id = p.plan_id;

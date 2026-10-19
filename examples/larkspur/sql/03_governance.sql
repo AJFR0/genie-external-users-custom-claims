@@ -9,7 +9,8 @@ CREATE OR REPLACE TABLE `{{catalog}}`.`{{gov}}`.portal_user_grants (
   granted_at     TIMESTAMP          COMMENT 'When the grant was created'
 ) COMMENT 'Per-user entitlements for the Larkspur portal.';
 
-ALTER TABLE `{{catalog}}`.`{{gov}}`.portal_user_grants ADD CONSTRAINT claim_format CHECK (portal_user_id RLIKE '^[a-z0-9][a-z0-9._:-]{0,127}$');
+-- regexp_extract instead of RLIKE '^...$': in Java regex `$` also matches before a trailing newline.
+ALTER TABLE `{{catalog}}`.`{{gov}}`.portal_user_grants ADD CONSTRAINT claim_format CHECK (regexp_extract(portal_user_id, '^[a-z0-9][a-z0-9._:-]{0,127}', 0) = portal_user_id);
 ALTER TABLE `{{catalog}}`.`{{gov}}`.portal_user_grants ADD CONSTRAINT known_role CHECK (role IN ('subscriber', 'member', 'sponsor_admin', 'consultant', 'pharmacy'));
 ALTER TABLE `{{catalog}}`.`{{gov}}`.portal_user_grants ADD CONSTRAINT known_scope CHECK (scope_type IN ('member', 'sponsor', 'pharmacy'));
 ALTER TABLE `{{catalog}}`.`{{gov}}`.portal_user_grants ADD CONSTRAINT valid_window CHECK (valid_to IS NULL OR valid_to >= valid_from);

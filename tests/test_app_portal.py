@@ -116,3 +116,19 @@ def test_redact_mode_hides_statement_ids_everywhere(tmp_path):
     sign_in(client)
     body = client.post("/portal/api/ask", json={"question": "q"}).json()
     assert "stmt-1" not in str(body["trace"])
+
+
+UUID = "0f8e7d6c-1111-2222-3333-" + "444455556666"
+
+
+def test_redact_mode_scrubs_hosts_and_ids_from_errors(tmp_path):
+    err = RuntimeError(f"GET https://host.example/api/2.0/genie/spaces/space-1 failed for {UUID} on wh-123")
+    client, *_ = make_client(tmp_path, genie=FakeGenie(error=err), redact_ids=True, host="https://host.example")
+    sign_in(client)
+    text = str(client.post("/portal/api/ask", json={"question": "q"}).json())
+    assert "host.example" not in text and UUID not in text and "wh-123" not in text and "<workspace-host>" in text
+
+
+def test_untrusted_host_header_is_rejected(tmp_path):
+    client, *_ = make_client(tmp_path)
+    assert client.get("/portal", headers={"host": "evil.example"}).status_code == 400

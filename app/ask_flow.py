@@ -2,7 +2,9 @@
 from __future__ import annotations
 
 from claims_kit.claims import CLAIM_PATTERN, validate_claim
-from claims_kit.trace import Trace, redact, replace_identifier, token_view
+from claims_kit.trace import Trace, redact, token_view
+
+from .redaction import screen_safe
 
 
 def run_ask(services, settings, runtime, persona, question: str, new_conversation: bool) -> dict:
@@ -68,5 +70,5 @@ def run_ask(services, settings, runtime, persona, question: str, new_conversatio
         error = str(exc)[:400]
         services.audit.write("ask_error", example=ex.name, portal_user_id=claim, error=error)
     out = {"answer": answer, "error": error, "trace": trace.to_list()}
-    # Screen-sharing mode also hides the catalog name, which appears in every fully qualified name.
-    return replace_identifier(out, services.catalog, "<catalog>") if settings.redact_ids else out
+    # Screen-sharing mode hides hosts, ids and the catalog name everywhere, including error messages.
+    return screen_safe(out, settings, services.catalog, runtime.provider.client_id) if settings.redact_ids else out

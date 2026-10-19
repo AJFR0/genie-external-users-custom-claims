@@ -9,7 +9,7 @@ This guide builds the pattern from the [Overview](overview.html) end to end, usi
 
 ## Step 1: Check availability
 
-OAuth custom identity claims are announced on the Databricks *What's coming?* page ([AWS](https://docs.databricks.com/aws/en/release-notes/whats-coming), [Azure](https://learn.microsoft.com/en-us/azure/databricks/release-notes/whats-coming)). There is nothing to enable. Three checks tell you whether your workspace has them.
+OAuth custom identity claims are announced on the Databricks *What's coming?* page ([AWS](https://docs.databricks.com/aws/en/release-notes/whats-coming), [Azure](https://learn.microsoft.com/en-us/azure/databricks/release-notes/whats-coming)). There is no workspace setting to turn on. Three checks tell you whether your workspace has them.
 
 **Check 1 and 2, in the SQL editor.** These are in `sql/check_availability.sql`.
 
@@ -133,7 +133,7 @@ Each pattern below is live in one of the two examples, and the trace cards show 
 One row per user, role and scope. Onboarding a user is an insert.
 
 ```sql
-INSERT INTO northwind_governance.portal_user_grants
+INSERT INTO <catalog>.northwind_governance.portal_user_grants
 VALUES ('pu-1001', 'participant', 'participant', 'P-1001', DATE '2026-01-01', NULL, 'provisioning job', current_timestamp());
 ```
 
@@ -142,7 +142,7 @@ VALUES ('pu-1001', 'participant', 'participant', 'P-1001', DATE '2026-01-01', NU
 What a role may see lives in one row. Turning off `mask_dob` for advisors changes every advisor on their next question.
 
 ```sql
-UPDATE northwind_governance.role_policies SET mask_dob = false WHERE role = 'advisor';
+UPDATE <catalog>.northwind_governance.role_policies SET mask_dob = false WHERE role = 'advisor';
 ```
 
 ### 3. Several roles per user
@@ -169,8 +169,8 @@ Larkspur subscribers whose role includes minor dependents also see their childre
 
 ```sql
 SELECT m.member_id, 'minor dependent' AS visible_as
-FROM larkspur_governance.my_effective_grants AS e
-JOIN larkspur_base.members AS m ON m.subscriber_id = e.scope_id
+FROM <catalog>.larkspur_governance.my_effective_grants AS e
+JOIN <catalog>.larkspur_base.members AS m ON m.subscriber_id = e.scope_id
 WHERE e.include_minor_dependents AND m.relationship = 'child'
   AND m.date_of_birth > add_months(current_date(), -216)
 ```
@@ -222,7 +222,7 @@ The local app in `app/` is a working reference. The parts that matter in product
 - **Take the user id from your server-side session.** Never from the browser, the chat or a URL. Validate its format before minting: Unity Catalog trims surrounding spaces from the claim and keeps its case, so `" pu-1001 "` matches `pu-1001` and `PU-1001` matches nothing. See `src/claims_kit/claims.py`.
 - **Mint and cache one token per user.** `client_credentials` with `custom_claim`, cached until a few minutes before it expires, never sent to the browser. To avoid storing a client secret, use the `urn:ietf:params:oauth:grant-type:token-exchange` grant (workload identity federation) with the same `custom_claim` parameter. See `src/claims_kit/tokens.py`.
 - **Bind conversations to users.** Genie conversations belong to the service principal, and any token from that service principal can read them. Keep your own map of user to conversation id, never accept a conversation id from the client, start a new conversation per session, delete it at sign-out, and delete old conversations on a schedule. See `app/conversations.py`.
-- **Write your own audit log.** Query history attributes every query to the service principal, and the claim isn't written to system tables. Log the user id, conversation id, message id and statement ids, and join to query history on statement id. See `app/audit.py`.
+- **Write your own audit log.** Query history attributes every query to the service principal, so Databricks audit data can't tell you which end user asked. Log the user id, conversation id, message id and statement ids, and join to query history on statement id. See `app/audit.py`.
 - **Retry transient warehouse errors** and nothing else. See `StatementRunner.execute`.
 - **Trace each request while you build.** `app/ask_flow.py` records every step a question takes, from session to audit record, which makes isolation easy to explain and to debug.
 
@@ -251,8 +251,9 @@ The local app in `app/` is a working reference. The parts that matter in product
 
 | Category | What it proves |
 |---|---|
-| visibility | Each persona sees exactly the ids its grants allow, in every portal view |
+| visibility | Each persona sees exactly the ids its grants allow, in every portal view, with no duplicated rows |
 | role_effect | Masking rules from role policies hold |
+| constraint | The entitlements table rejects malformed claims (trailing newline, uppercase, leading space) |
 | attack | No claim, injection strings, wildcards, uppercase and control characters see nothing; an admin session without a claim sees nothing |
 | privilege | The portal service principal can't read base or governance objects, change entitlements or create a view |
 | cross_app | Another application's service principal is denied |
@@ -267,7 +268,7 @@ Results from the live runs behind this guide:
 
 [[ validation_summary("larkspur") ]]
 
-A Genie case is inconclusive, never passed, when Genie doesn't finish or doesn't state the expected number. Only a leaked number fails it.
+A case is inconclusive, never passed, when the evidence is ambiguous: Genie doesn't finish or doesn't state the expected number, a transient warehouse error interrupts a check, or an object is hidden instead of explicitly denied. Only a leaked number or a wrong row fails a case, and every result records the reason it passed.
 
 ## Production checklist
 
@@ -292,6 +293,6 @@ A Genie case is inconclusive, never passed, when Genie doesn't finish or doesn't
 | The portal service principal gets `INSUFFICIENT_PERMISSIONS` on the warehouse | Grant it Can Use on the warehouse (bootstrap does). |
 | Genie reports "Failed to fetch tables" when creating the agent | The views don't exist yet. Create the agent after the views (task 06 runs after 04 and 05). |
 | `ALTER VIEW ... OWNER TO` is denied | The deploying user needs ownership or MANAGE on the catalog or schema, or metastore admin. |
-| The admin console rejects a grant with a CHECK constraint error | The claim, role or scope type is malformed. The constraint is doing its job. |
+| The admin console rejects a grant with a CHECK constraint error | The console checks ids, roles and scope types itself, so this is usually an end date before the start date. Jobs that write grants directly also hit the claim, role and scope constraints. |
 | Statements fail with "catalog not found" for an unqualified name | Fully qualify every name. The workspace's default catalog may not be the one you expect. |
 | Genie answers with zero for a plan or sponsor | It filtered on a display name. Add the naming rule to the instructions (prompt matching is off on claim-keyed views). |

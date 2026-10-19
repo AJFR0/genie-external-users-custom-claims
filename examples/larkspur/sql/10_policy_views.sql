@@ -12,7 +12,7 @@ WHERE g.portal_user_id = current_oauth_custom_identity_claim()
   AND current_date() >= g.valid_from
   AND (g.valid_to IS NULL OR current_date() <= g.valid_to);
 
--- A relationship rule derived from data, not from grant rows: a subscriber whose role includes minor
+-- A relationship rule derived from data, with no extra grant rows: a subscriber whose role includes minor
 -- dependents also sees their children under 18. Spouses and adult children (18+) are never included.
 CREATE VIEW `{{catalog}}`.`{{gov}}`.my_members
 COMMENT 'Members whose claims the signed-in user may see, and why.'

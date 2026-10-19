@@ -69,3 +69,11 @@ def test_constraint_violation_becomes_400(tmp_path):
     client, *_ = make_client(tmp_path, admin=FakeRunner(error=err))
     r = client.post("/admin/api/northwind/grants", json=GRANT)
     assert r.status_code == 400 and "known_scope" in r.json()["detail"]
+
+
+def test_redact_mode_scrubs_admin_errors(tmp_path):
+    uuid = "0f8e7d6c-1111-2222-3333-" + "444455556666"
+    err = StatementError(f"[INSUFFICIENT_PERMISSIONS] on https://host.example for {uuid}")
+    client, *_ = make_client(tmp_path, admin=FakeRunner(error=err), redact_ids=True, host="https://host.example")
+    detail = client.get("/admin/api/northwind/grants").json()["detail"]
+    assert "host.example" not in detail and uuid not in detail and "INSUFFICIENT_PERMISSIONS" in detail

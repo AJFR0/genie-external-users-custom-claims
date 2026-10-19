@@ -1,7 +1,7 @@
 """Per-user audit log (JSON lines).
 
-Databricks query history attributes every query to the portal service principal, and the claim is not written
-to system tables. This log is the per-user record: join it to query history on statement_id. In production,
+Databricks query history attributes every query to the portal service principal, so it can't tell you which
+end user asked. This log is the per-user record: join it to query history on statement_id. In production,
 send these records to your logging pipeline instead of a local file.
 """
 from __future__ import annotations

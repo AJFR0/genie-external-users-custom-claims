@@ -2,6 +2,7 @@
 
   visibility   each persona sees exactly the ids its grants allow, in every portal view
   role_effect  masking and other column rules that come from role_policies
+  constraint   malformed claims can't be written into the entitlements table
   attack       no claim, forged or malformed claims, an admin session without a claim
   privilege    the portal service principal can't read base or governance objects, change entitlements or run DDL
   cross_app    another application's service principal can't read this application's views
@@ -30,7 +31,7 @@ from .personas import ExampleFixtures, GenieCase, load_fixtures
 from .sql import StatementError, StatementRunner
 from .tokens import ClaimTokenProvider, TokenError, decode_jwt_unverified
 
-CATEGORIES = ("visibility", "role_effect", "attack", "privilege", "cross_app", "binding", "token", "genie", "documented")
+CATEGORIES = ("visibility", "role_effect", "constraint", "attack", "privilege", "cross_app", "binding", "token", "genie", "documented")
 ATTACK_VARIANTS = (
     ("sql-injection", "{claim}' OR '1'='1"),
     ("wildcard", "%"),
@@ -85,10 +86,35 @@ class SuiteContext:
         return self.example.fq(self.catalog, f"portal.{name}")
 
 
-def _err(e: Exception) -> str:
+_EXPECTED_ATTACK_ERRORS = ("OAUTH_CUSTOM_IDENTITY_CLAIM_NOT_PROVIDED", "CODE POINT IS IN [0,31]")
+
+
+def _reason(e: Exception) -> str:
+    """The error class and the start of the message, so evidence shows why a case passed."""
     if isinstance(e, StatementError):
-        return f"error: {e.error_class or e.message[:120]}"
-    return f"error: {str(e)[:120]}"
+        msg = " ".join(e.message.split())
+        return msg[:160] if msg.startswith("[") else f"{e.error_code or 'error'}: {msg[:150]}"
+    return str(e)[:160]
+
+
+def _err(e: Exception) -> str:
+    return f"error: {_reason(e)}"
+
+
+def _denial(e: StatementError) -> tuple:
+    """Only an explicit permission error proves a denial; a hidden or missing object could be a typo."""
+    if e.is_permission_error and not e.is_transient:
+        return True, f"denied: {_reason(e)}"
+    if e.is_denied_or_hidden:
+        return None, f"inconclusive: object hidden or missing, confirm it exists ({_reason(e)})"
+    return None, f"inconclusive: unexpected error ({_reason(e)})"
+
+
+def _attack_error(case_id: str, want: str, e: StatementError) -> "CaseResult":
+    text = f"{e.error_code or ''} {e.message}".upper()
+    if not e.is_transient and (any(k in text for k in _EXPECTED_ATTACK_ERRORS) or e.is_permission_error):
+        return CaseResult(case_id, "attack", None, True, want, f"rejected: {_reason(e)}", e.statement_id)
+    return CaseResult(case_id, "attack", None, None, want, f"inconclusive: unexpected error ({_reason(e)})", e.statement_id)
 
 
 def _fmt(ids, limit=6) -> str:
@@ -128,6 +154,53 @@ def visibility_cases(ctx: SuiteContext, fx: ExampleFixtures) -> list[CaseResult]
             ok = got == exp.ids
             observed = _fmt(got) if ok else f"{_fmt(got)}; missing {_fmt(exp.ids - got)}; unexpected {_fmt(got - exp.ids)}"
             out.append(CaseResult(case_id, "visibility", p.id, ok, _fmt(exp.ids), observed, res.statement_id))
+    return out
+
+
+def duplicate_cases(ctx: SuiteContext, fx: ExampleFixtures) -> list[CaseResult]:
+    """A user with several matching grants must never see the same row twice."""
+    out = []
+    for p in fx.personas:
+        runner = ctx.sp_runner(p.claim)
+        for view, exp in sorted(fx.views[p.id].items()):
+            if not exp.ids:
+                continue
+            case_id, want, v = f"no_duplicates/{p.id}/{view}", "no duplicated rows", ctx.view(view)
+            try:
+                res = runner.execute(f"SELECT (SELECT count(*) FROM {v}) AS n, (SELECT count(*) FROM (SELECT DISTINCT * FROM {v})) AS d")
+            except StatementError as e:
+                out.append(CaseResult(case_id, "visibility", p.id, None, want, f"inconclusive: {_reason(e)}", e.statement_id))
+                continue
+            n, d = int(res.rows[0][0]), int(res.rows[0][1])
+            out.append(CaseResult(case_id, "visibility", p.id, n == d, want, f"{n} rows, {d} distinct", res.statement_id))
+    return out
+
+
+def constraint_cases(ctx: SuiteContext, fx: ExampleFixtures) -> list[CaseResult]:
+    """The claim_format CHECK constraint must reject ids the backend would never mint."""
+    ex = ctx.example
+    table = ex.fq(ctx.catalog, "governance.portal_user_grants")
+    claim = fx.personas[0].claim
+    bad = (("newline", f"concat('{claim}', char(10))"), ("uppercase", f"'{claim.upper()}'"), ("leading-space", f"concat(' ', '{claim}')"))
+    want = "rejected by the claim_format CHECK constraint"
+    out = []
+    for name, expr in bad:
+        case_id = f"constraint/{name}-claim"
+        try:
+            res = ctx.admin.execute(
+                f"INSERT INTO {table} (portal_user_id, role, scope_type, scope_id, valid_from, valid_to, granted_by, granted_at) "
+                f"VALUES ({expr}, '{ex.grant_roles[0]}', '{ex.scope_types[0]}', 'zz-isolation-probe', current_date(), NULL, "
+                f"'isolation suite', current_timestamp())")
+        except StatementError as e:
+            ok = any(k in e.message.upper() for k in ("CONSTRAINT", "CHECK"))
+            out.append(CaseResult(case_id, "constraint", None, True if ok else None, want,
+                                  ("rejected: " if ok else "inconclusive: ") + _reason(e), e.statement_id))
+            continue
+        try:
+            ctx.admin.execute(f"DELETE FROM {table} WHERE scope_id = 'zz-isolation-probe' AND granted_by = 'isolation suite'")
+        except StatementError:
+            pass
+        out.append(CaseResult(case_id, "constraint", None, False, want, "the malformed claim was accepted (row deleted again)", res.statement_id))
     return out
 
 
@@ -178,18 +251,20 @@ def attack_cases(ctx: SuiteContext, fx: ExampleFixtures) -> list[CaseResult]:
         try:
             token = ctx.provider.mint_raw(claim)
         except TokenError as e:
-            out.append(CaseResult(case_id, "attack", None, True, want, f"token request rejected (HTTP {e.status})"))
+            rejected = e.status in (400, 401, 403)
+            out.append(CaseResult(case_id, "attack", None, True if rejected else None, want,
+                                  f"token request rejected (HTTP {e.status})" if rejected else f"inconclusive: token endpoint HTTP {e.status}"))
             continue
         try:
             n, sid = _count(ctx.raw_runner(token.access_token), count_sql)
             out.append(CaseResult(case_id, "attack", None, n == 0, want, f"{n} rows", sid))
         except StatementError as e:
-            out.append(CaseResult(case_id, "attack", None, True, want, _err(e), e.statement_id))
+            out.append(_attack_error(case_id, want, e))
     try:
         n, sid = _count(ctx.admin, count_sql)
         out.append(CaseResult("attack/admin-without-claim", "attack", None, n == 0, want, f"{n} rows", sid))
     except StatementError as e:
-        out.append(CaseResult("attack/admin-without-claim", "attack", None, True, want, _err(e), e.statement_id))
+        out.append(_attack_error("attack/admin-without-claim", want, e))
     want_trim = "a claim with surrounding spaces matches the trimmed claim, so validate claims before minting"
     try:
         expected, _ = _count(ctx.sp_runner(persona.claim), count_sql)
@@ -224,7 +299,8 @@ def privilege_cases(ctx: SuiteContext, fx: ExampleFixtures) -> list[CaseResult]:
                 except StatementError:
                     pass
         except StatementError as e:
-            out.append(CaseResult(case_id, "privilege", None, e.is_denied_or_hidden, "denied", _err(e), e.statement_id))
+            passed, observed = _denial(e)
+            out.append(CaseResult(case_id, "privilege", None, passed, "denied", observed, e.statement_id))
     return out
 
 
@@ -241,7 +317,8 @@ def cross_app_cases(ctx: SuiteContext, fx: ExampleFixtures) -> list[CaseResult]:
         n, sid = _count(ctx.sp_runner(persona.claim, ctx.other_provider), f"SELECT count(*) FROM {ctx.view(view)}")
         return [CaseResult(case_id, "cross_app", persona.id, False, want, f"query ran and returned {n} rows", sid)]
     except StatementError as e:
-        return [CaseResult(case_id, "cross_app", persona.id, e.is_denied_or_hidden, want, _err(e), e.statement_id)]
+        passed, observed = _denial(e)
+        return [CaseResult(case_id, "cross_app", persona.id, passed, want, observed, e.statement_id)]
 
 
 def _has_use_catalog(ctx: SuiteContext, principal: str) -> bool:
@@ -407,7 +484,7 @@ def genie_cases(ctx: SuiteContext, fx: ExampleFixtures) -> list[CaseResult]:
     return out
 
 
-SUITE = (visibility_cases, role_effect_cases, attack_cases, privilege_cases, cross_app_cases, binding_case, token_cases, genie_cases)
+SUITE = (visibility_cases, duplicate_cases, role_effect_cases, constraint_cases, attack_cases, privilege_cases, cross_app_cases, binding_case, token_cases, genie_cases)
 
 
 def run_suite(ctx: SuiteContext, fixtures: ExampleFixtures | None = None) -> list[CaseResult]:

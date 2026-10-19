@@ -2,32 +2,14 @@
 from __future__ import annotations
 
 import json
-import re
 from datetime import datetime, timezone
 from pathlib import Path
 
 from .personas import load_personas
-from .trace import replace_identifier
+from .trace import replace_identifier, scrub  # noqa: F401  (scrub is re-exported)
 from .validate import results_as_dicts
 
 TRACE_PERSONAS = {"northwind": ("linda", "raj", "unknown"), "larkspur": ("ana", "dana", "theo", "priya")}
-_UUID = re.compile(r"\b[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\b", re.I)
-_HEX32 = re.compile(r"\b[0-9a-f]{32}\b", re.I)
-
-
-def scrub(obj, secrets: dict):
-    if isinstance(obj, str):
-        for raw, placeholder in secrets.items():
-            if raw:
-                obj = obj.replace(raw, placeholder)
-        return _HEX32.sub("<id>", _UUID.sub("<id>", obj))
-    if isinstance(obj, list):
-        return [scrub(v, secrets) for v in obj]
-    if isinstance(obj, dict):
-        return {k: scrub(v, secrets) for k, v in obj.items()}
-    return obj
-
-
 def trace_card(ctx, persona) -> dict:
     runner = ctx.sp_runner(persona.claim)
     access = runner.execute(f"SELECT * FROM {ctx.view('my_access')}")

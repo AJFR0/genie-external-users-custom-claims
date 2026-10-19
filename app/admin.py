@@ -15,6 +15,8 @@ from pydantic import BaseModel, ConfigDict
 from claims_kit.claims import InvalidClaim, validate_claim
 from claims_kit.sql import StatementError
 
+from .redaction import screen_safe
+
 KEY_WHERE = "portal_user_id = :uid AND role = :role AND scope_type = :stype AND scope_id = :sid"
 
 
@@ -66,7 +68,8 @@ def build_admin_router(settings, services, templates) -> APIRouter:
         try:
             return services.admin_runner.execute(sql, params)
         except StatementError as e:
-            raise HTTPException(400, e.message[:400]) from e
+            detail = e.message[:400]
+            raise HTTPException(400, screen_safe(detail, settings, services.catalog) if settings.redact_ids else detail) from e
 
     @router.get("", response_class=HTMLResponse)
     def admin_page(request: Request):

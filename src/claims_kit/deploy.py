@@ -17,6 +17,14 @@ DEPLOY_CLAIM = "deploy-session"
 AdminSql = Callable[[str], object]
 
 
+class DeployError(RuntimeError):
+    """Several steps failed; every cleanup step was still attempted."""
+
+    def __init__(self, errors: list[Exception]):
+        super().__init__(f"{len(errors)} deploy steps failed: " + "; ".join(str(e)[:160] for e in errors))
+        self.errors = errors
+
+
 def _names(ex: Example, catalog: str) -> tuple[str, str, str, str]:
     c = f"`{catalog}`"
     return c, f"{c}.`{ex.schemas['base']}`", f"{c}.`{ex.schemas['governance']}`", f"{c}.`{ex.schemas['portal']}`"
@@ -72,24 +80,34 @@ def deploy_claim_views(ex: Example, *, catalog: str, portal_sp: str, view_owner:
             admin(f"ALTER VIEW {ex.fq(catalog, view)} OWNER TO `{view_owner}`")
         return log
 
-    for grant in temporary_grants(ex, catalog, portal_sp):
-        admin(grant)
+    # Every cleanup step runs even when an earlier step failed, so the portal service principal never keeps
+    # temporary rights or owns a view. Errors are collected and raised together at the end.
+    errors: list[Exception] = []
     try:
+        for grant in temporary_grants(ex, catalog, portal_sp):
+            admin(grant)
         for stmt in statements:
             log.append(f"portal service principal (claim session): {stmt}")
             sp_runner.execute(stmt)
-    finally:
+    except Exception as exc:
+        errors.append(exc)
+    for view in ex.claim_views:
         try:
-            for view in ex.claim_views:
-                try:
-                    admin(f"ALTER VIEW {ex.fq(catalog, view)} OWNER TO `{view_owner}`")
-                except Exception as exc:
-                    if not _missing(exc):
-                        raise
-                    log.append(f"skipped ownership (not created): {view}")
-        finally:
-            for revoke in revoke_temporary_grants(ex, catalog, portal_sp):
-                admin(revoke)
+            admin(f"ALTER VIEW {ex.fq(catalog, view)} OWNER TO `{view_owner}`")
+        except Exception as exc:
+            if _missing(exc):
+                log.append(f"skipped ownership (not created): {view}")
+            else:
+                errors.append(exc)
+    for revoke in revoke_temporary_grants(ex, catalog, portal_sp):
+        try:
+            admin(revoke)
+        except Exception as exc:
+            errors.append(exc)
+    if len(errors) == 1:
+        raise errors[0]
+    if errors:
+        raise DeployError(errors) from errors[0]
     return log
 
 

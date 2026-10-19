@@ -147,3 +147,94 @@ def test_evaluate_genie_outcomes():
 
 def test_evaluate_genie_inconclusive_when_not_completed():
     assert evaluate_genie("g", "p", GenieCase("q", ("a",)), _answer(status="FAILED"), {"a": Decimal(1)}).passed is None
+
+
+def _attack_handler(error_for_injection=None):
+    def handler(headers, sql):
+        auth = headers.get("Authorization", "")
+        if auth == "Bearer raw:None":
+            raise StatementError("[OAUTH_CUSTOM_IDENTITY_CLAIM_NOT_PROVIDED] none")
+        if "OR '1'='1" in auth and error_for_injection:
+            raise error_for_injection
+        if auth.startswith("Bearer raw: ") or "X-Claim" in headers:
+            return StatementResult("s", ["n"], [["4"]])
+        return StatementResult("s", ["n"], [["0"]])
+    return handler
+
+
+def test_attack_transient_or_unexpected_error_is_inconclusive():
+    for err in (StatementError("[TEMPORARILY_UNAVAILABLE] busy", error_code="TEMPORARILY_UNAVAILABLE"),
+                StatementError("[DIVIDE_BY_ZERO] oops")):
+        results = attack_cases(ctx_with(_attack_handler(err)), FX)
+        case = next(r for r in results if r.case_id == "attack/sql-injection")
+        assert case.passed is None and "inconclusive" in case.observed
+
+
+def test_attack_control_character_rejection_passes_with_reason():
+    err = StatementError("Query could not be scheduled: Header {X} contains characters whose code point is in [0,31] or equals 127",
+                         error_code="BAD_REQUEST")
+    results = attack_cases(ctx_with(_attack_handler(err)), FX)
+    case = next(r for r in results if r.case_id == "attack/sql-injection")
+    assert case.passed is True and "code point" in case.observed
+
+
+def test_attack_token_endpoint_outcomes():
+    from claims_kit.tokens import TokenError
+
+    class P(Provider):
+        def __init__(self, status):
+            super().__init__()
+            self.status = status
+
+        def mint_raw(self, claim):
+            if claim == "%":
+                raise TokenError(self.status, "x")
+            return super().mint_raw(claim)
+
+    for status, expected in ((400, True), (503, None)):
+        ctx = SuiteContext(example=EX, catalog="cat", host="h", warehouse_id="wh", provider=P(status), admin=Admin(),
+                           make_runner=lambda auth: Runner(auth(), _attack_handler()))
+        case = next(r for r in attack_cases(ctx, FX) if r.case_id == "attack/wildcard")
+        assert case.passed is expected
+
+
+def test_privilege_hidden_error_is_inconclusive_and_reason_is_recorded():
+    def handler(headers, sql):
+        if "account_balances" in sql:
+            raise StatementError("[TABLE_OR_VIEW_NOT_FOUND] cannot be found")
+        raise StatementError("[INSUFFICIENT_PERMISSIONS] User does not have USE SCHEMA on Schema", error_code="BAD_REQUEST")
+    results = {r.case_id: r for r in privilege_cases(ctx_with(handler), FX)}
+    assert results["privilege/read-base-table"].passed is None
+    assert results["privilege/read-entitlements"].passed is True
+    assert "does not have USE SCHEMA" in results["privilege/read-entitlements"].observed
+
+
+def test_duplicate_rows_are_detected():
+    from claims_kit.validate import duplicate_cases
+
+    def handler(headers, sql):
+        return StatementResult("s", ["n", "d"], [["5", "4" if "plan_roster" in sql else "5"]])
+    results = duplicate_cases(ctx_with(handler), FX)
+    assert any(r.passed is False and "plan_roster" in r.case_id for r in results)
+    assert all(r.passed for r in results if "plan_roster" not in r.case_id)
+
+
+def test_constraint_cases_pass_when_rejected_and_fail_and_clean_up_when_accepted():
+    from claims_kit.validate import constraint_cases
+
+    class RejectingAdmin(Admin):
+        def execute(self, sql, parameters=None):
+            self.statements.append(sql)
+            raise StatementError("[DELTA_VIOLATE_CONSTRAINT_WITH_VALUES] CHECK constraint claim_format violated")
+
+    class AcceptingAdmin(Admin):
+        def execute(self, sql, parameters=None):
+            self.statements.append(sql)
+            return StatementResult("s", ["num_affected_rows"], [["1"]])
+
+    ok = SuiteContext(example=EX, catalog="cat", host="h", warehouse_id="wh", provider=Provider(), admin=RejectingAdmin())
+    assert all(r.passed is True for r in constraint_cases(ok, FX)) and len(constraint_cases(ok, FX)) == 3
+    bad_admin = AcceptingAdmin()
+    bad = SuiteContext(example=EX, catalog="cat", host="h", warehouse_id="wh", provider=Provider(), admin=bad_admin)
+    assert all(r.passed is False for r in constraint_cases(bad, FX))
+    assert sum(s.startswith("DELETE FROM") for s in bad_admin.statements) == 3

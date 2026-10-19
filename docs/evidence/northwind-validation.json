@@ -229,6 +229,132 @@
       "statement_id": "<id>"
     },
     {
+      "case_id": "no_duplicates/maya/my_access",
+      "category": "visibility",
+      "persona": "maya",
+      "passed": true,
+      "expected": "no duplicated rows",
+      "observed": "1 rows, 1 distinct",
+      "statement_id": "<id>"
+    },
+    {
+      "case_id": "no_duplicates/maya/my_accounts",
+      "category": "visibility",
+      "persona": "maya",
+      "passed": true,
+      "expected": "no duplicated rows",
+      "observed": "4 rows, 4 distinct",
+      "statement_id": "<id>"
+    },
+    {
+      "case_id": "no_duplicates/maya/my_contributions",
+      "category": "visibility",
+      "persona": "maya",
+      "passed": true,
+      "expected": "no duplicated rows",
+      "observed": "18 rows, 18 distinct",
+      "statement_id": "<id>"
+    },
+    {
+      "case_id": "no_duplicates/james/my_access",
+      "category": "visibility",
+      "persona": "james",
+      "passed": true,
+      "expected": "no duplicated rows",
+      "observed": "1 rows, 1 distinct",
+      "statement_id": "<id>"
+    },
+    {
+      "case_id": "no_duplicates/james/my_accounts",
+      "category": "visibility",
+      "persona": "james",
+      "passed": true,
+      "expected": "no duplicated rows",
+      "observed": "3 rows, 3 distinct",
+      "statement_id": "<id>"
+    },
+    {
+      "case_id": "no_duplicates/james/my_contributions",
+      "category": "visibility",
+      "persona": "james",
+      "passed": true,
+      "expected": "no duplicated rows",
+      "observed": "18 rows, 18 distinct",
+      "statement_id": "<id>"
+    },
+    {
+      "case_id": "no_duplicates/linda/my_access",
+      "category": "visibility",
+      "persona": "linda",
+      "passed": true,
+      "expected": "no duplicated rows",
+      "observed": "2 rows, 2 distinct",
+      "statement_id": "<id>"
+    },
+    {
+      "case_id": "no_duplicates/linda/my_accounts",
+      "category": "visibility",
+      "persona": "linda",
+      "passed": true,
+      "expected": "no duplicated rows",
+      "observed": "4 rows, 4 distinct",
+      "statement_id": "<id>"
+    },
+    {
+      "case_id": "no_duplicates/linda/my_contributions",
+      "category": "visibility",
+      "persona": "linda",
+      "passed": true,
+      "expected": "no duplicated rows",
+      "observed": "18 rows, 18 distinct",
+      "statement_id": "<id>"
+    },
+    {
+      "case_id": "no_duplicates/linda/plan_roster",
+      "category": "visibility",
+      "persona": "linda",
+      "passed": true,
+      "expected": "no duplicated rows",
+      "observed": "59 rows, 59 distinct",
+      "statement_id": "<id>"
+    },
+    {
+      "case_id": "no_duplicates/linda/plan_summary",
+      "category": "visibility",
+      "persona": "linda",
+      "passed": true,
+      "expected": "no duplicated rows",
+      "observed": "8 rows, 8 distinct",
+      "statement_id": "<id>"
+    },
+    {
+      "case_id": "no_duplicates/raj/my_access",
+      "category": "visibility",
+      "persona": "raj",
+      "passed": true,
+      "expected": "no duplicated rows",
+      "observed": "2 rows, 2 distinct",
+      "statement_id": "<id>"
+    },
+    {
+      "case_id": "no_duplicates/raj/plan_roster",
+      "category": "visibility",
+      "persona": "raj",
+      "passed": true,
+      "expected": "no duplicated rows",
+      "observed": "99 rows, 99 distinct",
+      "statement_id": "<id>"
+    },
+    {
+      "case_id": "no_duplicates/raj/plan_summary",
+      "category": "visibility",
+      "persona": "raj",
+      "passed": true,
+      "expected": "no duplicated rows",
+      "observed": "16 rows, 16 distinct",
+      "statement_id": "<id>"
+    },
+    {
       "case_id": "role_effect/linda/plan_roster.date_of_birth",
       "category": "role_effect",
       "persona": "linda",
@@ -247,12 +373,39 @@
       "statement_id": "<id>"
     },
     {
+      "case_id": "constraint/newline-claim",
+      "category": "constraint",
+      "persona": null,
+      "passed": true,
+      "expected": "rejected by the claim_format CHECK constraint",
+      "observed": "rejected: [DELTA_VIOLATE_CONSTRAINT_WITH_VALUES] CHECK constraint claim_format (regexp_extract(portal_user_id, '^[a-z0-9][a-z0-9._:-]{0,127}', 0) = portal_user_id) violat",
+      "statement_id": "<id>"
+    },
+    {
+      "case_id": "constraint/uppercase-claim",
+      "category": "constraint",
+      "persona": null,
+      "passed": true,
+      "expected": "rejected by the claim_format CHECK constraint",
+      "observed": "rejected: [DELTA_VIOLATE_CONSTRAINT_WITH_VALUES] CHECK constraint claim_format (regexp_extract(portal_user_id, '^[a-z0-9][a-z0-9._:-]{0,127}', 0) = portal_user_id) violat",
+      "statement_id": "<id>"
+    },
+    {
+      "case_id": "constraint/leading-space-claim",
+      "category": "constraint",
+      "persona": null,
+      "passed": true,
+      "expected": "rejected by the claim_format CHECK constraint",
+      "observed": "rejected: [DELTA_VIOLATE_CONSTRAINT_WITH_VALUES] CHECK constraint claim_format (regexp_extract(portal_user_id, '^[a-z0-9][a-z0-9._:-]{0,127}', 0) = portal_user_id) violat",
+      "statement_id": "<id>"
+    },
+    {
       "case_id": "attack/no-claim",
       "category": "attack",
       "persona": null,
       "passed": true,
       "expected": "0 rows or an error",
-      "observed": "error: OAUTH_CUSTOM_IDENTITY_CLAIM_NOT_PROVIDED",
+      "observed": "rejected: [OAUTH_CUSTOM_IDENTITY_CLAIM_NOT_PROVIDED] No custom identity claim was provided. SQLSTATE: 22KD2",
       "statement_id": "<id>"
     },
     {
@@ -297,7 +450,7 @@
       "persona": null,
       "passed": true,
       "expected": "0 rows or an error",
-      "observed": "error: BAD_REQUEST",
+      "observed": "rejected: BAD_REQUEST: Query could not be scheduled: Header {X-Databricks-Oauth-Identity-Custom-Claim -> pu-1001 } contains characters whose code point is in [0,31] or equal",
       "statement_id": "<id>"
     },
     {
@@ -306,7 +459,7 @@
       "persona": null,
       "passed": true,
       "expected": "0 rows or an error",
-      "observed": "error: OAUTH_CUSTOM_IDENTITY_CLAIM_NOT_PROVIDED",
+      "observed": "rejected: [OAUTH_CUSTOM_IDENTITY_CLAIM_NOT_PROVIDED] No custom identity claim was provided. SQLSTATE: 22KD2",
       "statement_id": "<id>"
     },
     {
@@ -324,7 +477,7 @@
       "persona": null,
       "passed": true,
       "expected": "denied",
-      "observed": "error: INSUFFICIENT_PERMISSIONS",
+      "observed": "denied: [INSUFFICIENT_PERMISSIONS] Insufficient privileges: User does not have USE SCHEMA on Schema '<catalog>.northwind_base'. SQLSTATE: 42501",
       "statement_id": "<id>"
     },
     {
@@ -333,7 +486,7 @@
       "persona": null,
       "passed": true,
       "expected": "denied",
-      "observed": "error: INSUFFICIENT_PERMISSIONS",
+      "observed": "denied: [INSUFFICIENT_PERMISSIONS] Insufficient privileges: User does not have USE SCHEMA on Schema '<catalog>.northwind_governance'. SQLSTATE: 42501",
       "statement_id": "<id>"
     },
     {
@@ -342,7 +495,7 @@
       "persona": null,
       "passed": true,
       "expected": "denied",
-      "observed": "error: INSUFFICIENT_PERMISSIONS",
+      "observed": "denied: [INSUFFICIENT_PERMISSIONS] Insufficient privileges: User does not have USE SCHEMA on Schema '<catalog>.northwind_governance'. SQLSTATE: 42501",
       "statement_id": "<id>"
     },
     {
@@ -351,7 +504,7 @@
       "persona": null,
       "passed": true,
       "expected": "denied",
-      "observed": "error: INSUFFICIENT_PERMISSIONS",
+      "observed": "denied: [INSUFFICIENT_PERMISSIONS] Insufficient privileges: User does not have USE SCHEMA on Schema '<catalog>.northwind_governance'. SQLSTATE: 42501",
       "statement_id": "<id>"
     },
     {
@@ -360,7 +513,7 @@
       "persona": null,
       "passed": true,
       "expected": "denied",
-      "observed": "error: INSUFFICIENT_PERMISSIONS",
+      "observed": "denied: [INSUFFICIENT_PERMISSIONS] Insufficient privileges: User does not have USE SCHEMA on Schema '<catalog>.northwind_governance'. SQLSTATE: 42501",
       "statement_id": "<id>"
     },
     {
@@ -369,7 +522,7 @@
       "persona": null,
       "passed": true,
       "expected": "denied",
-      "observed": "error: BAD_REQUEST",
+      "observed": "denied: BAD_REQUEST: PERMISSION_DENIED: User does not have CREATE TABLE on Schema '<catalog>.northwind_portal'.",
       "statement_id": "<id>"
     },
     {
@@ -378,7 +531,7 @@
       "persona": "maya",
       "passed": true,
       "expected": "denied",
-      "observed": "error: INSUFFICIENT_PERMISSIONS",
+      "observed": "denied: [INSUFFICIENT_PERMISSIONS] Insufficient privileges: User does not have USE SCHEMA on Schema '<catalog>.northwind_portal'. SQLSTATE: 42501",
       "statement_id": "<id>"
     },
     {

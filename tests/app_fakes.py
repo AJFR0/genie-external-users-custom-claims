@@ -7,6 +7,7 @@ from app.services import ExampleRuntime, Services
 from app.settings import Settings
 from claims_kit.config import load_example
 from claims_kit.genie import GenieAnswer, GenieQuery
+from claims_kit.local import LocalEnv
 from claims_kit.personas import load_personas
 from claims_kit.sql import StatementResult
 from claims_kit.tokens import MintedToken
@@ -35,10 +36,12 @@ class FakeProvider:
 
 
 class FakeGenie:
-    def __init__(self, status="COMPLETED", sql="SELECT 1"):
-        self.asked, self.deleted, self.status, self.n, self.sql = [], [], status, 0, sql
+    def __init__(self, status="COMPLETED", sql="SELECT 1", error=None):
+        self.asked, self.deleted, self.status, self.n, self.sql, self.error = [], [], status, 0, sql, error
 
     def ask(self, question, conversation_id=None):
+        if self.error:
+            raise self.error
         self.n += 1
         self.asked.append((question, conversation_id))
         queries = [GenieQuery(self.sql, None, "stmt-1", ["balance"], [["10.00"]])] if self.status == "COMPLETED" else []
@@ -60,7 +63,7 @@ class FakeRunner:
         return self.result or StatementResult("s", ["role", "scope_id"], [["participant", "P-1001"]])
 
 
-def make_client(tmp_path, *, genie=None, runner=None, admin=None, redact_ids=False):
+def make_client(tmp_path, *, genie=None, runner=None, admin=None, redact_ids=False, host=None):
     ex = load_example("northwind")
     runtime = ExampleRuntime(ex, load_personas(ex), FakeProvider(), "space-1")
     genie = genie or FakeGenie()
@@ -68,5 +71,7 @@ def make_client(tmp_path, *, genie=None, runner=None, admin=None, redact_ids=Fal
     services = Services(catalog="cat", examples={"northwind": runtime}, conversations=ConversationStore(),
                         audit=AuditLog(tmp_path / "audit.jsonl"), admin_runner=admin,
                         make_runner=lambda auth: runner, make_genie=lambda space_id, auth: genie)
-    settings = Settings(env=None, session_secret="test-secret", audit_path=tmp_path / "audit.jsonl", redact_ids=redact_ids)
+    env = LocalEnv(host=host, warehouse_id="wh-123", admin_profile=None, catalog="cat", examples={}) if host else None
+    settings = Settings(env=env, session_secret="test-secret", audit_path=tmp_path / "audit.jsonl", redact_ids=redact_ids,
+                        allowed_hosts=("testserver", "127.0.0.1", "localhost"))
     return TestClient(create_app(settings, services)), services, genie, runner

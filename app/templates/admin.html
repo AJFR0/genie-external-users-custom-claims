@@ -2,7 +2,7 @@
 {% block content %}
 <div class="admin" data-examples='{{ examples_json }}'>
   {% if not admin_ready %}<div class="banner warn">Set ADMIN_PROFILE in .env to a Databricks CLI profile to use the admin console. It uses your own identity, never a portal service principal.</div>{% endif %}
-  <p class="dim">You are working as yourself, not as the portal. Changes apply on each user's next question: no new identities, secrets or group memberships.</p>
+  <p class="dim">You are working as yourself, with your own Databricks identity. The portal service principal can only read views. Changes apply on each user's next question: no new identities, secrets or group memberships.</p>
   <nav class="tabs" id="tabs">{% for name, rt in examples.items() %}<button data-ex="{{ name }}">{{ rt.example.title }}</button>{% endfor %}</nav>
   <section>
     <h2>Per-user grants <small>governance.portal_user_grants</small></h2>

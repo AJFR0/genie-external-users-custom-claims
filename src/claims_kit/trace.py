@@ -1,6 +1,7 @@
 """A request trace: numbered steps with timings and details, shown next to every portal answer."""
 from __future__ import annotations
 
+import re
 import time
 from contextlib import contextmanager
 from dataclasses import asdict, dataclass, field
@@ -79,3 +80,21 @@ def replace_identifier(obj, name: str, placeholder: str):
         return v
 
     return walk(obj)
+
+
+_UUID = re.compile(r"\b[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\b", re.I)
+_HEX32 = re.compile(r"\b[0-9a-f]{32}\b", re.I)
+
+
+def scrub(obj, secrets: dict):
+    """Replace known sensitive values, then any UUID or 32-hex id, in every string inside obj."""
+    if isinstance(obj, str):
+        for raw, placeholder in secrets.items():
+            if raw:
+                obj = obj.replace(raw, placeholder)
+        return _HEX32.sub("<id>", _UUID.sub("<id>", obj))
+    if isinstance(obj, list):
+        return [scrub(v, secrets) for v in obj]
+    if isinstance(obj, dict):
+        return {k: scrub(v, secrets) for k, v in obj.items()}
+    return obj

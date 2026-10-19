@@ -8,6 +8,7 @@ from fastapi.responses import RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from starlette.middleware.sessions import SessionMiddleware
+from starlette.middleware.trustedhost import TrustedHostMiddleware
 
 from .admin import build_admin_router
 from .portal import build_portal_router
@@ -21,6 +22,8 @@ def create_app(settings=None, services=None) -> FastAPI:
     settings = settings or load_settings()
     services = services or build_services(settings)
     app = FastAPI(title="Genie custom-claims reference app", docs_url=None, redoc_url=None, openapi_url=None)
+    # The admin tab acts with the operator's Databricks identity: refuse other Host headers (DNS rebinding).
+    app.add_middleware(TrustedHostMiddleware, allowed_hosts=list(settings.allowed_hosts))
     app.add_middleware(SessionMiddleware, secret_key=settings.session_secret, session_cookie="claims_ref_session", same_site="strict")
     templates = Jinja2Templates(directory=str(HERE / "templates"))
     app.mount("/static", StaticFiles(directory=str(HERE / "static")), name="static")
