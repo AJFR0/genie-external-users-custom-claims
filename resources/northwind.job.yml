@@ -23,3 +23,11 @@ resources:
           depends_on: [{task_key: create_data}]
           notebook_task:
             notebook_path: ../notebooks/03_entitlements.py
+        - task_key: claim_views
+          depends_on: [{task_key: entitlements}]
+          notebook_task:
+            notebook_path: ../notebooks/04_claim_views.py
+        - task_key: runtime_grants
+          depends_on: [{task_key: claim_views}]
+          notebook_task:
+            notebook_path: ../notebooks/05_runtime_grants.py
