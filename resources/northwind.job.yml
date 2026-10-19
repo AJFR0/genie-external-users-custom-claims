@@ -15,3 +15,11 @@ resources:
         - task_key: check_availability
           notebook_task:
             notebook_path: ../notebooks/01_check_availability.py
+        - task_key: create_data
+          depends_on: [{task_key: check_availability}]
+          notebook_task:
+            notebook_path: ../notebooks/02_create_data.py
+        - task_key: entitlements
+          depends_on: [{task_key: create_data}]
+          notebook_task:
+            notebook_path: ../notebooks/03_entitlements.py
