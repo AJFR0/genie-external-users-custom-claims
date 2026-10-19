@@ -4,7 +4,7 @@ from claims_kit.claims import validate_claim
 from claims_kit.config import load_example
 from claims_kit.personas import load_fixtures
 
-EXAMPLES = ["northwind"]  # Task 11 adds "larkspur"
+EXAMPLES = ["northwind", "larkspur"]
 
 
 @pytest.mark.parametrize("name", EXAMPLES)

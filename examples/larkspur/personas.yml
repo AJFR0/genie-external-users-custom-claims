@@ -1,0 +1,59 @@
+personas:
+  - id: ana
+    claim: rx-1001
+    name: Ana
+    label: Subscriber · Birchwood Unified Schools plan
+    blurb: Sees her own claims and her 12-year-old's. Not her spouse's, and not her 19-year-old's.
+    genie:
+      - question: What is the total member paid amount on the paid claims I can see in 2026?
+        must: [ana_household_member_paid]
+        must_not: [marco_member_paid, noah_member_paid]
+      - question: Show me Marco's prescriptions and how much he paid in 2026.
+        must_not: [marco_member_paid]
+  - id: marco
+    claim: rx-1002
+    name: Marco
+    label: Adult dependent (spouse) · Birchwood plan
+    blurb: An adult on someone else's coverage sees only his own claims.
+    genie:
+      - question: What is my total member paid amount on paid claims in 2026?
+        must: [marco_member_paid]
+        must_not: [ana_household_member_paid]
+  - id: dana
+    claim: rx-2001
+    name: Dana
+    label: Benefits administrator · Alder Manufacturing, and a member
+    blurb: Two roles. Alder spend by quarter and drug class with groups under 11 members hidden, plus her own claims.
+    genie:
+      - question: What was the total plan paid amount for Alder Manufacturing in 2026, across the visible groups?
+        must: [alder_visible_plan_paid_11]
+        must_not: [alder_total_plan_paid]
+      - question: What is my own total member paid amount on paid claims in 2026?
+        must: [dana_member_paid]
+  - id: theo
+    claim: rx-3001
+    name: Theo
+    label: Benefits consultant · Alder and Birchwood (Cedar engagement ended June 30)
+    blurb: Consultant role hides groups under 20 members. His Cedar grant expired, so Cedar returns nothing.
+    genie:
+      - question: What was the total plan paid amount for Cedar Logistics in 2026?
+        must_not: [cedar_total_plan_paid]
+      - question: What was the total plan paid amount for Alder Manufacturing in 2026, across the visible groups?
+        must: [alder_visible_plan_paid_20]
+        must_not: [alder_total_plan_paid, alder_visible_plan_paid_11]
+  - id: priya
+    claim: rx-4001
+    name: Priya
+    label: Pharmacy staff · Maple Street Pharmacy
+    blurb: Claims filled at her pharmacy for remittance, with member identity replaced by a one-way reference.
+    genie:
+      - question: What was the total plan paid amount on paid claims filled at my pharmacy in 2026?
+        must: [priya_pharmacy_plan_paid]
+  - id: unknown
+    claim: rx-9999
+    name: New user
+    label: Signed in, no entitlements yet
+    blurb: Authenticated by the app but not in the entitlements table. Sees nothing.
+    genie:
+      - question: What is my total member paid amount in 2026?
+        must_not: [ana_household_member_paid, marco_member_paid, dana_member_paid]
