@@ -9,4 +9,4 @@ def test_every_diagram_is_valid_svg_with_text():
         root = ET.fromstring(build().render())
         texts = [t.text for t in root.iter("{http://www.w3.org/2000/svg}text") if t.text]
         assert root.get("viewBox") and len(texts) >= 8, name
-        assert not any("—" in t for t in texts), f"{name}: no em dashes in public text"
+        assert not any("\u2014" in t for t in texts), f"{name}: no em dashes in public text"

@@ -1,0 +1,14 @@
+resources:
+  jobs:
+    teardown:
+      name: genie-claims-ref · 99 teardown
+      max_concurrent_runs: 1
+      parameters:
+        - {name: catalog, default: "${var.catalog}"}
+        - {name: warehouse_id, default: "${var.warehouse_id}"}
+        - {name: secret_scope, default: "${var.secret_scope}"}
+        - {name: delete_identities, default: "false"}
+      tasks:
+        - task_key: teardown
+          notebook_task:
+            notebook_path: ../notebooks/99_teardown.py
