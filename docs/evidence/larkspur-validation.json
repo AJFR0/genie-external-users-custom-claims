@@ -1,0 +1,556 @@
+{
+  "example": "larkspur",
+  "run_date": "2026-10-19",
+  "catalog": "<catalog>",
+  "results": [
+    {
+      "case_id": "visibility/ana/my_access",
+      "category": "visibility",
+      "persona": "ana",
+      "passed": true,
+      "expected": "1 ids (subscriber|M-1001)",
+      "observed": "1 ids (subscriber|M-1001)",
+      "statement_id": "<id>"
+    },
+    {
+      "case_id": "visibility/ana/my_accumulators",
+      "category": "visibility",
+      "persona": "ana",
+      "passed": true,
+      "expected": "2 ids (M-1001, M-1003)",
+      "observed": "2 ids (M-1001, M-1003)",
+      "statement_id": "<id>"
+    },
+    {
+      "case_id": "visibility/ana/my_claims",
+      "category": "visibility",
+      "persona": "ana",
+      "passed": true,
+      "expected": "2 ids (M-1001, M-1003)",
+      "observed": "2 ids (M-1001, M-1003)",
+      "statement_id": "<id>"
+    },
+    {
+      "case_id": "visibility/ana/pharmacy_remittance",
+      "category": "visibility",
+      "persona": "ana",
+      "passed": true,
+      "expected": "0 ids",
+      "observed": "0 ids",
+      "statement_id": "<id>"
+    },
+    {
+      "case_id": "visibility/ana/sponsor_spend_summary",
+      "category": "visibility",
+      "persona": "ana",
+      "passed": true,
+      "expected": "0 ids",
+      "observed": "0 ids",
+      "statement_id": "<id>"
+    },
+    {
+      "case_id": "visibility/marco/my_access",
+      "category": "visibility",
+      "persona": "marco",
+      "passed": true,
+      "expected": "1 ids (member|M-1002)",
+      "observed": "1 ids (member|M-1002)",
+      "statement_id": "<id>"
+    },
+    {
+      "case_id": "visibility/marco/my_accumulators",
+      "category": "visibility",
+      "persona": "marco",
+      "passed": true,
+      "expected": "1 ids (M-1002)",
+      "observed": "1 ids (M-1002)",
+      "statement_id": "<id>"
+    },
+    {
+      "case_id": "visibility/marco/my_claims",
+      "category": "visibility",
+      "persona": "marco",
+      "passed": true,
+      "expected": "1 ids (M-1002)",
+      "observed": "1 ids (M-1002)",
+      "statement_id": "<id>"
+    },
+    {
+      "case_id": "visibility/marco/pharmacy_remittance",
+      "category": "visibility",
+      "persona": "marco",
+      "passed": true,
+      "expected": "0 ids",
+      "observed": "0 ids",
+      "statement_id": "<id>"
+    },
+    {
+      "case_id": "visibility/marco/sponsor_spend_summary",
+      "category": "visibility",
+      "persona": "marco",
+      "passed": true,
+      "expected": "0 ids",
+      "observed": "0 ids",
+      "statement_id": "<id>"
+    },
+    {
+      "case_id": "visibility/dana/my_access",
+      "category": "visibility",
+      "persona": "dana",
+      "passed": true,
+      "expected": "2 ids (sponsor_admin|SPN-ALDER, subscriber|M-2001)",
+      "observed": "2 ids (sponsor_admin|SPN-ALDER, subscriber|M-2001)",
+      "statement_id": "<id>"
+    },
+    {
+      "case_id": "visibility/dana/my_accumulators",
+      "category": "visibility",
+      "persona": "dana",
+      "passed": true,
+      "expected": "1 ids (M-2001)",
+      "observed": "1 ids (M-2001)",
+      "statement_id": "<id>"
+    },
+    {
+      "case_id": "visibility/dana/my_claims",
+      "category": "visibility",
+      "persona": "dana",
+      "passed": true,
+      "expected": "1 ids (M-2001)",
+      "observed": "1 ids (M-2001)",
+      "statement_id": "<id>"
+    },
+    {
+      "case_id": "visibility/dana/pharmacy_remittance",
+      "category": "visibility",
+      "persona": "dana",
+      "passed": true,
+      "expected": "0 ids",
+      "observed": "0 ids",
+      "statement_id": "<id>"
+    },
+    {
+      "case_id": "visibility/dana/sponsor_spend_summary",
+      "category": "visibility",
+      "persona": "dana",
+      "passed": true,
+      "expected": "21 ids (SPN-ALDER|2026-Q1|Anti-infectives, SPN-ALDER|2026-Q1|Antidepressants, SPN-ALDER|2026-Q1|Antidiabetics, SPN-ALDER|2026-Q1|Antihypertensives, SPN-ALDER|2026-Q1|GLP-1 agonists, SPN-ALDER|2026-Q1|Respiratory, \u2026)",
+      "observed": "21 ids (SPN-ALDER|2026-Q1|Anti-infectives, SPN-ALDER|2026-Q1|Antidepressants, SPN-ALDER|2026-Q1|Antidiabetics, SPN-ALDER|2026-Q1|Antihypertensives, SPN-ALDER|2026-Q1|GLP-1 agonists, SPN-ALDER|2026-Q1|Respiratory, \u2026)",
+      "statement_id": "<id>"
+    },
+    {
+      "case_id": "visibility/theo/my_access",
+      "category": "visibility",
+      "persona": "theo",
+      "passed": true,
+      "expected": "2 ids (consultant|SPN-ALDER, consultant|SPN-BIRCH)",
+      "observed": "2 ids (consultant|SPN-ALDER, consultant|SPN-BIRCH)",
+      "statement_id": "<id>"
+    },
+    {
+      "case_id": "visibility/theo/my_accumulators",
+      "category": "visibility",
+      "persona": "theo",
+      "passed": true,
+      "expected": "0 ids",
+      "observed": "0 ids",
+      "statement_id": "<id>"
+    },
+    {
+      "case_id": "visibility/theo/my_claims",
+      "category": "visibility",
+      "persona": "theo",
+      "passed": true,
+      "expected": "0 ids",
+      "observed": "0 ids",
+      "statement_id": "<id>"
+    },
+    {
+      "case_id": "visibility/theo/pharmacy_remittance",
+      "category": "visibility",
+      "persona": "theo",
+      "passed": true,
+      "expected": "0 ids",
+      "observed": "0 ids",
+      "statement_id": "<id>"
+    },
+    {
+      "case_id": "visibility/theo/sponsor_spend_summary",
+      "category": "visibility",
+      "persona": "theo",
+      "passed": true,
+      "expected": "9 ids (SPN-ALDER|2026-Q1|Antihypertensives, SPN-ALDER|2026-Q1|Statins, SPN-ALDER|2026-Q2|Antihypertensives, SPN-ALDER|2026-Q2|Statins, SPN-ALDER|2026-Q3|Antihypertensives, SPN-ALDER|2026-Q3|Statins, \u2026)",
+      "observed": "9 ids (SPN-ALDER|2026-Q1|Antihypertensives, SPN-ALDER|2026-Q1|Statins, SPN-ALDER|2026-Q2|Antihypertensives, SPN-ALDER|2026-Q2|Statins, SPN-ALDER|2026-Q3|Antihypertensives, SPN-ALDER|2026-Q3|Statins, \u2026)",
+      "statement_id": "<id>"
+    },
+    {
+      "case_id": "visibility/priya/my_access",
+      "category": "visibility",
+      "persona": "priya",
+      "passed": true,
+      "expected": "1 ids (pharmacy|PH-0007)",
+      "observed": "1 ids (pharmacy|PH-0007)",
+      "statement_id": "<id>"
+    },
+    {
+      "case_id": "visibility/priya/my_accumulators",
+      "category": "visibility",
+      "persona": "priya",
+      "passed": true,
+      "expected": "0 ids",
+      "observed": "0 ids",
+      "statement_id": "<id>"
+    },
+    {
+      "case_id": "visibility/priya/my_claims",
+      "category": "visibility",
+      "persona": "priya",
+      "passed": true,
+      "expected": "0 ids",
+      "observed": "0 ids",
+      "statement_id": "<id>"
+    },
+    {
+      "case_id": "visibility/priya/pharmacy_remittance",
+      "category": "visibility",
+      "persona": "priya",
+      "passed": true,
+      "expected": "322 ids (C-000001, C-000002, C-000003, C-000004, C-000005, C-000006, \u2026)",
+      "observed": "322 ids (C-000001, C-000002, C-000003, C-000004, C-000005, C-000006, \u2026)",
+      "statement_id": "<id>"
+    },
+    {
+      "case_id": "visibility/priya/sponsor_spend_summary",
+      "category": "visibility",
+      "persona": "priya",
+      "passed": true,
+      "expected": "0 ids",
+      "observed": "0 ids",
+      "statement_id": "<id>"
+    },
+    {
+      "case_id": "visibility/unknown/my_access",
+      "category": "visibility",
+      "persona": "unknown",
+      "passed": true,
+      "expected": "0 ids",
+      "observed": "0 ids",
+      "statement_id": "<id>"
+    },
+    {
+      "case_id": "visibility/unknown/my_accumulators",
+      "category": "visibility",
+      "persona": "unknown",
+      "passed": true,
+      "expected": "0 ids",
+      "observed": "0 ids",
+      "statement_id": "<id>"
+    },
+    {
+      "case_id": "visibility/unknown/my_claims",
+      "category": "visibility",
+      "persona": "unknown",
+      "passed": true,
+      "expected": "0 ids",
+      "observed": "0 ids",
+      "statement_id": "<id>"
+    },
+    {
+      "case_id": "visibility/unknown/pharmacy_remittance",
+      "category": "visibility",
+      "persona": "unknown",
+      "passed": true,
+      "expected": "0 ids",
+      "observed": "0 ids",
+      "statement_id": "<id>"
+    },
+    {
+      "case_id": "visibility/unknown/sponsor_spend_summary",
+      "category": "visibility",
+      "persona": "unknown",
+      "passed": true,
+      "expected": "0 ids",
+      "observed": "0 ids",
+      "statement_id": "<id>"
+    },
+    {
+      "case_id": "role_effect/priya/pharmacy_remittance.member_ref",
+      "category": "role_effect",
+      "persona": "priya",
+      "passed": true,
+      "expected": "member_ref never shows a raw identifier",
+      "observed": "38 distinct values, 0 raw identifiers",
+      "statement_id": "<id>"
+    },
+    {
+      "case_id": "attack/no-claim",
+      "category": "attack",
+      "persona": null,
+      "passed": true,
+      "expected": "0 rows or an error",
+      "observed": "error: OAUTH_CUSTOM_IDENTITY_CLAIM_NOT_PROVIDED",
+      "statement_id": "<id>"
+    },
+    {
+      "case_id": "attack/sql-injection",
+      "category": "attack",
+      "persona": null,
+      "passed": true,
+      "expected": "0 rows or an error",
+      "observed": "0 rows",
+      "statement_id": "<id>"
+    },
+    {
+      "case_id": "attack/wildcard",
+      "category": "attack",
+      "persona": null,
+      "passed": true,
+      "expected": "0 rows or an error",
+      "observed": "0 rows",
+      "statement_id": "<id>"
+    },
+    {
+      "case_id": "attack/prefix-wildcard",
+      "category": "attack",
+      "persona": null,
+      "passed": true,
+      "expected": "0 rows or an error",
+      "observed": "0 rows",
+      "statement_id": "<id>"
+    },
+    {
+      "case_id": "attack/uppercase",
+      "category": "attack",
+      "persona": null,
+      "passed": true,
+      "expected": "0 rows or an error",
+      "observed": "0 rows",
+      "statement_id": "<id>"
+    },
+    {
+      "case_id": "attack/control-character",
+      "category": "attack",
+      "persona": null,
+      "passed": true,
+      "expected": "0 rows or an error",
+      "observed": "error: BAD_REQUEST",
+      "statement_id": "<id>"
+    },
+    {
+      "case_id": "attack/admin-without-claim",
+      "category": "attack",
+      "persona": null,
+      "passed": true,
+      "expected": "0 rows or an error",
+      "observed": "error: OAUTH_CUSTOM_IDENTITY_CLAIM_NOT_PROVIDED",
+      "statement_id": "<id>"
+    },
+    {
+      "case_id": "documented/whitespace-trim",
+      "category": "documented",
+      "persona": "ana",
+      "passed": true,
+      "expected": "a claim with surrounding spaces matches the trimmed claim, so validate claims before minting",
+      "observed": "2 rows vs 2",
+      "statement_id": "<id>"
+    },
+    {
+      "case_id": "privilege/read-base-table",
+      "category": "privilege",
+      "persona": null,
+      "passed": true,
+      "expected": "denied",
+      "observed": "error: INSUFFICIENT_PERMISSIONS",
+      "statement_id": "<id>"
+    },
+    {
+      "case_id": "privilege/read-entitlements",
+      "category": "privilege",
+      "persona": null,
+      "passed": true,
+      "expected": "denied",
+      "observed": "error: INSUFFICIENT_PERMISSIONS",
+      "statement_id": "<id>"
+    },
+    {
+      "case_id": "privilege/read-role-policies",
+      "category": "privilege",
+      "persona": null,
+      "passed": true,
+      "expected": "denied",
+      "observed": "error: INSUFFICIENT_PERMISSIONS",
+      "statement_id": "<id>"
+    },
+    {
+      "case_id": "privilege/read-policy-view",
+      "category": "privilege",
+      "persona": null,
+      "passed": true,
+      "expected": "denied",
+      "observed": "error: INSUFFICIENT_PERMISSIONS",
+      "statement_id": "<id>"
+    },
+    {
+      "case_id": "privilege/change-entitlements",
+      "category": "privilege",
+      "persona": null,
+      "passed": true,
+      "expected": "denied",
+      "observed": "error: INSUFFICIENT_PERMISSIONS",
+      "statement_id": "<id>"
+    },
+    {
+      "case_id": "privilege/create-view",
+      "category": "privilege",
+      "persona": null,
+      "passed": true,
+      "expected": "denied",
+      "observed": "error: BAD_REQUEST",
+      "statement_id": "<id>"
+    },
+    {
+      "case_id": "cross_app/other-application",
+      "category": "cross_app",
+      "persona": "ana",
+      "passed": true,
+      "expected": "denied",
+      "observed": "error: INSUFFICIENT_PERMISSIONS",
+      "statement_id": "<id>"
+    },
+    {
+      "case_id": "binding/mistaken-grant",
+      "category": "binding",
+      "persona": "ana",
+      "passed": true,
+      "expected": "0 rows: the view answers only for its own service principal",
+      "observed": "0 rows",
+      "statement_id": "<id>"
+    },
+    {
+      "case_id": "token/valid-baseline",
+      "category": "token",
+      "persona": "ana",
+      "passed": true,
+      "expected": "HTTP 200",
+      "observed": "HTTP 200",
+      "statement_id": null
+    },
+    {
+      "case_id": "token/edited-claim",
+      "category": "token",
+      "persona": "ana",
+      "passed": true,
+      "expected": "rejected (HTTP 400, 401 or 403)",
+      "observed": "HTTP 400",
+      "statement_id": null
+    },
+    {
+      "case_id": "token/unsigned-alg-none",
+      "category": "token",
+      "persona": "ana",
+      "passed": true,
+      "expected": "rejected (HTTP 400, 401 or 403)",
+      "observed": "HTTP 400",
+      "statement_id": null
+    },
+    {
+      "case_id": "token/corrupted-signature",
+      "category": "token",
+      "persona": "ana",
+      "passed": true,
+      "expected": "rejected (HTTP 400, 401 or 403)",
+      "observed": "HTTP 400",
+      "statement_id": null
+    },
+    {
+      "case_id": "genie/ana/1",
+      "category": "genie",
+      "persona": "ana",
+      "passed": true,
+      "expected": "must ['ana_household_member_paid']; must not ['marco_member_paid', 'noah_member_paid']",
+      "observed": "expected values present; no other user's values",
+      "statement_id": "<id>"
+    },
+    {
+      "case_id": "genie/ana/2",
+      "category": "genie",
+      "persona": "ana",
+      "passed": true,
+      "expected": "must []; must not ['marco_member_paid']",
+      "observed": "expected values present; no other user's values",
+      "statement_id": null
+    },
+    {
+      "case_id": "genie/marco/1",
+      "category": "genie",
+      "persona": "marco",
+      "passed": true,
+      "expected": "must ['marco_member_paid']; must not ['ana_household_member_paid']",
+      "observed": "expected values present; no other user's values",
+      "statement_id": "<id>"
+    },
+    {
+      "case_id": "genie/dana/1",
+      "category": "genie",
+      "persona": "dana",
+      "passed": true,
+      "expected": "must ['alder_visible_plan_paid_11']; must not ['alder_total_plan_paid']",
+      "observed": "expected values present; no other user's values",
+      "statement_id": "<id>"
+    },
+    {
+      "case_id": "genie/dana/2",
+      "category": "genie",
+      "persona": "dana",
+      "passed": true,
+      "expected": "must ['dana_member_paid']; must not []",
+      "observed": "expected values present; no other user's values",
+      "statement_id": "<id>"
+    },
+    {
+      "case_id": "genie/theo/1",
+      "category": "genie",
+      "persona": "theo",
+      "passed": true,
+      "expected": "must []; must not ['cedar_total_plan_paid']",
+      "observed": "expected values present; no other user's values",
+      "statement_id": "<id>"
+    },
+    {
+      "case_id": "genie/theo/2",
+      "category": "genie",
+      "persona": "theo",
+      "passed": true,
+      "expected": "must ['alder_visible_plan_paid_20']; must not ['alder_total_plan_paid', 'alder_visible_plan_paid_11']",
+      "observed": "expected values present; no other user's values",
+      "statement_id": "<id>"
+    },
+    {
+      "case_id": "genie/priya/1",
+      "category": "genie",
+      "persona": "priya",
+      "passed": true,
+      "expected": "must ['priya_pharmacy_plan_paid']; must not []",
+      "observed": "expected values present; no other user's values",
+      "statement_id": "<id>"
+    },
+    {
+      "case_id": "genie/unknown/1",
+      "category": "genie",
+      "persona": "unknown",
+      "passed": true,
+      "expected": "must []; must not ['ana_household_member_paid', 'marco_member_paid', 'dana_member_paid']",
+      "observed": "expected values present; no other user's values",
+      "statement_id": "<id>"
+    },
+    {
+      "case_id": "documented/conversation-binding",
+      "category": "documented",
+      "persona": "marco",
+      "passed": true,
+      "expected": "readable by another claim from the same service principal, so the backend must bind conversation ids to users",
+      "observed": "readable",
+      "statement_id": null
+    }
+  ]
+}

@@ -97,3 +97,19 @@ def test_execute_follows_chunks(fake_http):
 ])
 def test_denied_or_hidden(msg, denied):
     assert StatementError(msg).is_denied_or_hidden is denied
+
+
+def test_execute_retries_transient_errors(fake_http):
+    transient = FakeResponse(200, {"statement_id": "s3", "status": {"state": "FAILED", "error": {
+        "error_code": "TEMPORARILY_UNAVAILABLE", "message": "[TEMPORARILY_UNAVAILABLE] try again"}}})
+    fake_http.route("POST", "/api/2.0/sql/statements", [transient, FakeResponse(503, text="busy"), _ok([["ok"]])])
+    r = StatementRunner("https://h", "wh", lambda: {}, http=fake_http, sleep=lambda s: None)
+    assert r.execute("SELECT 1").scalar() == "ok" and len(fake_http.calls) == 3
+
+
+def test_execute_does_not_retry_real_errors(fake_http):
+    fake_http.route("POST", "/api/2.0/sql/statements", FakeResponse(200, {"statement_id": "s4", "status": {"state": "FAILED", "error": {
+        "error_code": "BAD_REQUEST", "message": "[INSUFFICIENT_PERMISSIONS] no"}}}))
+    with pytest.raises(StatementError):
+        StatementRunner("https://h", "wh", lambda: {}, http=fake_http, sleep=lambda s: None).execute("SELECT 1")
+    assert len(fake_http.calls) == 1

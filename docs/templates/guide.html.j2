@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{ title }}</title>
+  <style>{{ css }}</style>
+</head>
+<body>
+  <header class="masthead">
+    <div class="kicker">Genie for external users · OAuth custom identity claims</div>
+    <h1>{{ title }}</h1>
+    <p class="disclaimer">Community reference, not official Databricks documentation. OAuth custom identity claims are announced on the Databricks <em>What's coming?</em> page; check your workspace with <code>sql/check_availability.sql</code>.</p>
+    <nav class="guides">{% for s, t in guides %}<a href="{{ s }}.html"{% if s == slug %} class="active"{% endif %}>{{ t }}</a>{% endfor %}</nav>
+  </header>
+  <div class="layout">
+    <aside class="toc">{{ toc }}</aside>
+    <article>{{ body }}</article>
+  </div>
+</body>
+</html>

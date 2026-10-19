@@ -1,0 +1,371 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Genie for External Users: Who It Is For and What Changes</title>
+  <style>:root { --ink:#1f2933; --muted:#52606d; --line:#d9e2ec; --panel:#f5f7fa; --claim:#2f6fde; --ok:#1f9d55; --deny:#d64545; --mask:#b7791f; }
+* { box-sizing: border-box; }
+body { margin:0; color:var(--ink); font:16px/1.6 -apple-system, "Segoe UI", Helvetica, Arial, sans-serif; }
+.masthead { padding:36px 48px 18px; border-bottom:1px solid var(--line); background:linear-gradient(180deg, #f7f9fc, #fff); }
+.kicker { color:var(--claim); font-weight:600; letter-spacing:.04em; text-transform:uppercase; font-size:12px; }
+h1 { font-size:34px; line-height:1.2; margin:8px 0 10px; }
+.disclaimer { color:var(--muted); font-size:14px; margin:0 0 14px; max-width:900px; }
+.guides a { margin-right:18px; color:var(--muted); text-decoration:none; font-size:14px; } .guides a.active { color:var(--claim); font-weight:600; }
+.layout { display:grid; grid-template-columns: 260px minmax(0, 1fr); gap:40px; padding:24px 48px 64px; max-width:1400px; }
+.toc { position:sticky; top:16px; align-self:start; font-size:13px; } .toc ul { list-style:none; padding-left:12px; } .toc > ul { padding-left:0; }
+.toc a { color:var(--muted); text-decoration:none; } .toc a:hover { color:var(--claim); }
+article { max-width:960px; } h2 { font-size:25px; margin-top:44px; border-top:1px solid var(--line); padding-top:22px; } h3 { font-size:19px; margin-top:28px; }
+code { font-family: ui-monospace, Menlo, Consolas, monospace; font-size:.88em; background:var(--panel); padding:1px 4px; border-radius:4px; }
+pre, .codehilite pre { background:var(--panel); border:1px solid var(--line); border-radius:8px; padding:12px 14px; overflow:auto; font-size:13px; line-height:1.45; }
+pre code { background:none; padding:0; }
+table { border-collapse:collapse; margin:14px 0; font-size:14px; } th, td { border:1px solid var(--line); padding:6px 10px; vertical-align:top; text-align:left; } th { background:var(--panel); }
+figure.diagram { margin:22px 0; } figure.diagram svg { width:100%; height:auto; border:1px solid var(--line); border-radius:10px; }
+figcaption { color:var(--muted); font-size:13px; margin-top:6px; }
+.admonition { border-left:4px solid var(--claim); background:#f4f8fe; padding:10px 14px; border-radius:6px; margin:16px 0; } .admonition-title { font-weight:700; margin:0 0 4px; }
+.admonition.warning { border-color:var(--mask); background:#fffaf0; } .admonition.danger { border-color:var(--deny); background:#fdf3f3; }
+.trace-card { border:1px solid var(--line); border-left:4px solid var(--claim); border-radius:8px; padding:12px 16px; margin:16px 0; background:#fff; }
+.tc-head { font-size:15px; margin-bottom:6px; } .tc-route li { margin:6px 0; } .tc-note, .dim { color:var(--muted); font-size:13px; } .missing { color:var(--deny); }
+@page { size: Letter; margin: 16mm 14mm; @bottom-right { content: counter(page); color:#52606d; font-size:9pt; } }
+@media print {
+  body { font-size:10.5pt; } .masthead { padding:0 0 10px; background:none; } .guides, .toc { display:none; }
+  .layout { display:block; padding:0; } article { max-width:none; } h2 { margin-top:28px; } h2, h3 { break-after:avoid; }
+  figure, .trace-card, .admonition, tr { break-inside:avoid; } pre { white-space:pre-wrap; word-break:break-word; }
+  a { color:inherit; text-decoration:none; }
+}
+pre { line-height: 125%; }
+td.linenos .normal { color: #666666; background-color: transparent; padding-left: 5px; padding-right: 5px; }
+span.linenos { color: #666666; background-color: transparent; padding-left: 5px; padding-right: 5px; }
+td.linenos .special { color: #000000; background-color: #ffffc0; padding-left: 5px; padding-right: 5px; }
+span.linenos.special { color: #000000; background-color: #ffffc0; padding-left: 5px; padding-right: 5px; }
+.codehilite .hll { background-color: #ffffcc }
+.codehilite { background: #f0f0f0; }
+.codehilite .c { color: #60A0B0; font-style: italic } /* Comment */
+.codehilite .err { border: 1px solid #F00 } /* Error */
+.codehilite .k { color: #007020; font-weight: bold } /* Keyword */
+.codehilite .o { color: #666 } /* Operator */
+.codehilite .ch { color: #60A0B0; font-style: italic } /* Comment.Hashbang */
+.codehilite .cm { color: #60A0B0; font-style: italic } /* Comment.Multiline */
+.codehilite .cp { color: #007020 } /* Comment.Preproc */
+.codehilite .cpf { color: #60A0B0; font-style: italic } /* Comment.PreprocFile */
+.codehilite .c1 { color: #60A0B0; font-style: italic } /* Comment.Single */
+.codehilite .cs { color: #60A0B0; background-color: #FFF0F0 } /* Comment.Special */
+.codehilite .gd { color: #A00000 } /* Generic.Deleted */
+.codehilite .ge { font-style: italic } /* Generic.Emph */
+.codehilite .ges { font-weight: bold; font-style: italic } /* Generic.EmphStrong */
+.codehilite .gr { color: #F00 } /* Generic.Error */
+.codehilite .gh { color: #000080; font-weight: bold } /* Generic.Heading */
+.codehilite .gi { color: #00A000 } /* Generic.Inserted */
+.codehilite .go { color: #888 } /* Generic.Output */
+.codehilite .gp { color: #C65D09; font-weight: bold } /* Generic.Prompt */
+.codehilite .gs { font-weight: bold } /* Generic.Strong */
+.codehilite .gu { color: #800080; font-weight: bold } /* Generic.Subheading */
+.codehilite .gt { color: #04D } /* Generic.Traceback */
+.codehilite .kc { color: #007020; font-weight: bold } /* Keyword.Constant */
+.codehilite .kd { color: #007020; font-weight: bold } /* Keyword.Declaration */
+.codehilite .kn { color: #007020; font-weight: bold } /* Keyword.Namespace */
+.codehilite .kp { color: #007020 } /* Keyword.Pseudo */
+.codehilite .kr { color: #007020; font-weight: bold } /* Keyword.Reserved */
+.codehilite .kt { color: #902000 } /* Keyword.Type */
+.codehilite .m { color: #40A070 } /* Literal.Number */
+.codehilite .s { color: #4070A0 } /* Literal.String */
+.codehilite .na { color: #4070A0 } /* Name.Attribute */
+.codehilite .nb { color: #007020 } /* Name.Builtin */
+.codehilite .nc { color: #0E84B5; font-weight: bold } /* Name.Class */
+.codehilite .no { color: #60ADD5 } /* Name.Constant */
+.codehilite .nd { color: #555; font-weight: bold } /* Name.Decorator */
+.codehilite .ni { color: #D55537; font-weight: bold } /* Name.Entity */
+.codehilite .ne { color: #007020 } /* Name.Exception */
+.codehilite .nf { color: #06287E } /* Name.Function */
+.codehilite .nl { color: #002070; font-weight: bold } /* Name.Label */
+.codehilite .nn { color: #0E84B5; font-weight: bold } /* Name.Namespace */
+.codehilite .nt { color: #062873; font-weight: bold } /* Name.Tag */
+.codehilite .nv { color: #BB60D5 } /* Name.Variable */
+.codehilite .ow { color: #007020; font-weight: bold } /* Operator.Word */
+.codehilite .w { color: #BBB } /* Text.Whitespace */
+.codehilite .mb { color: #40A070 } /* Literal.Number.Bin */
+.codehilite .mf { color: #40A070 } /* Literal.Number.Float */
+.codehilite .mh { color: #40A070 } /* Literal.Number.Hex */
+.codehilite .mi { color: #40A070 } /* Literal.Number.Integer */
+.codehilite .mo { color: #40A070 } /* Literal.Number.Oct */
+.codehilite .sa { color: #4070A0 } /* Literal.String.Affix */
+.codehilite .sb { color: #4070A0 } /* Literal.String.Backtick */
+.codehilite .sc { color: #4070A0 } /* Literal.String.Char */
+.codehilite .dl { color: #4070A0 } /* Literal.String.Delimiter */
+.codehilite .sd { color: #4070A0; font-style: italic } /* Literal.String.Doc */
+.codehilite .s2 { color: #4070A0 } /* Literal.String.Double */
+.codehilite .se { color: #4070A0; font-weight: bold } /* Literal.String.Escape */
+.codehilite .sh { color: #4070A0 } /* Literal.String.Heredoc */
+.codehilite .si { color: #70A0D0; font-style: italic } /* Literal.String.Interpol */
+.codehilite .sx { color: #C65D09 } /* Literal.String.Other */
+.codehilite .sr { color: #235388 } /* Literal.String.Regex */
+.codehilite .s1 { color: #4070A0 } /* Literal.String.Single */
+.codehilite .ss { color: #517918 } /* Literal.String.Symbol */
+.codehilite .bp { color: #007020 } /* Name.Builtin.Pseudo */
+.codehilite .fm { color: #06287E } /* Name.Function.Magic */
+.codehilite .vc { color: #BB60D5 } /* Name.Variable.Class */
+.codehilite .vg { color: #BB60D5 } /* Name.Variable.Global */
+.codehilite .vi { color: #BB60D5 } /* Name.Variable.Instance */
+.codehilite .vm { color: #BB60D5 } /* Name.Variable.Magic */
+.codehilite .il { color: #40A070 } /* Literal.Number.Integer.Long */</style>
+</head>
+<body>
+  <header class="masthead">
+    <div class="kicker">Genie for external users · OAuth custom identity claims</div>
+    <h1>Genie for External Users: Who It Is For and What Changes</h1>
+    <p class="disclaimer">Community reference, not official Databricks documentation. OAuth custom identity claims are announced on the Databricks <em>What's coming?</em> page; check your workspace with <code>sql/check_availability.sql</code>.</p>
+    <nav class="guides"><a href="overview.html" class="active">Genie for External Users: Who It Is For and What Changes</a><a href="implementation-guide.html">Implementation Guide</a><a href="demo-runbook.html">Demo Runbook</a></nav>
+  </header>
+  <div class="layout">
+    <aside class="toc"><div class="toc">
+<ul>
+<li><a href="#who-this-is-for">Who this is for</a></li>
+<li><a href="#the-problem-genie-answers-as-the-caller">The problem: Genie answers as the caller</a></li>
+<li><a href="#what-teams-did-before">What teams did before</a></li>
+<li><a href="#what-changes-with-custom-identity-claims">What changes with custom identity claims</a></li>
+<li><a href="#how-one-question-flows">How one question flows</a></li>
+<li><a href="#four-layers-of-isolation">Four layers of isolation</a></li>
+<li><a href="#entitlements-are-data-per-user-and-per-role">Entitlements are data: per user and per role</a></li>
+<li><a href="#the-flexibility-you-get">The flexibility you get</a></li>
+<li><a href="#is-this-the-right-pattern">Is this the right pattern?</a></li>
+<li><a href="#availability">Availability</a></li>
+<li><a href="#faq">FAQ</a></li>
+</ul>
+</div>
+</aside>
+    <article><p>Your application's own users can ask a Genie Agent free-form questions about your data, and each of them sees only what their entitlements allow. None of them needs a Databricks account. Your backend authenticates as one service principal, stamps every request with the signed-in user's id inside an OAuth token that Databricks signs, and Unity Catalog filters every query by that id.</p>
+<p>This guide explains who the pattern is for, what teams did before it, and what it changes. The <a href="implementation-guide.html">Implementation Guide</a> walks through building it, and the <a href="demo-runbook.html">Demo Runbook</a> shows it end to end with two fictional companies.</p>
+<h2 id="who-this-is-for">Who this is for</h2>
+<table>
+<thead>
+<tr>
+<th>You are</th>
+<th>Typical users of your application</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>A team that runs a customer portal</td>
+<td>members, participants, policyholders, patients, account holders</td>
+</tr>
+<tr>
+<td>A software company or partner building on Databricks</td>
+<td>your customers' staff, inside your product</td>
+</tr>
+<tr>
+<td>A team serving partners or a network</td>
+<td>brokers, advisors, franchisees, pharmacies, carriers, shippers, sellers</td>
+</tr>
+<tr>
+<td>A team serving organizations with many sites</td>
+<td>districts and schools, regions and stores</td>
+</tr>
+</tbody>
+</table>
+<p>You'll recognize the need when you hear one of these:</p>
+<ul>
+<li>"We want Genie, or 'ask your data', inside our portal or product."</li>
+<li>"Our users sign in through Auth0, Microsoft Entra External ID, Amazon Cognito, Okta or our own system, and we won't sync them to Databricks."</li>
+<li>"We have tens of thousands, or millions, of end users."</li>
+<li>"We have a service principal per customer and it is getting hard to manage."</li>
+<li>"Can we just pass the user id in the prompt?"</li>
+<li>"Our embedded dashboards work. Can users ask questions too?"</li>
+<li>"Some users have two roles, or should only see totals."</li>
+</ul>
+<h2 id="the-problem-genie-answers-as-the-caller">The problem: Genie answers as the caller</h2>
+<p>Genie writes SQL and runs it as the identity that called it. To give each person their own answer, Databricks has to know who that person is on every query, through something they can't change. For employees who already exist in Databricks, that is their own identity. For external users of your application, it has not been simple.</p>
+<h2 id="what-teams-did-before">What teams did before</h2>
+<figure class="diagram"><svg xmlns="http://www.w3.org/2000/svg" width="1240" height="500" viewBox="0 0 1240 500" role="img"><defs><marker id="arrow-ink" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#1f2933"/></marker><marker id="arrow-muted" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#52606d"/></marker><marker id="arrow-line" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#9aa5b1"/></marker><marker id="arrow-soft" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#d9e2ec"/></marker><marker id="arrow-panel" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#f5f7fa"/></marker><marker id="arrow-white" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#ffffff"/></marker><marker id="arrow-claim" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#2f6fde"/></marker><marker id="arrow-claim_bg" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#eaf1fd"/></marker><marker id="arrow-ok" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#1f9d55"/></marker><marker id="arrow-ok_bg" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#e6f6ed"/></marker><marker id="arrow-deny" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#d64545"/></marker><marker id="arrow-deny_bg" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#fdecec"/></marker><marker id="arrow-mask" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#b7791f"/></marker><marker id="arrow-mask_bg" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#fdf4e3"/></marker><marker id="arrow-genie" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#7b5bd6"/></marker><marker id="arrow-genie_bg" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#f1edfb"/></marker></defs><rect width="100%" height="100%" fill="#ffffff"/><text x="40" y="46" font-family="Helvetica, Arial, sans-serif" font-size="22" fill="#1f2933" font-weight="bold" text-anchor="start">Per-user answers before custom identity claims: every pattern had a cost</text><rect x="40" y="76" width="220" height="250" rx="10" fill="#ffffff" stroke="#d9e2ec" stroke-width="1.5"/><text x="54" y="104" font-family="Helvetica, Arial, sans-serif" font-size="15" fill="#1f2933" font-weight="bold" text-anchor="start">Provision every user</text><text x="54" y="134" font-family="Helvetica, Arial, sans-serif" font-size="11" fill="#52606d" font-weight="bold" text-anchor="start">HOW</text><text x="54" y="154.0" font-family="Helvetica, Arial, sans-serif" font-size="12.5" fill="#1f2933" font-weight="normal" text-anchor="start">SCIM or token federation makes</text><text x="54" y="171.5" font-family="Helvetica, Arial, sans-serif" font-size="12.5" fill="#1f2933" font-weight="normal" text-anchor="start">each end user a Databricks</text><text x="54" y="189.0" font-family="Helvetica, Arial, sans-serif" font-size="12.5" fill="#1f2933" font-weight="normal" text-anchor="start">identity</text><text x="54" y="226" font-family="Helvetica, Arial, sans-serif" font-size="11" fill="#d64545" font-weight="bold" text-anchor="start">COST</text><text x="54" y="246.0" font-family="Helvetica, Arial, sans-serif" font-size="12.5" fill="#d64545" font-weight="normal" text-anchor="start">Sync every external user</text><text x="54" y="263.5" font-family="Helvetica, Arial, sans-serif" font-size="12.5" fill="#d64545" font-weight="normal" text-anchor="start">Federation needs users that</text><text x="54" y="281.0" font-family="Helvetica, Arial, sans-serif" font-size="12.5" fill="#d64545" font-weight="normal" text-anchor="start">already exist</text><text x="54" y="298.5" font-family="Helvetica, Arial, sans-serif" font-size="12.5" fill="#d64545" font-weight="normal" text-anchor="start">Account identity limits</text><rect x="276" y="76" width="220" height="250" rx="10" fill="#ffffff" stroke="#d9e2ec" stroke-width="1.5"/><text x="290" y="104" font-family="Helvetica, Arial, sans-serif" font-size="15" fill="#1f2933" font-weight="bold" text-anchor="start">One SP per tenant</text><text x="290" y="134" font-family="Helvetica, Arial, sans-serif" font-size="11" fill="#52606d" font-weight="bold" text-anchor="start">HOW</text><text x="290" y="154.0" font-family="Helvetica, Arial, sans-serif" font-size="12.5" fill="#1f2933" font-weight="normal" text-anchor="start">Views filter on session_user()</text><text x="290" y="171.5" font-family="Helvetica, Arial, sans-serif" font-size="12.5" fill="#1f2933" font-weight="normal" text-anchor="start">with one service principal</text><text x="290" y="189.0" font-family="Helvetica, Arial, sans-serif" font-size="12.5" fill="#1f2933" font-weight="normal" text-anchor="start">per customer</text><text x="290" y="226" font-family="Helvetica, Arial, sans-serif" font-size="11" fill="#d64545" font-weight="bold" text-anchor="start">COST</text><text x="290" y="246.0" font-family="Helvetica, Arial, sans-serif" font-size="12.5" fill="#d64545" font-weight="normal" text-anchor="start">Access only per tenant</text><text x="290" y="263.5" font-family="Helvetica, Arial, sans-serif" font-size="12.5" fill="#d64545" font-weight="normal" text-anchor="start">A secret per tenant</text><text x="290" y="281.0" font-family="Helvetica, Arial, sans-serif" font-size="12.5" fill="#d64545" font-weight="normal" text-anchor="start">Identities multiply by role</text><rect x="512" y="76" width="220" height="250" rx="10" fill="#ffffff" stroke="#d9e2ec" stroke-width="1.5"/><text x="526" y="104" font-family="Helvetica, Arial, sans-serif" font-size="15" fill="#1f2933" font-weight="bold" text-anchor="start">Embedded dashboards</text><text x="526" y="134" font-family="Helvetica, Arial, sans-serif" font-size="11" fill="#52606d" font-weight="bold" text-anchor="start">HOW</text><text x="526" y="154.0" font-family="Helvetica, Arial, sans-serif" font-size="12.5" fill="#1f2933" font-weight="normal" text-anchor="start">Signed per-viewer filters</text><text x="526" y="171.5" font-family="Helvetica, Arial, sans-serif" font-size="12.5" fill="#1f2933" font-weight="normal" text-anchor="start">on published dashboards</text><text x="526" y="226" font-family="Helvetica, Arial, sans-serif" font-size="11" fill="#d64545" font-weight="bold" text-anchor="start">COST</text><text x="526" y="246.0" font-family="Helvetica, Arial, sans-serif" font-size="12.5" fill="#d64545" font-weight="normal" text-anchor="start">No free-form questions</text><rect x="748" y="76" width="220" height="250" rx="10" fill="#ffffff" stroke="#d9e2ec" stroke-width="1.5"/><text x="762" y="104" font-family="Helvetica, Arial, sans-serif" font-size="15" fill="#1f2933" font-weight="bold" text-anchor="start">Tool-only agents</text><text x="762" y="134" font-family="Helvetica, Arial, sans-serif" font-size="11" fill="#52606d" font-weight="bold" text-anchor="start">HOW</text><text x="762" y="154.0" font-family="Helvetica, Arial, sans-serif" font-size="12.5" fill="#1f2933" font-weight="normal" text-anchor="start">An agent calls UC function</text><text x="762" y="171.5" font-family="Helvetica, Arial, sans-serif" font-size="12.5" fill="#1f2933" font-weight="normal" text-anchor="start">tools with a server-bound id</text><text x="762" y="226" font-family="Helvetica, Arial, sans-serif" font-size="11" fill="#d64545" font-weight="bold" text-anchor="start">COST</text><text x="762" y="246.0" font-family="Helvetica, Arial, sans-serif" font-size="12.5" fill="#d64545" font-weight="normal" text-anchor="start">Only the questions the</text><text x="762" y="263.5" font-family="Helvetica, Arial, sans-serif" font-size="12.5" fill="#d64545" font-weight="normal" text-anchor="start">tools were built for</text><rect x="984" y="76" width="220" height="250" rx="10" fill="#fdecec" stroke="#d64545" stroke-width="1.5"/><text x="998" y="104" font-family="Helvetica, Arial, sans-serif" font-size="15" fill="#1f2933" font-weight="bold" text-anchor="start">User id in the prompt</text><text x="998" y="134" font-family="Helvetica, Arial, sans-serif" font-size="11" fill="#52606d" font-weight="bold" text-anchor="start">HOW</text><text x="998" y="154.0" font-family="Helvetica, Arial, sans-serif" font-size="12.5" fill="#1f2933" font-weight="normal" text-anchor="start">The id travels as text or</text><text x="998" y="171.5" font-family="Helvetica, Arial, sans-serif" font-size="12.5" fill="#1f2933" font-weight="normal" text-anchor="start">as a session variable</text><text x="998" y="226" font-family="Helvetica, Arial, sans-serif" font-size="11" fill="#d64545" font-weight="bold" text-anchor="start">COST</text><text x="998" y="246.0" font-family="Helvetica, Arial, sans-serif" font-size="12.5" fill="#d64545" font-weight="normal" text-anchor="start">Not secure: users, injected</text><text x="998" y="263.5" font-family="Helvetica, Arial, sans-serif" font-size="12.5" fill="#d64545" font-weight="normal" text-anchor="start">text or the model itself</text><text x="998" y="281.0" font-family="Helvetica, Arial, sans-serif" font-size="12.5" fill="#d64545" font-weight="normal" text-anchor="start">can change it</text><rect x="40" y="350" width="1160" height="120" rx="10" fill="#eaf1fd" stroke="#2f6fde" stroke-width="1.5"/><text x="64" y="384" font-family="Helvetica, Arial, sans-serif" font-size="18" fill="#2f6fde" font-weight="bold" text-anchor="start">With custom identity claims</text><text x="64" y="414.0" font-family="Helvetica, Arial, sans-serif" font-size="14" fill="#1f2933" font-weight="normal" text-anchor="start">One service principal per application. A signed token names the end user on every request.</text><text x="64" y="433.6" font-family="Helvetica, Arial, sans-serif" font-size="14" fill="#1f2933" font-weight="normal" text-anchor="start">Entitlements are rows in a table. Unity Catalog filters every query. Genie stays free-form.</text></svg><figcaption>Five patterns teams used for per-user answers, and what each cost.</figcaption></figure>
+
+<table>
+<thead>
+<tr>
+<th>Pattern</th>
+<th>How it works</th>
+<th>What it costs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Provision every user</td>
+<td>SCIM or token federation makes each end user a Databricks identity</td>
+<td>You sync every external user. Token federation maps a token to a user who already exists; it doesn't create one. Large populations run into account identity limits.</td>
+</tr>
+<tr>
+<td>One service principal per tenant</td>
+<td>Views filter on <code>session_user()</code>; each customer gets its own service principal</td>
+<td>Everyone in a tenant sees the same rows. Every tenant needs a secret. Finer access multiplies identities by role.</td>
+</tr>
+<tr>
+<td>Embedded dashboards</td>
+<td>Published dashboards filter per signed viewer</td>
+<td>Viewers can't ask free-form questions.</td>
+</tr>
+<tr>
+<td>Tool-only agents</td>
+<td>An agent calls Unity Catalog function tools with a user id bound on the server</td>
+<td>Users can only ask the questions the tools were built for.</td>
+</tr>
+<tr>
+<td>User id in the prompt</td>
+<td>The id travels as text or as a session variable</td>
+<td>Not secure. The user, an injected instruction or the model itself can change text.</td>
+</tr>
+</tbody>
+</table>
+<h2 id="what-changes-with-custom-identity-claims">What changes with custom identity claims</h2>
+<table>
+<thead>
+<tr>
+<th></th>
+<th>Before</th>
+<th>With custom identity claims</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Databricks identities for end users</td>
+<td>One per user, or one service principal per tenant</td>
+<td>One service principal per application</td>
+</tr>
+<tr>
+<td>Scale ceiling</td>
+<td>The account identity limit</td>
+<td>Not tied to identity count. The claim is a string.</td>
+</tr>
+<tr>
+<td>Access granularity</td>
+<td>Per tenant</td>
+<td>Per user, role, account or aggregate, in any combination</td>
+</tr>
+<tr>
+<td>Onboarding a user</td>
+<td>Create an identity, a secret and group memberships</td>
+<td>Insert a row in your entitlements table</td>
+</tr>
+<tr>
+<td>Revoking access</td>
+<td>Delete the identity and clean up its secrets</td>
+<td>Delete or expire the row. It applies on the next question.</td>
+</tr>
+<tr>
+<td>A user with two roles</td>
+<td>The app switches identities between questions</td>
+<td>Two rows in a table</td>
+</tr>
+<tr>
+<td>Secrets to manage</td>
+<td>One per service principal, often thousands</td>
+<td>One per application, or none with workload identity federation</td>
+</tr>
+<tr>
+<td>Genie experience</td>
+<td>Free-form, but only as granular as the identity</td>
+<td>Free-form, per user</td>
+</tr>
+<tr>
+<td>Where isolation is enforced</td>
+<td>Unity Catalog, at identity level</td>
+<td>Unity Catalog, at user level, from a signed token</td>
+</tr>
+</tbody>
+</table>
+<p>Four things make it work:</p>
+<ul>
+<li><strong>One service principal per application.</strong> It represents your backend. End users have no Databricks identity at all.</li>
+<li><strong>The claim travels inside a token Databricks signs.</strong> Your backend reads the user's id from its own authenticated session (the chat and the browser never supply it) and asks Databricks for a short-lived token stamped with it. Tampered tokens are rejected.</li>
+<li><strong>Dynamic views compare rows to your entitlements table.</strong> They read the claim with <code>current_oauth_custom_identity_claim()</code>. No matching grant means no rows.</li>
+<li><strong>Genie stays free-form.</strong> Genie decides which SQL to write. Unity Catalog decides which rows come back.</li>
+</ul>
+<h2 id="how-one-question-flows">How one question flows</h2>
+<figure class="diagram"><svg xmlns="http://www.w3.org/2000/svg" width="1240" height="620" viewBox="0 0 1240 620" role="img"><defs><marker id="arrow-ink" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#1f2933"/></marker><marker id="arrow-muted" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#52606d"/></marker><marker id="arrow-line" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#9aa5b1"/></marker><marker id="arrow-soft" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#d9e2ec"/></marker><marker id="arrow-panel" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#f5f7fa"/></marker><marker id="arrow-white" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#ffffff"/></marker><marker id="arrow-claim" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#2f6fde"/></marker><marker id="arrow-claim_bg" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#eaf1fd"/></marker><marker id="arrow-ok" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#1f9d55"/></marker><marker id="arrow-ok_bg" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#e6f6ed"/></marker><marker id="arrow-deny" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#d64545"/></marker><marker id="arrow-deny_bg" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#fdecec"/></marker><marker id="arrow-mask" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#b7791f"/></marker><marker id="arrow-mask_bg" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#fdf4e3"/></marker><marker id="arrow-genie" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#7b5bd6"/></marker><marker id="arrow-genie_bg" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#f1edfb"/></marker></defs><rect width="100%" height="100%" fill="#ffffff"/><text x="40" y="40" font-family="Helvetica, Arial, sans-serif" font-size="22" fill="#1f2933" font-weight="bold" text-anchor="start">How one question flows</text><rect x="30" y="60" width="200" height="46" rx="10" fill="#ffffff" stroke="#d9e2ec" stroke-width="1.5"/><text x="130.0" y="86" font-family="Helvetica, Arial, sans-serif" font-size="14" fill="#1f2933" font-weight="bold" text-anchor="middle">User's browser</text><polyline points="130,106 130,580" fill="none" stroke="#d9e2ec" stroke-width="2" stroke-dasharray="4 6"/><rect x="290" y="60" width="200" height="46" rx="10" fill="#ffffff" stroke="#d9e2ec" stroke-width="1.5"/><text x="390.0" y="86" font-family="Helvetica, Arial, sans-serif" font-size="14" fill="#1f2933" font-weight="bold" text-anchor="middle">Your backend</text><polyline points="390,106 390,580" fill="none" stroke="#d9e2ec" stroke-width="2" stroke-dasharray="4 6"/><rect x="550" y="60" width="200" height="46" rx="10" fill="#ffffff" stroke="#d9e2ec" stroke-width="1.5"/><text x="650.0" y="86" font-family="Helvetica, Arial, sans-serif" font-size="14" fill="#1f2933" font-weight="bold" text-anchor="middle">Databricks OAuth</text><polyline points="650,106 650,580" fill="none" stroke="#d9e2ec" stroke-width="2" stroke-dasharray="4 6"/><rect x="780" y="60" width="200" height="46" rx="10" fill="#f1edfb" stroke="#d9e2ec" stroke-width="1.5"/><text x="880.0" y="86" font-family="Helvetica, Arial, sans-serif" font-size="14" fill="#1f2933" font-weight="bold" text-anchor="middle">Genie Agent</text><polyline points="880,106 880,580" fill="none" stroke="#d9e2ec" stroke-width="2" stroke-dasharray="4 6"/><rect x="1010" y="60" width="200" height="46" rx="10" fill="#eaf1fd" stroke="#d9e2ec" stroke-width="1.5"/><text x="1110.0" y="86" font-family="Helvetica, Arial, sans-serif" font-size="14" fill="#1f2933" font-weight="bold" text-anchor="middle">Unity Catalog</text><polyline points="1110,106 1110,580" fill="none" stroke="#d9e2ec" stroke-width="2" stroke-dasharray="4 6"/><polyline points="130,160 386,160" fill="none" stroke="#1f2933" stroke-width="2" marker-end="url(#arrow-ink)"/><text x="258" y="150" font-family="Helvetica, Arial, sans-serif" font-size="12" fill="#1f2933" font-weight="normal" text-anchor="middle">sign in with your identity provider</text><circle cx="106" cy="160" r="13" fill="#1f2933"/><text x="106" y="164.5" font-family="Helvetica, Arial, sans-serif" font-size="13" fill="#ffffff" font-weight="bold" text-anchor="middle">1</text><text x="400" y="186" font-family="Helvetica, Arial, sans-serif" font-size="12" fill="#52606d" font-weight="normal" text-anchor="start">user id comes from the server-side session</text><polyline points="390,230 646,230" fill="none" stroke="#2f6fde" stroke-width="2" marker-end="url(#arrow-claim)"/><text x="518" y="220" font-family="Helvetica, Arial, sans-serif" font-size="12" fill="#2f6fde" font-weight="normal" text-anchor="middle">client_credentials + custom_claim=pu-2001</text><circle cx="366" cy="230" r="13" fill="#2f6fde"/><text x="366" y="234.5" font-family="Helvetica, Arial, sans-serif" font-size="13" fill="#ffffff" font-weight="bold" text-anchor="middle">2</text><polyline points="650,266 394,266" fill="none" stroke="#2f6fde" stroke-width="2" stroke-dasharray="6 4" marker-end="url(#arrow-claim)"/><text x="522" y="290" font-family="Helvetica, Arial, sans-serif" font-size="12" fill="#2f6fde" font-weight="normal" text-anchor="middle">signed token: custom.claim = pu-2001</text><polyline points="390,340 876,340" fill="none" stroke="#7b5bd6" stroke-width="2" marker-end="url(#arrow-genie)"/><text x="640" y="330" font-family="Helvetica, Arial, sans-serif" font-size="12" fill="#7b5bd6" font-weight="normal" text-anchor="middle">question + that token</text><circle cx="366" cy="340" r="13" fill="#7b5bd6"/><text x="366" y="344.5" font-family="Helvetica, Arial, sans-serif" font-size="13" fill="#ffffff" font-weight="bold" text-anchor="middle">3</text><polyline points="880,400 1106,400" fill="none" stroke="#7b5bd6" stroke-width="2" marker-end="url(#arrow-genie)"/><text x="995" y="390" font-family="Helvetica, Arial, sans-serif" font-size="12" fill="#7b5bd6" font-weight="normal" text-anchor="middle">SQL, the same for every user</text><circle cx="856" cy="400" r="13" fill="#7b5bd6"/><text x="856" y="404.5" font-family="Helvetica, Arial, sans-serif" font-size="13" fill="#ffffff" font-weight="bold" text-anchor="middle">4</text><rect x="990" y="456" width="240" height="70" rx="10" fill="#eaf1fd" stroke="#2f6fde" stroke-width="1.5"/><circle cx="966" cy="491" r="13" fill="#2f6fde"/><text x="966" y="495.5" font-family="Helvetica, Arial, sans-serif" font-size="13" fill="#ffffff" font-weight="bold" text-anchor="middle">5</text><text x="1004" y="482.0" font-family="Helvetica, Arial, sans-serif" font-size="12.5" fill="#2f6fde" font-weight="normal" text-anchor="start">claim → entitlements table</text><text x="1004" y="499.5" font-family="Helvetica, Arial, sans-serif" font-size="12.5" fill="#2f6fde" font-weight="normal" text-anchor="start">→ only the permitted rows</text><polyline points="1110,560 134,560" fill="none" stroke="#1f9d55" stroke-width="2" stroke-dasharray="6 4" marker-end="url(#arrow-ok)"/><text x="620" y="552" font-family="Helvetica, Arial, sans-serif" font-size="12" fill="#1f9d55" font-weight="normal" text-anchor="middle">answer, through Genie and your backend</text><text x="40" y="606" font-family="Helvetica, Arial, sans-serif" font-size="13" fill="#52606d" font-weight="normal" text-anchor="start">The browser never sees the token, the claim or the Genie conversation id.</text></svg><figcaption>The five steps of one question. The browser never sees the token, the claim or the conversation id.</figcaption></figure>
+
+<ol>
+<li><strong>Sign in.</strong> The user signs in to your application with your identity provider.</li>
+<li><strong>Stamp.</strong> Your backend requests an OAuth token for its service principal and adds <code>custom_claim=&lt;user id&gt;</code>. Databricks returns a signed, short-lived token.</li>
+<li><strong>Ask.</strong> Your backend sends the question to the Genie Conversation API with that token.</li>
+<li><strong>Write SQL.</strong> Genie writes SQL. It is the same SQL for every user who asks the same question.</li>
+<li><strong>Filter.</strong> Unity Catalog evaluates the views. It reads the claim from the token, looks it up in your entitlements table and returns only the permitted rows.</li>
+</ol>
+<p>According to the announcement, the Genie Conversation API, the SQL Statement Execution API and the Databricks JDBC driver honor the claim. You can use the same pattern from your own agent or service, without Genie.</p>
+<h2 id="four-layers-of-isolation">Four layers of isolation</h2>
+<figure class="diagram"><svg xmlns="http://www.w3.org/2000/svg" width="1240" height="590" viewBox="0 0 1240 590" role="img"><defs><marker id="arrow-ink" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#1f2933"/></marker><marker id="arrow-muted" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#52606d"/></marker><marker id="arrow-line" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#9aa5b1"/></marker><marker id="arrow-soft" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#d9e2ec"/></marker><marker id="arrow-panel" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#f5f7fa"/></marker><marker id="arrow-white" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#ffffff"/></marker><marker id="arrow-claim" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#2f6fde"/></marker><marker id="arrow-claim_bg" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#eaf1fd"/></marker><marker id="arrow-ok" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#1f9d55"/></marker><marker id="arrow-ok_bg" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#e6f6ed"/></marker><marker id="arrow-deny" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#d64545"/></marker><marker id="arrow-deny_bg" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#fdecec"/></marker><marker id="arrow-mask" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#b7791f"/></marker><marker id="arrow-mask_bg" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#fdf4e3"/></marker><marker id="arrow-genie" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#7b5bd6"/></marker><marker id="arrow-genie_bg" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#f1edfb"/></marker></defs><rect width="100%" height="100%" fill="#ffffff"/><text x="40" y="40" font-family="Helvetica, Arial, sans-serif" font-size="22" fill="#1f2933" font-weight="bold" text-anchor="start">Four layers, each proved by the isolation suite</text><rect x="40" y="70" width="740" height="104" rx="10" fill="#eaf1fd" stroke="#2f6fde" stroke-width="1.5"/><text x="62" y="104" font-family="Helvetica, Arial, sans-serif" font-size="17" fill="#2f6fde" font-weight="bold" text-anchor="start">1  Unity Catalog grants</text><text x="62" y="132" font-family="Helvetica, Arial, sans-serif" font-size="13.5" fill="#1f2933" font-weight="normal" text-anchor="start">Which application's service principal can read which views</text><rect x="62" y="144" width="139.20000000000002" height="23" rx="11.5" fill="#ffffff" stroke="#52606d" stroke-width="1.2"/><text x="131.60000000000002" y="158" font-family="Helvetica, Arial, sans-serif" font-size="11" fill="#52606d" font-weight="normal" text-anchor="middle">proved by: cross_app</text><rect x="860" y="80" width="340" height="84" rx="10" fill="#fdecec" stroke="#d64545" stroke-width="1.5"/><text x="874" y="106" font-family="Helvetica, Arial, sans-serif" font-size="13.5" fill="#1f2933" font-weight="bold" text-anchor="start">Another application's service principal</text><text x="874" y="128.0" font-family="Helvetica, Arial, sans-serif" font-size="12.5" fill="#52606d" font-weight="normal" text-anchor="start">stops at layer 1: PERMISSION_DENIED</text><polyline points="856,122 784,122" fill="none" stroke="#d64545" stroke-width="2" marker-end="url(#arrow-deny)"/><rect x="40" y="192" width="740" height="104" rx="10" fill="#eaf1fd" stroke="#2f6fde" stroke-width="1.5"/><text x="62" y="226" font-family="Helvetica, Arial, sans-serif" font-size="17" fill="#2f6fde" font-weight="bold" text-anchor="start">2  Service principal binding</text><text x="62" y="254" font-family="Helvetica, Arial, sans-serif" font-size="13.5" fill="#1f2933" font-weight="normal" text-anchor="start">session_user() = this application's service principal, inside the view</text><rect x="62" y="266" width="126.88000000000001" height="23" rx="11.5" fill="#ffffff" stroke="#52606d" stroke-width="1.2"/><text x="125.44" y="280" font-family="Helvetica, Arial, sans-serif" font-size="11" fill="#52606d" font-weight="normal" text-anchor="middle">proved by: binding</text><rect x="860" y="202" width="340" height="84" rx="10" fill="#fdecec" stroke="#d64545" stroke-width="1.5"/><text x="874" y="228" font-family="Helvetica, Arial, sans-serif" font-size="13.5" fill="#1f2933" font-weight="bold" text-anchor="start">A mistaken grant to another application</text><text x="874" y="250.0" font-family="Helvetica, Arial, sans-serif" font-size="12.5" fill="#52606d" font-weight="normal" text-anchor="start">stops at layer 2: 0 rows</text><polyline points="856,244 784,244" fill="none" stroke="#d64545" stroke-width="2" marker-end="url(#arrow-deny)"/><rect x="40" y="314" width="740" height="104" rx="10" fill="#ffffff" stroke="#2f6fde" stroke-width="1.5"/><text x="62" y="348" font-family="Helvetica, Arial, sans-serif" font-size="17" fill="#2f6fde" font-weight="bold" text-anchor="start">3  Claim → entitlements</text><text x="62" y="376" font-family="Helvetica, Arial, sans-serif" font-size="13.5" fill="#1f2933" font-weight="normal" text-anchor="start">Grant rows for the user named in the signed token</text><rect x="62" y="388" width="200.8" height="23" rx="11.5" fill="#ffffff" stroke="#52606d" stroke-width="1.2"/><text x="162.4" y="402" font-family="Helvetica, Arial, sans-serif" font-size="11" fill="#52606d" font-weight="normal" text-anchor="middle">proved by: visibility · attack</text><rect x="860" y="324" width="340" height="84" rx="10" fill="#fdecec" stroke="#d64545" stroke-width="1.5"/><text x="874" y="350" font-family="Helvetica, Arial, sans-serif" font-size="13.5" fill="#1f2933" font-weight="bold" text-anchor="start">A forged, unknown or malformed claim</text><text x="874" y="372.0" font-family="Helvetica, Arial, sans-serif" font-size="12.5" fill="#52606d" font-weight="normal" text-anchor="start">stops at layer 3: 0 rows</text><polyline points="856,366 784,366" fill="none" stroke="#d64545" stroke-width="2" marker-end="url(#arrow-deny)"/><rect x="40" y="436" width="740" height="104" rx="10" fill="#ffffff" stroke="#2f6fde" stroke-width="1.5"/><text x="62" y="470" font-family="Helvetica, Arial, sans-serif" font-size="17" fill="#2f6fde" font-weight="bold" text-anchor="start">4  Role policy</text><text x="62" y="498" font-family="Helvetica, Arial, sans-serif" font-size="13.5" fill="#1f2933" font-weight="normal" text-anchor="start">What that role may see: detail level, masking, minimum group size</text><rect x="62" y="510" width="151.52" height="23" rx="11.5" fill="#ffffff" stroke="#52606d" stroke-width="1.2"/><text x="137.76" y="524" font-family="Helvetica, Arial, sans-serif" font-size="11" fill="#52606d" font-weight="normal" text-anchor="middle">proved by: role_effect</text><rect x="860" y="446" width="340" height="84" rx="10" fill="#fdecec" stroke="#d64545" stroke-width="1.5"/><text x="874" y="472" font-family="Helvetica, Arial, sans-serif" font-size="13.5" fill="#1f2933" font-weight="bold" text-anchor="start">An advisor asks for dates of birth</text><text x="874" y="494.0" font-family="Helvetica, Arial, sans-serif" font-size="12.5" fill="#52606d" font-weight="normal" text-anchor="start">stops at layer 4: masked</text><polyline points="856,488 784,488" fill="none" stroke="#d64545" stroke-width="2" marker-end="url(#arrow-deny)"/></svg><figcaption>Each layer is checked separately by the isolation suite in this repo.</figcaption></figure>
+
+<ol>
+<li><strong>Unity Catalog grants</strong> decide which application can read which views. Another application's service principal has no grant, so its queries are denied.</li>
+<li><strong>Service principal binding</strong> inside each view (<code>session_user()</code> must be this application's service principal) means that even a mistaken grant to another application returns no rows.</li>
+<li><strong>Claim to entitlements</strong> decides which end user. A forged, unknown or malformed claim matches no grant.</li>
+<li><strong>Role policy</strong> decides how much that user's role may see: their own records, aggregates only, masked columns, or a minimum group size.</li>
+</ol>
+<h2 id="entitlements-are-data-per-user-and-per-role">Entitlements are data: per user and per role</h2>
+<p>Two small tables hold every rule:</p>
+<ul>
+<li><strong>Per-user grants</strong>: one row per user, role and scope, with optional start and end dates. Onboarding is an insert. Revoking is a delete or an end date. A user with two roles has two rows.</li>
+<li><strong>Per-role policies</strong>: one row per role, saying what that role may see. Change a row and every user with that role changes on their next question.</li>
+</ul>
+<p>One governance view resolves the claim against both, and every portal view joins to it. That keeps the security logic in a single definition you can review.</p>
+<figure class="diagram"><svg xmlns="http://www.w3.org/2000/svg" width="1240" height="720" viewBox="0 0 1240 720" role="img"><defs><marker id="arrow-ink" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#1f2933"/></marker><marker id="arrow-muted" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#52606d"/></marker><marker id="arrow-line" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#9aa5b1"/></marker><marker id="arrow-soft" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#d9e2ec"/></marker><marker id="arrow-panel" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#f5f7fa"/></marker><marker id="arrow-white" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#ffffff"/></marker><marker id="arrow-claim" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#2f6fde"/></marker><marker id="arrow-claim_bg" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#eaf1fd"/></marker><marker id="arrow-ok" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#1f9d55"/></marker><marker id="arrow-ok_bg" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#e6f6ed"/></marker><marker id="arrow-deny" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#d64545"/></marker><marker id="arrow-deny_bg" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#fdecec"/></marker><marker id="arrow-mask" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#b7791f"/></marker><marker id="arrow-mask_bg" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#fdf4e3"/></marker><marker id="arrow-genie" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#7b5bd6"/></marker><marker id="arrow-genie_bg" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#f1edfb"/></marker></defs><rect width="100%" height="100%" fill="#ffffff"/><text x="40" y="40" font-family="Helvetica, Arial, sans-serif" font-size="22" fill="#1f2933" font-weight="bold" text-anchor="start">Tracing one lookup: Linda (pu-2001), plan sponsor and participant</text><rect x="40" y="70" width="260" height="100" rx="10" fill="#eaf1fd" stroke="#2f6fde" stroke-width="1.5"/><text x="54" y="96" font-family="Helvetica, Arial, sans-serif" font-size="15" fill="#1f2933" font-weight="bold" text-anchor="start">Signed token</text><text x="54" y="118.0" font-family="Menlo, Consolas, monospace" font-size="11.5" fill="#52606d" font-weight="normal" text-anchor="start" xml:space="preserve">"custom": {"claim": "pu-2001"}</text><text x="54" y="134.1" font-family="Menlo, Consolas, monospace" font-size="11.5" fill="#52606d" font-weight="normal" text-anchor="start" xml:space="preserve">"sub": &lt;Northwind portal SP&gt;</text><polyline points="300,120 995,120 995,196" fill="none" stroke="#2f6fde" stroke-width="2" marker-end="url(#arrow-claim)"/><text x="640" y="110" font-family="Helvetica, Arial, sans-serif" font-size="12" fill="#2f6fde" font-weight="normal" text-anchor="middle">the claim travels inside the signed token</text><rect x="330" y="200" width="410" height="150" rx="10" fill="#ffffff" stroke="#d9e2ec" stroke-width="1.5"/><text x="344" y="226" font-family="Helvetica, Arial, sans-serif" font-size="15" fill="#1f2933" font-weight="bold" text-anchor="start">portal_user_grants   (per user)</text><text x="344" y="248.0" font-family="Menlo, Consolas, monospace" font-size="11" fill="#52606d" font-weight="normal" text-anchor="start" xml:space="preserve">pu-2001  sponsor      plan         PLAN-A</text><text x="344" y="263.4" font-family="Menlo, Consolas, monospace" font-size="11" fill="#52606d" font-weight="normal" text-anchor="start" xml:space="preserve">pu-2001  participant  participant  P-2001</text><text x="344" y="278.8" font-family="Menlo, Consolas, monospace" font-size="11" fill="#52606d" font-weight="normal" text-anchor="start" xml:space="preserve">pu-1001  participant  participant  P-1001  (another user)</text><rect x="330" y="375" width="410" height="130" rx="10" fill="#ffffff" stroke="#d9e2ec" stroke-width="1.5"/><text x="344" y="401" font-family="Helvetica, Arial, sans-serif" font-size="15" fill="#1f2933" font-weight="bold" text-anchor="start">role_policies   (per role)</text><text x="344" y="423.0" font-family="Menlo, Consolas, monospace" font-size="11" fill="#52606d" font-weight="normal" text-anchor="start" xml:space="preserve">sponsor      aggregates  roster  dob visible</text><text x="344" y="438.4" font-family="Menlo, Consolas, monospace" font-size="11" fill="#52606d" font-weight="normal" text-anchor="start" xml:space="preserve">participant  own accounts</text><text x="344" y="453.8" font-family="Menlo, Consolas, monospace" font-size="11" fill="#52606d" font-weight="normal" text-anchor="start" xml:space="preserve">advisor      aggregates  roster  dob masked</text><rect x="770" y="200" width="450" height="280" rx="10" fill="#ffffff" stroke="#2f6fde" stroke-width="2"/><text x="790" y="230" font-family="Menlo, Consolas, monospace" font-size="15" fill="#2f6fde" font-weight="bold" text-anchor="start" xml:space="preserve">governance.my_effective_grants</text><circle cx="802" cy="270" r="13" fill="#2f6fde"/><text x="802" y="274.5" font-family="Helvetica, Arial, sans-serif" font-size="13" fill="#ffffff" font-weight="bold" text-anchor="middle">1</text><text x="824" y="275" font-family="Menlo, Consolas, monospace" font-size="11" fill="#1f2933" font-weight="normal" text-anchor="start" xml:space="preserve">portal_user_id = current_oauth_custom_identity_claim()</text><circle cx="802" cy="320" r="13" fill="#2f6fde"/><text x="802" y="324.5" font-family="Helvetica, Arial, sans-serif" font-size="13" fill="#ffffff" font-weight="bold" text-anchor="middle">2</text><text x="824" y="325" font-family="Menlo, Consolas, monospace" font-size="11" fill="#1f2933" font-weight="normal" text-anchor="start" xml:space="preserve">session_user() = the Northwind portal SP</text><circle cx="802" cy="370" r="13" fill="#2f6fde"/><text x="802" y="374.5" font-family="Helvetica, Arial, sans-serif" font-size="13" fill="#ffffff" font-weight="bold" text-anchor="middle">3</text><text x="824" y="375" font-family="Menlo, Consolas, monospace" font-size="11" fill="#1f2933" font-weight="normal" text-anchor="start" xml:space="preserve">today is between valid_from and valid_to</text><circle cx="802" cy="420" r="13" fill="#2f6fde"/><text x="802" y="424.5" font-family="Helvetica, Arial, sans-serif" font-size="13" fill="#ffffff" font-weight="bold" text-anchor="middle">4</text><text x="824" y="425" font-family="Menlo, Consolas, monospace" font-size="11" fill="#1f2933" font-weight="normal" text-anchor="start" xml:space="preserve">join role_policies on role</text><polyline points="740,275 766,290" fill="none" stroke="#9aa5b1" stroke-width="2" marker-end="url(#arrow-line)"/><polyline points="740,440 766,420" fill="none" stroke="#9aa5b1" stroke-width="2" marker-end="url(#arrow-line)"/><rect x="40" y="550" width="360" height="100" rx="10" fill="#e6f6ed" stroke="#1f9d55" stroke-width="1.5"/><text x="54" y="576" font-family="Helvetica, Arial, sans-serif" font-size="14" fill="#1f2933" font-weight="bold" text-anchor="start">portal.my_accounts</text><text x="54" y="598.0" font-family="Helvetica, Arial, sans-serif" font-size="12.5" fill="#52606d" font-weight="normal" text-anchor="start">her own Plan B account: P-2001</text><polyline points="995,480 220,546" fill="none" stroke="#1f9d55" stroke-width="2" marker-end="url(#arrow-ok)"/><rect x="440" y="550" width="360" height="100" rx="10" fill="#e6f6ed" stroke="#1f9d55" stroke-width="1.5"/><text x="454" y="576" font-family="Helvetica, Arial, sans-serif" font-size="14" fill="#1f2933" font-weight="bold" text-anchor="start">portal.plan_summary</text><text x="454" y="598.0" font-family="Helvetica, Arial, sans-serif" font-size="12.5" fill="#52606d" font-weight="normal" text-anchor="start">Plan A totals by fund</text><polyline points="995,480 620,546" fill="none" stroke="#1f9d55" stroke-width="2" marker-end="url(#arrow-ok)"/><rect x="840" y="550" width="360" height="100" rx="10" fill="#e6f6ed" stroke="#1f9d55" stroke-width="1.5"/><text x="854" y="576" font-family="Helvetica, Arial, sans-serif" font-size="14" fill="#1f2933" font-weight="bold" text-anchor="start">portal.plan_roster</text><text x="854" y="598.0" font-family="Helvetica, Arial, sans-serif" font-size="12.5" fill="#52606d" font-weight="normal" text-anchor="start">Plan A participants,</text><text x="854" y="615.5" font-family="Helvetica, Arial, sans-serif" font-size="12.5" fill="#52606d" font-weight="normal" text-anchor="start">dates of birth visible</text><polyline points="995,480 1020,546" fill="none" stroke="#1f9d55" stroke-width="2" marker-end="url(#arrow-ok)"/><text x="40" y="690" font-family="Helvetica, Arial, sans-serif" font-size="14" fill="#52606d" font-weight="normal" text-anchor="start">No matching grant means every portal view returns no rows: the design fails closed.</text></svg><figcaption>One lookup traced end to end for a user who holds two roles.</figcaption></figure>
+
+<p>The <a href="implementation-guide.html#entitlement-pattern-catalog">entitlement pattern catalog</a> shows nine patterns built on these two tables, each traced on a live workspace.</p>
+<h2 id="the-flexibility-you-get">The flexibility you get</h2>
+<ul>
+<li><strong>Onboard in a row.</strong> No identity, secret or group membership to create.</li>
+<li><strong>Revoke on the next question.</strong> Delete the row, or give it an end date.</li>
+<li><strong>Several roles per person.</strong> A plan sponsor who is also a participant gets two rows and sees both.</li>
+<li><strong>Totals only.</strong> Aggregate views with a minimum group size per role.</li>
+<li><strong>Mask by role.</strong> The same view hides a column for one role and shows it for another.</li>
+<li><strong>Time-bound access.</strong> A consultant's engagement ends on a date; access ends with it.</li>
+<li><strong>Rules from your data.</strong> A parent sees a minor child's claims, computed from dates of birth, with no extra rows.</li>
+<li><strong>Many applications.</strong> Each application has its own service principal and its own views, and one can't read another's.</li>
+<li><strong>Any identity provider.</strong> Your sign-in stays exactly as it is.</li>
+</ul>
+<h2 id="is-this-the-right-pattern">Is this the right pattern?</h2>
+<figure class="diagram"><svg xmlns="http://www.w3.org/2000/svg" width="1240" height="640" viewBox="0 0 1240 640" role="img"><defs><marker id="arrow-ink" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#1f2933"/></marker><marker id="arrow-muted" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#52606d"/></marker><marker id="arrow-line" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#9aa5b1"/></marker><marker id="arrow-soft" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#d9e2ec"/></marker><marker id="arrow-panel" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#f5f7fa"/></marker><marker id="arrow-white" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#ffffff"/></marker><marker id="arrow-claim" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#2f6fde"/></marker><marker id="arrow-claim_bg" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#eaf1fd"/></marker><marker id="arrow-ok" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#1f9d55"/></marker><marker id="arrow-ok_bg" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#e6f6ed"/></marker><marker id="arrow-deny" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#d64545"/></marker><marker id="arrow-deny_bg" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#fdecec"/></marker><marker id="arrow-mask" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#b7791f"/></marker><marker id="arrow-mask_bg" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#fdf4e3"/></marker><marker id="arrow-genie" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#7b5bd6"/></marker><marker id="arrow-genie_bg" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#f1edfb"/></marker></defs><rect width="100%" height="100%" fill="#ffffff"/><text x="40" y="40" font-family="Helvetica, Arial, sans-serif" font-size="22" fill="#1f2933" font-weight="bold" text-anchor="start">Is this the right pattern?</text><rect x="40" y="70" width="330" height="76" rx="10" fill="#f5f7fa" stroke="#9aa5b1" stroke-width="1.5"/><text x="54" y="96" font-family="Helvetica, Arial, sans-serif" font-size="14" fill="#1f2933" font-weight="bold" text-anchor="start">Do users ask free-form questions?</text><rect x="40" y="210" width="330" height="96" rx="10" fill="#fdf4e3" stroke="#b7791f" stroke-width="1.5"/><text x="54" y="236" font-family="Helvetica, Arial, sans-serif" font-size="14" fill="#b7791f" font-weight="bold" text-anchor="start">Use something simpler</text><text x="54" y="258.0" font-family="Helvetica, Arial, sans-serif" font-size="12.5" fill="#52606d" font-weight="normal" text-anchor="start">Embedded dashboards, or an agent</text><text x="54" y="275.5" font-family="Helvetica, Arial, sans-serif" font-size="12.5" fill="#52606d" font-weight="normal" text-anchor="start">with UC function tools</text><polyline points="205,146 205,206" fill="none" stroke="#b7791f" stroke-width="2" marker-end="url(#arrow-mask)"/><text x="222" y="180" font-family="Helvetica, Arial, sans-serif" font-size="12" fill="#b7791f" font-weight="normal" text-anchor="middle">no</text><rect x="450" y="70" width="330" height="76" rx="10" fill="#f5f7fa" stroke="#9aa5b1" stroke-width="1.5"/><text x="464" y="96" font-family="Helvetica, Arial, sans-serif" font-size="14" fill="#1f2933" font-weight="bold" text-anchor="start">Are the users employees already</text><text x="464" y="118.0" font-family="Helvetica, Arial, sans-serif" font-size="12.5" fill="#52606d" font-weight="normal" text-anchor="start">synced to Databricks?</text><polyline points="370,108 446,108" fill="none" stroke="#1f9d55" stroke-width="2" marker-end="url(#arrow-ok)"/><text x="408" y="100" font-family="Helvetica, Arial, sans-serif" font-size="12" fill="#1f9d55" font-weight="normal" text-anchor="middle">yes</text><rect x="450" y="210" width="330" height="96" rx="10" fill="#fdf4e3" stroke="#b7791f" stroke-width="1.5"/><text x="464" y="236" font-family="Helvetica, Arial, sans-serif" font-size="14" fill="#b7791f" font-weight="bold" text-anchor="start">Per-user identities</text><text x="464" y="258.0" font-family="Helvetica, Arial, sans-serif" font-size="12.5" fill="#52606d" font-weight="normal" text-anchor="start">Standard identities with row filters</text><polyline points="615,146 615,206" fill="none" stroke="#b7791f" stroke-width="2" marker-end="url(#arrow-mask)"/><text x="634" y="180" font-family="Helvetica, Arial, sans-serif" font-size="12" fill="#b7791f" font-weight="normal" text-anchor="middle">yes</text><rect x="860" y="70" width="330" height="76" rx="10" fill="#f5f7fa" stroke="#9aa5b1" stroke-width="1.5"/><text x="874" y="96" font-family="Helvetica, Arial, sans-serif" font-size="14" fill="#1f2933" font-weight="bold" text-anchor="start">Does a multi-agent supervisor</text><text x="874" y="118.0" font-family="Helvetica, Arial, sans-serif" font-size="12.5" fill="#52606d" font-weight="normal" text-anchor="start">sit in front of Genie?</text><polyline points="780,108 856,108" fill="none" stroke="#1f9d55" stroke-width="2" marker-end="url(#arrow-ok)"/><text x="818" y="100" font-family="Helvetica, Arial, sans-serif" font-size="12" fill="#1f9d55" font-weight="normal" text-anchor="middle">no</text><rect x="860" y="210" width="330" height="96" rx="10" fill="#fdf4e3" stroke="#b7791f" stroke-width="1.5"/><text x="874" y="236" font-family="Helvetica, Arial, sans-serif" font-size="14" fill="#b7791f" font-weight="bold" text-anchor="start">Bind the id in tools</text><text x="874" y="258.0" font-family="Helvetica, Arial, sans-serif" font-size="12.5" fill="#52606d" font-weight="normal" text-anchor="start">Pass the user id server-side</text><text x="874" y="275.5" font-family="Helvetica, Arial, sans-serif" font-size="12.5" fill="#52606d" font-weight="normal" text-anchor="start">to UC function tools</text><polyline points="1025,146 1025,206" fill="none" stroke="#b7791f" stroke-width="2" marker-end="url(#arrow-mask)"/><text x="1044" y="180" font-family="Helvetica, Arial, sans-serif" font-size="12" fill="#b7791f" font-weight="normal" text-anchor="middle">yes</text><rect x="860" y="350" width="330" height="76" rx="10" fill="#f5f7fa" stroke="#9aa5b1" stroke-width="1.5"/><text x="874" y="376" font-family="Helvetica, Arial, sans-serif" font-size="14" fill="#1f2933" font-weight="bold" text-anchor="start">Must per-user attribution live in</text><text x="874" y="398.0" font-family="Helvetica, Arial, sans-serif" font-size="12.5" fill="#52606d" font-weight="normal" text-anchor="start">Databricks audit tables?</text><polyline points="1200,108 1220,108 1220,388 1194,388" fill="none" stroke="#1f9d55" stroke-width="2" marker-end="url(#arrow-ok)"/><text x="1232" y="250" font-family="Helvetica, Arial, sans-serif" font-size="12" fill="#1f9d55" font-weight="normal" text-anchor="middle">no</text><rect x="450" y="350" width="330" height="96" rx="10" fill="#fdf4e3" stroke="#b7791f" stroke-width="1.5"/><text x="464" y="376" font-family="Helvetica, Arial, sans-serif" font-size="14" fill="#b7791f" font-weight="bold" text-anchor="start">Plan the audit trail</text><text x="464" y="398.0" font-family="Helvetica, Arial, sans-serif" font-size="12.5" fill="#52606d" font-weight="normal" text-anchor="start">Queries are attributed to the</text><text x="464" y="415.5" font-family="Helvetica, Arial, sans-serif" font-size="12.5" fill="#52606d" font-weight="normal" text-anchor="start">service principal: log users in your app</text><polyline points="856,388 784,388" fill="none" stroke="#b7791f" stroke-width="2" marker-end="url(#arrow-mask)"/><text x="820" y="380" font-family="Helvetica, Arial, sans-serif" font-size="12" fill="#b7791f" font-weight="normal" text-anchor="middle">yes</text><rect x="860" y="500" width="330" height="96" rx="10" fill="#e6f6ed" stroke="#1f9d55" stroke-width="1.5"/><text x="874" y="526" font-family="Helvetica, Arial, sans-serif" font-size="14" fill="#1f9d55" font-weight="bold" text-anchor="start">Custom identity claims</text><text x="874" y="548.0" font-family="Helvetica, Arial, sans-serif" font-size="12.5" fill="#52606d" font-weight="normal" text-anchor="start">One service principal per application,</text><text x="874" y="565.5" font-family="Helvetica, Arial, sans-serif" font-size="12.5" fill="#52606d" font-weight="normal" text-anchor="start">one Genie Agent: this repo</text><polyline points="1025,426 1025,496" fill="none" stroke="#1f9d55" stroke-width="2" marker-end="url(#arrow-ok)"/><text x="1044" y="466" font-family="Helvetica, Arial, sans-serif" font-size="12" fill="#1f9d55" font-weight="normal" text-anchor="middle">no</text></svg><figcaption>A quick way to decide.</figcaption></figure>
+
+<table>
+<thead>
+<tr>
+<th>Situation</th>
+<th>A better fit</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Only fixed, known questions</td>
+<td>Embedded dashboards, or an agent with Unity Catalog function tools</td>
+</tr>
+<tr>
+<td>Users are employees already synced to Databricks</td>
+<td>Per-user identities with row filters and column masks</td>
+</tr>
+<tr>
+<td>A multi-agent supervisor sits in front of Genie</td>
+<td>Bind the user id on the server in Unity Catalog function tools</td>
+</tr>
+<tr>
+<td>Per-user attribution must live inside Databricks audit tables</td>
+<td>Plan for an application audit log: query history attributes queries to the service principal</td>
+</tr>
+</tbody>
+</table>
+<h2 id="availability">Availability</h2>
+<p>OAuth custom identity claims are announced on the Databricks <em>What's coming?</em> page (<a href="https://docs.databricks.com/aws/en/release-notes/whats-coming">AWS</a>, <a href="https://learn.microsoft.com/en-us/azure/databricks/release-notes/whats-coming">Azure</a>). There is no setting to turn on. Check your own workspace in the SQL editor:</p>
+<div class="codehilite"><pre><span></span><code><span class="k">DESCRIBE</span><span class="w"> </span><span class="k">FUNCTION</span><span class="w"> </span><span class="n">current_oauth_custom_identity_claim</span><span class="p">;</span>
+<span class="c1">-- A description comes back: available.   [UNRESOLVED_ROUTINE]: not available in this workspace yet.</span>
+
+<span class="k">SELECT</span><span class="w"> </span><span class="n">current_oauth_custom_identity_claim</span><span class="p">()</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="n">claim</span><span class="p">;</span>
+<span class="c1">-- NULL, or [OAUTH_CUSTOM_IDENTITY_CLAIM_NOT_PROVIDED]: available. Your editor session simply has no claim.</span>
+</code></pre></div>
+
+<p>The third check is a test token request with <code>custom_claim</code> set. The <a href="implementation-guide.html#step-1-check-availability">Implementation Guide</a> has the commands, and the bundle in this repo runs all three checks before it deploys anything.</p>
+<h2 id="faq">FAQ</h2>
+<p><strong>Does Databricks learn who my users are?</strong> Only the opaque id string you choose. Databricks creates no names, emails or accounts for them.</p>
+<p><strong>What stops the AI from returning someone else's data?</strong> The AI never decides whose data it is. The id is inside a signed token, and Unity Catalog filters every query by it. A prompt that claims to be someone else changes nothing.</p>
+<p><strong>Does this replace our login?</strong> No. Your sign-in stays as it is. The claim travels from your backend to Databricks after the user signs in.</p>
+<p><strong>How is this different from token federation?</strong> Token federation signs in a user who already exists in Databricks. With custom identity claims, the end user never has to exist in Databricks.</p>
+<p><strong>Can one person hold several roles?</strong> Yes. Each role is its own grant row, and the views combine them. When grants disagree on masking, the least restrictive grant applies.</p>
+<p><strong>What happens when a user has no grants?</strong> Every view returns no rows, and Genie says the account has no access to that information.</p>
+<p><strong>Can we use this without Genie?</strong> Yes. The Statement Execution API and JDBC honor the claim too, so your own services and agents can query the same views.</p></article>
+  </div>
+</body>
+</html>

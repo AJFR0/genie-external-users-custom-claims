@@ -1,0 +1,502 @@
+{
+  "example": "northwind",
+  "run_date": "2026-10-19",
+  "catalog": "<catalog>",
+  "results": [
+    {
+      "case_id": "visibility/maya/my_access",
+      "category": "visibility",
+      "persona": "maya",
+      "passed": true,
+      "expected": "1 ids (participant|P-1001)",
+      "observed": "1 ids (participant|P-1001)",
+      "statement_id": "<id>"
+    },
+    {
+      "case_id": "visibility/maya/my_accounts",
+      "category": "visibility",
+      "persona": "maya",
+      "passed": true,
+      "expected": "1 ids (P-1001)",
+      "observed": "1 ids (P-1001)",
+      "statement_id": "<id>"
+    },
+    {
+      "case_id": "visibility/maya/my_contributions",
+      "category": "visibility",
+      "persona": "maya",
+      "passed": true,
+      "expected": "1 ids (P-1001)",
+      "observed": "1 ids (P-1001)",
+      "statement_id": "<id>"
+    },
+    {
+      "case_id": "visibility/maya/plan_roster",
+      "category": "visibility",
+      "persona": "maya",
+      "passed": true,
+      "expected": "0 ids",
+      "observed": "0 ids",
+      "statement_id": "<id>"
+    },
+    {
+      "case_id": "visibility/maya/plan_summary",
+      "category": "visibility",
+      "persona": "maya",
+      "passed": true,
+      "expected": "0 ids",
+      "observed": "0 ids",
+      "statement_id": "<id>"
+    },
+    {
+      "case_id": "visibility/james/my_access",
+      "category": "visibility",
+      "persona": "james",
+      "passed": true,
+      "expected": "1 ids (participant|P-1002)",
+      "observed": "1 ids (participant|P-1002)",
+      "statement_id": "<id>"
+    },
+    {
+      "case_id": "visibility/james/my_accounts",
+      "category": "visibility",
+      "persona": "james",
+      "passed": true,
+      "expected": "1 ids (P-1002)",
+      "observed": "1 ids (P-1002)",
+      "statement_id": "<id>"
+    },
+    {
+      "case_id": "visibility/james/my_contributions",
+      "category": "visibility",
+      "persona": "james",
+      "passed": true,
+      "expected": "1 ids (P-1002)",
+      "observed": "1 ids (P-1002)",
+      "statement_id": "<id>"
+    },
+    {
+      "case_id": "visibility/james/plan_roster",
+      "category": "visibility",
+      "persona": "james",
+      "passed": true,
+      "expected": "0 ids",
+      "observed": "0 ids",
+      "statement_id": "<id>"
+    },
+    {
+      "case_id": "visibility/james/plan_summary",
+      "category": "visibility",
+      "persona": "james",
+      "passed": true,
+      "expected": "0 ids",
+      "observed": "0 ids",
+      "statement_id": "<id>"
+    },
+    {
+      "case_id": "visibility/linda/my_access",
+      "category": "visibility",
+      "persona": "linda",
+      "passed": true,
+      "expected": "2 ids (participant|P-2001, sponsor|PLAN-A)",
+      "observed": "2 ids (participant|P-2001, sponsor|PLAN-A)",
+      "statement_id": "<id>"
+    },
+    {
+      "case_id": "visibility/linda/my_accounts",
+      "category": "visibility",
+      "persona": "linda",
+      "passed": true,
+      "expected": "1 ids (P-2001)",
+      "observed": "1 ids (P-2001)",
+      "statement_id": "<id>"
+    },
+    {
+      "case_id": "visibility/linda/my_contributions",
+      "category": "visibility",
+      "persona": "linda",
+      "passed": true,
+      "expected": "1 ids (P-2001)",
+      "observed": "1 ids (P-2001)",
+      "statement_id": "<id>"
+    },
+    {
+      "case_id": "visibility/linda/plan_roster",
+      "category": "visibility",
+      "persona": "linda",
+      "passed": true,
+      "expected": "59 ids (P-0001, P-0002, P-0003, P-0004, P-0005, P-0006, \u2026)",
+      "observed": "59 ids (P-0001, P-0002, P-0003, P-0004, P-0005, P-0006, \u2026)",
+      "statement_id": "<id>"
+    },
+    {
+      "case_id": "visibility/linda/plan_summary",
+      "category": "visibility",
+      "persona": "linda",
+      "passed": true,
+      "expected": "1 ids (PLAN-A)",
+      "observed": "1 ids (PLAN-A)",
+      "statement_id": "<id>"
+    },
+    {
+      "case_id": "visibility/raj/my_access",
+      "category": "visibility",
+      "persona": "raj",
+      "passed": true,
+      "expected": "2 ids (advisor|PLAN-A, advisor|PLAN-C)",
+      "observed": "2 ids (advisor|PLAN-A, advisor|PLAN-C)",
+      "statement_id": "<id>"
+    },
+    {
+      "case_id": "visibility/raj/my_accounts",
+      "category": "visibility",
+      "persona": "raj",
+      "passed": true,
+      "expected": "0 ids",
+      "observed": "0 ids",
+      "statement_id": "<id>"
+    },
+    {
+      "case_id": "visibility/raj/my_contributions",
+      "category": "visibility",
+      "persona": "raj",
+      "passed": true,
+      "expected": "0 ids",
+      "observed": "0 ids",
+      "statement_id": "<id>"
+    },
+    {
+      "case_id": "visibility/raj/plan_roster",
+      "category": "visibility",
+      "persona": "raj",
+      "passed": true,
+      "expected": "99 ids (P-0001, P-0002, P-0003, P-0004, P-0005, P-0006, \u2026)",
+      "observed": "99 ids (P-0001, P-0002, P-0003, P-0004, P-0005, P-0006, \u2026)",
+      "statement_id": "<id>"
+    },
+    {
+      "case_id": "visibility/raj/plan_summary",
+      "category": "visibility",
+      "persona": "raj",
+      "passed": true,
+      "expected": "2 ids (PLAN-A, PLAN-C)",
+      "observed": "2 ids (PLAN-A, PLAN-C)",
+      "statement_id": "<id>"
+    },
+    {
+      "case_id": "visibility/unknown/my_access",
+      "category": "visibility",
+      "persona": "unknown",
+      "passed": true,
+      "expected": "0 ids",
+      "observed": "0 ids",
+      "statement_id": "<id>"
+    },
+    {
+      "case_id": "visibility/unknown/my_accounts",
+      "category": "visibility",
+      "persona": "unknown",
+      "passed": true,
+      "expected": "0 ids",
+      "observed": "0 ids",
+      "statement_id": "<id>"
+    },
+    {
+      "case_id": "visibility/unknown/my_contributions",
+      "category": "visibility",
+      "persona": "unknown",
+      "passed": true,
+      "expected": "0 ids",
+      "observed": "0 ids",
+      "statement_id": "<id>"
+    },
+    {
+      "case_id": "visibility/unknown/plan_roster",
+      "category": "visibility",
+      "persona": "unknown",
+      "passed": true,
+      "expected": "0 ids",
+      "observed": "0 ids",
+      "statement_id": "<id>"
+    },
+    {
+      "case_id": "visibility/unknown/plan_summary",
+      "category": "visibility",
+      "persona": "unknown",
+      "passed": true,
+      "expected": "0 ids",
+      "observed": "0 ids",
+      "statement_id": "<id>"
+    },
+    {
+      "case_id": "role_effect/linda/plan_roster.date_of_birth",
+      "category": "role_effect",
+      "persona": "linda",
+      "passed": true,
+      "expected": "visible: no NULL values",
+      "observed": "59 of 59 rows non-NULL",
+      "statement_id": "<id>"
+    },
+    {
+      "case_id": "role_effect/raj/plan_roster.date_of_birth",
+      "category": "role_effect",
+      "persona": "raj",
+      "passed": true,
+      "expected": "masked: every value NULL",
+      "observed": "0 of 99 rows non-NULL",
+      "statement_id": "<id>"
+    },
+    {
+      "case_id": "attack/no-claim",
+      "category": "attack",
+      "persona": null,
+      "passed": true,
+      "expected": "0 rows or an error",
+      "observed": "error: OAUTH_CUSTOM_IDENTITY_CLAIM_NOT_PROVIDED",
+      "statement_id": "<id>"
+    },
+    {
+      "case_id": "attack/sql-injection",
+      "category": "attack",
+      "persona": null,
+      "passed": true,
+      "expected": "0 rows or an error",
+      "observed": "0 rows",
+      "statement_id": "<id>"
+    },
+    {
+      "case_id": "attack/wildcard",
+      "category": "attack",
+      "persona": null,
+      "passed": true,
+      "expected": "0 rows or an error",
+      "observed": "0 rows",
+      "statement_id": "<id>"
+    },
+    {
+      "case_id": "attack/prefix-wildcard",
+      "category": "attack",
+      "persona": null,
+      "passed": true,
+      "expected": "0 rows or an error",
+      "observed": "0 rows",
+      "statement_id": "<id>"
+    },
+    {
+      "case_id": "attack/uppercase",
+      "category": "attack",
+      "persona": null,
+      "passed": true,
+      "expected": "0 rows or an error",
+      "observed": "0 rows",
+      "statement_id": "<id>"
+    },
+    {
+      "case_id": "attack/control-character",
+      "category": "attack",
+      "persona": null,
+      "passed": true,
+      "expected": "0 rows or an error",
+      "observed": "error: BAD_REQUEST",
+      "statement_id": "<id>"
+    },
+    {
+      "case_id": "attack/admin-without-claim",
+      "category": "attack",
+      "persona": null,
+      "passed": true,
+      "expected": "0 rows or an error",
+      "observed": "error: OAUTH_CUSTOM_IDENTITY_CLAIM_NOT_PROVIDED",
+      "statement_id": "<id>"
+    },
+    {
+      "case_id": "documented/whitespace-trim",
+      "category": "documented",
+      "persona": "maya",
+      "passed": true,
+      "expected": "a claim with surrounding spaces matches the trimmed claim, so validate claims before minting",
+      "observed": "4 rows vs 4",
+      "statement_id": "<id>"
+    },
+    {
+      "case_id": "privilege/read-base-table",
+      "category": "privilege",
+      "persona": null,
+      "passed": true,
+      "expected": "denied",
+      "observed": "error: INSUFFICIENT_PERMISSIONS",
+      "statement_id": "<id>"
+    },
+    {
+      "case_id": "privilege/read-entitlements",
+      "category": "privilege",
+      "persona": null,
+      "passed": true,
+      "expected": "denied",
+      "observed": "error: INSUFFICIENT_PERMISSIONS",
+      "statement_id": "<id>"
+    },
+    {
+      "case_id": "privilege/read-role-policies",
+      "category": "privilege",
+      "persona": null,
+      "passed": true,
+      "expected": "denied",
+      "observed": "error: INSUFFICIENT_PERMISSIONS",
+      "statement_id": "<id>"
+    },
+    {
+      "case_id": "privilege/read-policy-view",
+      "category": "privilege",
+      "persona": null,
+      "passed": true,
+      "expected": "denied",
+      "observed": "error: INSUFFICIENT_PERMISSIONS",
+      "statement_id": "<id>"
+    },
+    {
+      "case_id": "privilege/change-entitlements",
+      "category": "privilege",
+      "persona": null,
+      "passed": true,
+      "expected": "denied",
+      "observed": "error: INSUFFICIENT_PERMISSIONS",
+      "statement_id": "<id>"
+    },
+    {
+      "case_id": "privilege/create-view",
+      "category": "privilege",
+      "persona": null,
+      "passed": true,
+      "expected": "denied",
+      "observed": "error: BAD_REQUEST",
+      "statement_id": "<id>"
+    },
+    {
+      "case_id": "cross_app/other-application",
+      "category": "cross_app",
+      "persona": "maya",
+      "passed": true,
+      "expected": "denied",
+      "observed": "error: INSUFFICIENT_PERMISSIONS",
+      "statement_id": "<id>"
+    },
+    {
+      "case_id": "binding/mistaken-grant",
+      "category": "binding",
+      "persona": "maya",
+      "passed": true,
+      "expected": "0 rows: the view answers only for its own service principal",
+      "observed": "0 rows",
+      "statement_id": "<id>"
+    },
+    {
+      "case_id": "token/valid-baseline",
+      "category": "token",
+      "persona": "maya",
+      "passed": true,
+      "expected": "HTTP 200",
+      "observed": "HTTP 200",
+      "statement_id": null
+    },
+    {
+      "case_id": "token/edited-claim",
+      "category": "token",
+      "persona": "maya",
+      "passed": true,
+      "expected": "rejected (HTTP 400, 401 or 403)",
+      "observed": "HTTP 400",
+      "statement_id": null
+    },
+    {
+      "case_id": "token/unsigned-alg-none",
+      "category": "token",
+      "persona": "maya",
+      "passed": true,
+      "expected": "rejected (HTTP 400, 401 or 403)",
+      "observed": "HTTP 400",
+      "statement_id": null
+    },
+    {
+      "case_id": "token/corrupted-signature",
+      "category": "token",
+      "persona": "maya",
+      "passed": true,
+      "expected": "rejected (HTTP 400, 401 or 403)",
+      "observed": "HTTP 400",
+      "statement_id": null
+    },
+    {
+      "case_id": "genie/maya/1",
+      "category": "genie",
+      "persona": "maya",
+      "passed": true,
+      "expected": "must ['maya_total_balance']; must not ['james_total_balance', 'linda_total_balance', 'plan_a_total']",
+      "observed": "expected values present; no other user's values",
+      "statement_id": "<id>"
+    },
+    {
+      "case_id": "genie/maya/2",
+      "category": "genie",
+      "persona": "maya",
+      "passed": true,
+      "expected": "must []; must not ['james_total_balance']",
+      "observed": "expected values present; no other user's values",
+      "statement_id": "<id>"
+    },
+    {
+      "case_id": "genie/james/1",
+      "category": "genie",
+      "persona": "james",
+      "passed": true,
+      "expected": "must ['james_total_balance']; must not ['maya_total_balance']",
+      "observed": "expected values present; no other user's values",
+      "statement_id": "<id>"
+    },
+    {
+      "case_id": "genie/linda/1",
+      "category": "genie",
+      "persona": "linda",
+      "passed": true,
+      "expected": "must ['linda_total_balance']; must not ['maya_total_balance', 'plan_a_total']",
+      "observed": "expected values present; no other user's values",
+      "statement_id": "<id>"
+    },
+    {
+      "case_id": "genie/linda/2",
+      "category": "genie",
+      "persona": "linda",
+      "passed": true,
+      "expected": "must ['plan_a_total']; must not ['plan_b_total', 'plan_c_total']",
+      "observed": "expected values present; no other user's values",
+      "statement_id": "<id>"
+    },
+    {
+      "case_id": "genie/raj/1",
+      "category": "genie",
+      "persona": "raj",
+      "passed": true,
+      "expected": "must ['plan_a_total', 'plan_c_total']; must not ['plan_b_total']",
+      "observed": "expected values present; no other user's values",
+      "statement_id": "<id>"
+    },
+    {
+      "case_id": "genie/unknown/1",
+      "category": "genie",
+      "persona": "unknown",
+      "passed": true,
+      "expected": "must []; must not ['maya_total_balance', 'james_total_balance', 'linda_total_balance']",
+      "observed": "expected values present; no other user's values",
+      "statement_id": "<id>"
+    },
+    {
+      "case_id": "documented/conversation-binding",
+      "category": "documented",
+      "persona": "james",
+      "passed": true,
+      "expected": "readable by another claim from the same service principal, so the backend must bind conversation ids to users",
+      "observed": "readable",
+      "statement_id": null
+    }
+  ]
+}

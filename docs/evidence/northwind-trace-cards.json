@@ -1,0 +1,134 @@
+{
+  "example": "northwind",
+  "run_date": "2026-10-19",
+  "catalog": "<catalog>",
+  "cards": [
+    {
+      "persona": "linda",
+      "name": "Linda",
+      "label": "Plan sponsor \u00b7 Plan A, and participant \u00b7 Plan B",
+      "claim": "pu-2001",
+      "blurb": "Two roles, two rows. Plan A totals and roster, plus her own Plan B account.",
+      "grants": {
+        "columns": [
+          "role",
+          "scope_type",
+          "scope_id",
+          "valid_from",
+          "valid_to",
+          "can_view_own_accounts",
+          "can_view_plan_aggregates",
+          "can_view_roster",
+          "mask_dob"
+        ],
+        "rows": [
+          [
+            "sponsor",
+            "plan",
+            "PLAN-A",
+            "2026-01-01",
+            null,
+            "false",
+            "true",
+            "true",
+            "false"
+          ],
+          [
+            "participant",
+            "participant",
+            "P-2001",
+            "2026-01-01",
+            null,
+            "true",
+            "false",
+            "false",
+            "false"
+          ]
+        ]
+      },
+      "view_row_counts": {
+        "my_accounts": 4,
+        "my_contributions": 18,
+        "plan_summary": 8,
+        "plan_roster": 59
+      }
+    },
+    {
+      "persona": "raj",
+      "name": "Raj",
+      "label": "Advisor \u00b7 Plans A and C",
+      "claim": "pu-3001",
+      "blurb": "Plan aggregates and rosters for the plans he advises, with dates of birth masked.",
+      "grants": {
+        "columns": [
+          "role",
+          "scope_type",
+          "scope_id",
+          "valid_from",
+          "valid_to",
+          "can_view_own_accounts",
+          "can_view_plan_aggregates",
+          "can_view_roster",
+          "mask_dob"
+        ],
+        "rows": [
+          [
+            "advisor",
+            "plan",
+            "PLAN-A",
+            "2026-01-01",
+            null,
+            "false",
+            "true",
+            "true",
+            "true"
+          ],
+          [
+            "advisor",
+            "plan",
+            "PLAN-C",
+            "2026-01-01",
+            null,
+            "false",
+            "true",
+            "true",
+            "true"
+          ]
+        ]
+      },
+      "view_row_counts": {
+        "my_accounts": 0,
+        "my_contributions": 0,
+        "plan_summary": 16,
+        "plan_roster": 99
+      }
+    },
+    {
+      "persona": "unknown",
+      "name": "New user",
+      "label": "Signed in, no entitlements yet",
+      "claim": "pu-9999",
+      "blurb": "Authenticated by the app but not in the entitlements table. Sees nothing.",
+      "grants": {
+        "columns": [
+          "role",
+          "scope_type",
+          "scope_id",
+          "valid_from",
+          "valid_to",
+          "can_view_own_accounts",
+          "can_view_plan_aggregates",
+          "can_view_roster",
+          "mask_dob"
+        ],
+        "rows": []
+      },
+      "view_row_counts": {
+        "my_accounts": 0,
+        "my_contributions": 0,
+        "plan_summary": 0,
+        "plan_roster": 0
+      }
+    }
+  ]
+}

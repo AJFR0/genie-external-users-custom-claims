@@ -15,6 +15,7 @@ _PLACEHOLDER = re.compile(r"\{\{\s*([a-z_][a-z0-9_]*)\s*\}\}")
 _UNSAFE_VALUE = re.compile(r"[`'\";\\\n\r]")
 _DENIED = ("PERMISSION_DENIED", "INSUFFICIENT_PERMISSIONS", "DOES NOT HAVE", "UNAUTHORIZED")
 _HIDDEN = ("TABLE_OR_VIEW_NOT_FOUND", "SCHEMA_NOT_FOUND", "NO_SUCH_CATALOG", "CATALOG_NOT_FOUND")
+_TRANSIENT = ("TEMPORARILY_UNAVAILABLE", "RESOURCE_EXHAUSTED")
 
 
 class StatementError(RuntimeError):
@@ -34,6 +35,11 @@ class StatementError(RuntimeError):
     def is_permission_error(self) -> bool:
         text = f"{self.error_code or ''} {self.message}".upper()
         return any(k in text for k in _DENIED)
+
+    @property
+    def is_transient(self) -> bool:
+        """Warehouse or API hiccups worth retrying; never an authorization outcome."""
+        return self.http_status in (429, 503) or (self.error_class or "") in _TRANSIENT or (self.error_code or "") in _TRANSIENT
 
     @property
     def is_denied_or_hidden(self) -> bool:
@@ -91,7 +97,18 @@ class StatementRunner:
         self._sleep = sleep
         self._clock = clock
 
-    def execute(self, statement: str, parameters: dict[str, object] | None = None) -> StatementResult:
+    def execute(self, statement: str, parameters: dict[str, object] | None = None, *, attempts: int = 3) -> StatementResult:
+        """Run one statement. Transient warehouse errors are retried with a short backoff; nothing else is."""
+        for attempt in range(1, attempts + 1):
+            try:
+                return self._execute_once(statement, parameters)
+            except StatementError as exc:
+                if not exc.is_transient or attempt == attempts:
+                    raise
+                self._sleep(2 * attempt)
+        raise AssertionError("unreachable")
+
+    def _execute_once(self, statement: str, parameters: dict[str, object] | None) -> StatementResult:
         body: dict = {"statement": statement, "warehouse_id": self.warehouse_id, "wait_timeout": "30s",
                       "on_wait_timeout": "CONTINUE", "format": "JSON_ARRAY", "disposition": "INLINE"}
         if parameters:

@@ -1,0 +1,185 @@
+{
+  "example": "larkspur",
+  "run_date": "2026-10-19",
+  "catalog": "<catalog>",
+  "cards": [
+    {
+      "persona": "ana",
+      "name": "Ana",
+      "label": "Subscriber \u00b7 Birchwood Unified Schools plan",
+      "claim": "rx-1001",
+      "blurb": "Sees her own claims and her 12-year-old's. Not her spouse's, and not her 19-year-old's.",
+      "grants": {
+        "columns": [
+          "role",
+          "scope_type",
+          "scope_id",
+          "valid_from",
+          "valid_to",
+          "detail_level",
+          "include_minor_dependents",
+          "mask_identity",
+          "min_cell_size"
+        ],
+        "rows": [
+          [
+            "subscriber",
+            "member",
+            "M-1001",
+            "2026-01-01",
+            null,
+            "own",
+            "true",
+            "false",
+            "0"
+          ]
+        ]
+      },
+      "view_row_counts": {
+        "my_claims": 27,
+        "my_accumulators": 2,
+        "sponsor_spend_summary": 0,
+        "pharmacy_remittance": 0
+      }
+    },
+    {
+      "persona": "dana",
+      "name": "Dana",
+      "label": "Benefits administrator \u00b7 Alder Manufacturing, and a member",
+      "claim": "rx-2001",
+      "blurb": "Two roles. Alder spend by quarter and drug class with groups under 11 members hidden, plus her own claims.",
+      "grants": {
+        "columns": [
+          "role",
+          "scope_type",
+          "scope_id",
+          "valid_from",
+          "valid_to",
+          "detail_level",
+          "include_minor_dependents",
+          "mask_identity",
+          "min_cell_size"
+        ],
+        "rows": [
+          [
+            "subscriber",
+            "member",
+            "M-2001",
+            "2026-01-01",
+            null,
+            "own",
+            "true",
+            "false",
+            "0"
+          ],
+          [
+            "sponsor_admin",
+            "sponsor",
+            "SPN-ALDER",
+            "2026-01-01",
+            null,
+            "aggregate",
+            "false",
+            "true",
+            "11"
+          ]
+        ]
+      },
+      "view_row_counts": {
+        "my_claims": 18,
+        "my_accumulators": 1,
+        "sponsor_spend_summary": 21,
+        "pharmacy_remittance": 0
+      }
+    },
+    {
+      "persona": "theo",
+      "name": "Theo",
+      "label": "Benefits consultant \u00b7 Alder and Birchwood (Cedar engagement ended June 30)",
+      "claim": "rx-3001",
+      "blurb": "Consultant role hides groups under 20 members. His Cedar grant expired, so Cedar returns nothing.",
+      "grants": {
+        "columns": [
+          "role",
+          "scope_type",
+          "scope_id",
+          "valid_from",
+          "valid_to",
+          "detail_level",
+          "include_minor_dependents",
+          "mask_identity",
+          "min_cell_size"
+        ],
+        "rows": [
+          [
+            "consultant",
+            "sponsor",
+            "SPN-BIRCH",
+            "2026-01-01",
+            null,
+            "aggregate",
+            "false",
+            "true",
+            "20"
+          ],
+          [
+            "consultant",
+            "sponsor",
+            "SPN-ALDER",
+            "2026-01-01",
+            null,
+            "aggregate",
+            "false",
+            "true",
+            "20"
+          ]
+        ]
+      },
+      "view_row_counts": {
+        "my_claims": 0,
+        "my_accumulators": 0,
+        "sponsor_spend_summary": 9,
+        "pharmacy_remittance": 0
+      }
+    },
+    {
+      "persona": "priya",
+      "name": "Priya",
+      "label": "Pharmacy staff \u00b7 Maple Street Pharmacy",
+      "claim": "rx-4001",
+      "blurb": "Claims filled at her pharmacy for remittance, with member identity replaced by a one-way reference.",
+      "grants": {
+        "columns": [
+          "role",
+          "scope_type",
+          "scope_id",
+          "valid_from",
+          "valid_to",
+          "detail_level",
+          "include_minor_dependents",
+          "mask_identity",
+          "min_cell_size"
+        ],
+        "rows": [
+          [
+            "pharmacy",
+            "pharmacy",
+            "PH-0007",
+            "2026-01-01",
+            null,
+            "pharmacy",
+            "false",
+            "true",
+            "0"
+          ]
+        ]
+      },
+      "view_row_counts": {
+        "my_claims": 0,
+        "my_accumulators": 0,
+        "sponsor_spend_summary": 0,
+        "pharmacy_remittance": 322
+      }
+    }
+  ]
+}

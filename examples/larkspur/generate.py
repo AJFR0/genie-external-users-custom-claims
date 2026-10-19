@@ -60,7 +60,7 @@ PERSONA_PHARMACY = "PH-0007"
 FIRST = ("Alex", "Bea", "Cyrus", "Dalia", "Emil", "Fern", "Grace", "Hugo", "Iris", "Jonah", "Kira", "Leo", "Mira", "Nils",
          "Opal", "Pavel", "Rhea", "Silas", "Talia", "Umar", "Vera", "Wynn", "Yara", "Zane")
 LAST = ("Adair", "Bishop", "Calloway", "Delgado", "Ellison", "Forsythe", "Gallo", "Hale", "Ingram", "Joyce", "Keller",
-        "Lowell", "Mercer", "Nakamura", "Oakes", "Pryor", "Quill", "Rowan", "Serrano", "Thorne", "Vance", "Whitlock")
+        "Lowell", "Mercer", "Nakamura", "Oakes", "Pryor", "Quinlan", "Rowan", "Serrano", "Thorne", "Vance", "Whitlock")
 
 
 def _money(x) -> Decimal:
