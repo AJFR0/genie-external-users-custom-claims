@@ -49,7 +49,8 @@ The result must contain `availability-probe` and the service principal's applica
 |---|---|
 | Pipelines and internal users | Write and read the base tables as usual. Base tables carry no claim logic. |
 | View owner (you, or an account group in production) | Owns the claim-keyed views. Views read the base and governance tables with the owner's rights. |
-| Portal service principal, one per application | `USE CATALOG`, `USE SCHEMA` on its portal schema, `SELECT` on its portal views. Nothing else. |
+| Portal service principal, one per application | Reads through its application's account group: `USE CATALOG`, `USE SCHEMA` on its portal schema, `SELECT` on its portal views. Nothing else. |
+| Row policies (layered mode) | ABAC row filter policies on every base table the portal views read, for the application's group only. Pipelines, administrators and the view owner are unaffected. |
 | Genie Agent | Attached to the portal views only. The portal service principal has Can Run. |
 | Operators | Change entitlements with their own identity, through your admin tooling (the local app's admin tab in this repo). |
 
@@ -60,7 +61,10 @@ databricks bundle deploy -p <profile> --var warehouse_id=<warehouse-id>
 databricks bundle run bootstrap -p <profile> --var warehouse_id=<warehouse-id>
 databricks bundle run northwind_deploy -p <profile> --var warehouse_id=<warehouse-id>
 databricks bundle run larkspur_deploy -p <profile> --var warehouse_id=<warehouse-id>
+databricks bundle run northwind_drills -p <profile> --var warehouse_id=<warehouse-id>   # optional, test deployments only
 ```
+
+The layered model needs the two governed tags `portal_grain` and `portal_key` (an account admin creates them; see the [Admin Runbook](admin-runbook.html#1-create-the-governed-tags)). To evaluate without them, add `--var tag_set=stand_in` to every command.
 
 | Variable | Default | Meaning |
 |---|---|---|
@@ -69,6 +73,8 @@ databricks bundle run larkspur_deploy -p <profile> --var warehouse_id=<warehouse
 | `warehouse_id` | (required) | SQL warehouse for the service principals, the Statement API and Genie |
 | `secret_scope` | `genie-claims-ref` | Where bootstrap stores each service principal's client id and secret |
 | `view_owner` | the deploying user | Owner of the claim-keyed views. Use an account group in production. |
+| `enforcement` | `layered` | `layered` adds ABAC row policies under the claim-keyed views. `views` deploys the views alone. |
+| `tag_set` | `governed` | `governed` uses the custom governed tags. `stand_in` uses platform system tags, for evaluation only. |
 
 If you can't create catalogs, point the bundle at one you can use: `--var catalog=<existing catalog> --var create_catalog=false`.
 
@@ -76,14 +82,16 @@ If you can't create catalogs, point the bundle at one you can use: `--var catalo
 
 | Notebook | What it does |
 |---|---|
-| `00_bootstrap_service_principals` | One service principal per application, an OAuth secret in the secret scope, Can Use on the warehouse |
+| `00_bootstrap_service_principals` | One service principal per application, an OAuth secret in the secret scope, Can Use on the warehouse, an account group per application, and the governed tags when permitted |
 | `01_check_availability` | The three checks above, and the deploy mode |
 | `02_create_data` | Catalog (optional), three schemas per example, deterministic synthetic data |
-| `03_entitlements` | Per-user grants and per-role policies, with CHECK constraints |
+| `03_entitlements` | Per-user grants and per-role policies, with CHECK constraints, and the derived tables (policy inputs, precomputed spend cells) |
 | `04_claim_views` | The claim-keyed views, in either deploy mode |
-| `05_runtime_grants` | `SELECT` on portal views for the portal service principal, nothing else |
-| `06_genie_agent` | The Genie Agent over the portal views, with Can Run for the service principal |
-| `07_validate_isolation` | The isolation suite; the task fails if any check fails |
+| `05_row_policies` | Tags, row-filter functions, row policies and default-deny, with a coverage check (layered mode) |
+| `06_runtime_grants` | `SELECT` on portal views for the application's group, nothing else |
+| `07_genie_agent` | The Genie Agent over the portal views, with Can Run for the service principal |
+| `08_validate_isolation` | The isolation suite; the task fails if any check fails |
+| `09_misconfiguration_drills` | The drills, in their own job; never part of deploy |
 
 ## Step 3: Understand each object (Northwind)
 
@@ -114,6 +122,24 @@ None of these mentions the claim. Each joins to `my_effective_grants`, groups th
 ### Runtime grants
 
 [[ sql("northwind", "runtime_grants") ]]
+
+### Row policies (layered mode)
+
+Each base table a portal view reads carries one ABAC row filter policy. A table's policy admits exactly the rows that some portal view exposes from it, for the signed-in user. Contributions, for example, admit only the participant's own rows, even though a sponsor's role reaches the plan's balances. The functions read the claim through `my_effective_grants`, so the claim is still read in one place:
+
+[[ sql("northwind", "policy_functions") ]]
+
+The policies are generated from `row_policies` in `example.yml` and a tag set. Each table carries one `portal_grain` value, which selects its policy, and `portal_key` tags bind its columns to the function's arguments:
+
+[[ policy_example("northwind", "base.account_balances") ]]
+
+A default-deny policy on the base schema returns no rows to the portal from any table without a grain tag, so a table granted before anyone tags it stays closed. Two Unity Catalog rules shape the layout:
+
+- **A policy function may read only tables that carry no policy of their own** (`UNSUPPORTED_NESTED_ROW_OR_COLUMN_ACCESS_POLICY` otherwise). The governance tables are the policies' inputs, so they stay unprotected and ungranted, and facts the rules need from protected tables are derived into them:
+
+[[ sql("northwind", "derived_tables") ]]
+
+- **A schema-level policy also matches the views in that schema.** Policies attach to the base schema only, which holds no views.
 
 ## Step 4: Configure the Genie Agent
 
@@ -179,11 +205,13 @@ WHERE e.include_minor_dependents AND m.relationship = 'child'
 
 ### 6. Aggregates with a minimum group size
 
-Benefits administrators see spend by quarter and drug class, never member rows. Groups with fewer distinct members than the role's `min_cell_size` disappear:
+Benefits administrators see spend by quarter and drug class, never member rows. Groups with fewer distinct members than the role's `min_cell_size` disappear. The totals are precomputed into `sponsor_spend_cells`, so a user's query is never evaluated against the member rows behind a hidden group. Groups smaller than every role's minimum are never stored, and the table's row policy applies each role's own minimum:
 
 ```sql
-HAVING COUNT(DISTINCT c.member_id) >= ms.min_cell_size
+WHERE c.members >= ms.min_cell_size   -- in the view; rf_cells applies the same rule in the row policy
 ```
+
+A `HAVING` clause over member-level rows is not enough on its own: a probe on the group's own columns can reveal that a hidden group exists. The `theo-cell` side-channel probe tests exactly that.
 
 [[ trace_card("larkspur", "dana") ]]
 
@@ -207,7 +235,7 @@ CASE WHEN mp.mask_identity THEN substr(sha2(concat('larkspur-demo:', c.member_id
 
 This hash is demo grade. In production use a keyed hash or a token vault so a reference can't be reversed by hashing every member id.
 
-### 9. Fail closed, and one service principal per application
+### 9. Nothing for unknown users, and one service principal per application
 
 A user who signs in but has no grants sees nothing:
 
@@ -233,7 +261,8 @@ The local app in `app/` is a working reference. The parts that matter in product
 - Keep tokens short-lived and on the server.
 - Keep base tables free of claim logic so pipelines and administrators keep working on them.
 - Grant the portal service principal `SELECT` on portal views and nothing else. The isolation suite proves it can't read base or governance objects, change entitlements or create objects.
-- One service principal per application, and every view checks `session_user()`.
+- One service principal per application, in its own account group, and every view checks `session_user()`.
+- Row policies on every base table the portal views read, plus default-deny, so a mistake in one layer never exposes rows (see the [Admin Runbook](admin-runbook.html) for tag governance and guardrail queries).
 - Keep prompt matching off on claim-keyed views, and keep Can Manage on the Genie Agent to a small group.
 - Run the isolation suite after every change to views, entitlements or the Genie Agent, and keep the results as evidence.
 
@@ -247,7 +276,7 @@ The local app in `app/` is a working reference. The parts that matter in product
 
 ## Step 6: Validate
 
-`notebooks/07_validate_isolation.py` (task 07 of each deploy job) and `python -m claims_kit.validate --example <name>` mint real tokens for every persona and check each layer:
+`notebooks/08_validate_isolation.py` (task 08 of each deploy job) and `python -m claims_kit.validate --example <name>` mint real tokens for every persona and check each layer:
 
 | Category | What it proves |
 |---|---|
@@ -260,7 +289,10 @@ The local app in `app/` is a working reference. The parts that matter in product
 | binding | Even with a mistaken grant, the view answers only for its own service principal |
 | token | Edited, unsigned and corrupted tokens are rejected |
 | genie | Answers contain the persona's own numbers and nobody else's |
+| side_channel | Error probes can't reveal values in rows the persona may not see (layered mode). In views mode the same probes are recorded under documented. |
 | documented | Platform behaviors your backend must handle (trimming, conversation ownership); never fails the run |
+
+The drills (`python -m claims_kit.drills --example <name>`, or the drills jobs) make five misconfigurations one at a time and show that each persona still sees only their own rows, while one layer alone returns the whole table. See [Choosing an Enforcement Model](choosing-an-enforcement-model.html#the-failure-matrix) for the live results.
 
 Results from the live runs behind this guide:
 
@@ -275,14 +307,15 @@ A case is inconclusive, never passed, when the evidence is ambiguous: Genie does
 1. One service principal per application; its credential in a vault with rotation, or workload identity federation.
 2. User id from the authenticated session only, validated against your canonical format.
 3. Tokens minted on the server, cached per user, never sent to the browser.
-4. Portal service principal: `USE CATALOG`, `USE SCHEMA` and `SELECT` on portal views only.
+4. Portal service principal in its application's account group; the group has `USE CATALOG`, `USE SCHEMA` and `SELECT` on portal views only.
 5. Claim-keyed views owned by an account group, with explicit column lists and comments on every column.
 6. Base tables without claim logic; entitlement tables with CHECK constraints.
-7. Genie Agent on portal views only, prompt matching off on claim-keyed views, Can Manage limited, instructions for naming and for other people.
-8. Conversation ids bound to users on the server; deleted at sign-out and on a schedule.
-9. Per-user audit log joined to query history on statement id.
-10. Transient errors retried; Genie polling with backoff and a timeout.
-11. Isolation suite run on every change, with results kept as evidence.
+7. Governed tags `portal_grain` and `portal_key` with ASSIGN limited to a governance group; one row policy per protected table, default-deny on the base schema, the coverage check passing, tables clustered on the policy keys.
+8. Genie Agent on portal views only, prompt matching off on claim-keyed views, Can Manage limited, instructions for naming and for other people.
+9. Conversation ids bound to users on the server; deleted at sign-out and on a schedule.
+10. Per-user audit log joined to query history on statement id.
+11. Transient errors retried; Genie polling with backoff and a timeout.
+12. Isolation suite and the guardrail queries run on every change, the drills on a test deployment, with results kept as evidence.
 
 ## Troubleshooting
 
