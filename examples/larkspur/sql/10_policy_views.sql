@@ -13,7 +13,8 @@ WHERE g.portal_user_id = current_oauth_custom_identity_claim()
   AND (g.valid_to IS NULL OR current_date() <= g.valid_to);
 
 -- A relationship rule derived from data, with no extra grant rows: a subscriber whose role includes minor
--- dependents also sees their children under 18. Spouses and adult children (18+) are never included.
+-- dependents also sees their children under 18. Spouses and adult children (18+) are never included. It reads the
+-- governance copy of the household, so the row-filter functions can use this view too.
 CREATE VIEW `{{catalog}}`.`{{gov}}`.my_members
 COMMENT 'Members whose claims the signed-in user may see, and why.'
 AS
@@ -25,7 +26,7 @@ FROM (
   UNION ALL
   SELECT m.member_id, 'minor dependent' AS visible_as
   FROM `{{catalog}}`.`{{gov}}`.my_effective_grants AS e
-  JOIN `{{catalog}}`.`{{base}}`.members AS m ON m.subscriber_id = e.scope_id
+  JOIN `{{catalog}}`.`{{gov}}`.household AS m ON m.subscriber_id = e.scope_id
   WHERE e.scope_type = 'member' AND e.detail_level = 'own' AND e.include_minor_dependents
     AND m.relationship = 'child'
     AND m.date_of_birth > add_months(current_date(), -216)

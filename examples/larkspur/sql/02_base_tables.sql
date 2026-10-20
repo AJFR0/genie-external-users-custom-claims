@@ -65,3 +65,14 @@ CREATE OR REPLACE TABLE `{{catalog}}`.`{{base}}`.accumulators (
   oop_max        DECIMAL(10,2) NOT NULL COMMENT 'Annual out-of-pocket maximum in US dollars',
   oop_met        DECIMAL(10,2) NOT NULL COMMENT 'Out-of-pocket spending so far in US dollars'
 ) COMMENT 'Deductible and out-of-pocket accumulators per member.';
+
+CREATE OR REPLACE TABLE `{{catalog}}`.`{{base}}`.sponsor_spend_cells (
+  sponsor_id     STRING        NOT NULL COMMENT 'Plan sponsor (employer) identifier',
+  fill_quarter   STRING        NOT NULL COMMENT 'Calendar quarter, for example 2026-Q1',
+  drug_class     STRING        NOT NULL COMMENT 'Therapeutic class',
+  members        BIGINT        NOT NULL COMMENT 'Distinct members with a paid claim in this group',
+  claims         BIGINT        NOT NULL COMMENT 'Paid claims in this group',
+  plan_paid      DECIMAL(14,2)          COMMENT 'Paid by the plan in US dollars',
+  member_paid    DECIMAL(14,2)          COMMENT 'Paid by members in US dollars',
+  generic_claims BIGINT                 COMMENT 'Paid claims for generic drugs'
+) COMMENT 'Paid spend by sponsor, quarter and drug class, precomputed so aggregate-only roles never reach member rows. Only groups at or above the smallest role minimum group size are stored.';

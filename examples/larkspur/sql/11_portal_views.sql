@@ -70,7 +70,7 @@ CREATE VIEW `{{catalog}}`.`{{portal}}`.sponsor_spend_summary (
   member_paid COMMENT 'Paid by members in US dollars',
   generic_claims COMMENT 'Paid claims for generic drugs'
 )
-COMMENT 'Paid pharmacy spend by sponsor, quarter and drug class for the sponsors in scope. Groups with fewer members than the role minimum cell size are hidden for privacy, so totals cover the visible groups only. No member-level data.'
+COMMENT 'Paid pharmacy spend by sponsor, quarter and drug class for the sponsors in scope. Groups with fewer members than the role minimum cell size are hidden for privacy, so totals cover the visible groups only. Read from precomputed spend cells, so no member-level data is involved.'
 AS
 WITH my_sponsors AS (
   SELECT scope_id AS sponsor_id, min(min_cell_size) AS min_cell_size
@@ -78,19 +78,12 @@ WITH my_sponsors AS (
   WHERE scope_type = 'sponsor' AND detail_level = 'aggregate'
   GROUP BY scope_id
 )
-SELECT c.sponsor_id, s.sponsor_name,
-       concat(CAST(year(c.fill_date) AS STRING), '-Q', CAST(quarter(c.fill_date) AS STRING)),
-       d.drug_class,
-       COUNT(DISTINCT c.member_id), COUNT(*),
-       CAST(SUM(c.plan_paid) AS DECIMAL(14,2)), CAST(SUM(c.member_paid) AS DECIMAL(14,2)),
-       SUM(CASE WHEN d.generic_flag THEN 1 ELSE 0 END)
-FROM `{{catalog}}`.`{{base}}`.pharmacy_claims AS c
+SELECT c.sponsor_id, s.sponsor_name, c.fill_quarter, c.drug_class, c.members, c.claims, c.plan_paid, c.member_paid,
+       c.generic_claims
+FROM `{{catalog}}`.`{{base}}`.sponsor_spend_cells AS c
 JOIN my_sponsors AS ms ON ms.sponsor_id = c.sponsor_id
 JOIN `{{catalog}}`.`{{base}}`.sponsors AS s ON s.sponsor_id = c.sponsor_id
-JOIN `{{catalog}}`.`{{base}}`.drugs AS d ON d.ndc = c.ndc
-WHERE c.claim_status = 'paid'
-GROUP BY c.sponsor_id, s.sponsor_name, year(c.fill_date), quarter(c.fill_date), d.drug_class, ms.min_cell_size
-HAVING COUNT(DISTINCT c.member_id) >= ms.min_cell_size;
+WHERE c.members >= ms.min_cell_size;
 
 CREATE VIEW `{{catalog}}`.`{{portal}}`.pharmacy_remittance (
   claim_id COMMENT 'Claim identifier',

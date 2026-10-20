@@ -25,3 +25,17 @@ def test_referential_integrity_and_unique_ids():
     assert all(p["plan_id"] in plan_ids for p in data["participants"])
     assert all(b["fund_id"] in fund_ids and b["participant_id"] in set(pids) for b in data["account_balances"])
     assert all(isinstance(b["balance"], Decimal) for b in data["account_balances"])
+
+
+def test_participant_plans_mapping_is_derived_into_governance():
+    from claims_kit.config import load_example
+    ex = load_example("northwind")
+    sql = ex.read_sql("derived_tables", ex.template_values("c", "sp", "owner"))
+    assert "CREATE OR REPLACE TABLE `c`.`northwind_governance`.participant_plans" in sql
+    assert "FROM `c`.`northwind_base`.account_balances" in sql and "FROM `c`.`northwind_base`.contributions" in sql
+
+
+def test_entitlements_notebook_builds_the_derived_tables():
+    from pathlib import Path
+    nb = (Path(__file__).resolve().parents[1] / "notebooks" / "03_entitlements.py").read_text()
+    assert 'read_sql("derived_tables"' in nb
