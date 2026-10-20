@@ -53,6 +53,19 @@ def run_ask(services, settings, runtime, persona, question: str, new_conversatio
             if not access.rows:
                 s.status = "warn"
                 s.detail["note"] = "No active grants: every portal view returns no rows (fail closed)."
+        if settings.enforcement == "layered":
+            with trace.step("Row policies under the views") as s:
+                s.detail = {"enforcement": "layered",
+                            "route": ["each base table the views read carries an ABAC row policy for this application's group",
+                                      "the policy admits only the rows this user's grants allow, before any condition in "
+                                      "Genie's SQL runs, so errors can't reveal other users' values",
+                                      "the views still apply their own claim check, so one mistake never opens the data"]}
+        else:
+            with trace.step("Views only: no row policies under the views") as s:
+                s.status = "warn"
+                s.detail = {"enforcement": "views",
+                            "note": "The claim-keyed views are the only filter. Use this mode only when your application "
+                                    "controls every query; free-form questions could probe other rows through errors."}
         with trace.step("Rows returned") as s:
             s.detail = {"results": [{"columns": q.columns, "rows": q.rows[:20], "row_count": len(q.rows),
                                      "statement_id": maybe(q.statement_id)} for q in result.queries]}

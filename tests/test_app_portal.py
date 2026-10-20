@@ -3,7 +3,8 @@ from claims_kit.sql import StatementError
 
 TITLES = ["Session → portal user id", "Claim format check", "Token for the portal service principal, stamped with the claim",
           "Genie conversation, bound to this user on the server", "SQL written by Genie",
-          "Why these rows: entitlements resolved from the claim", "Rows returned", "Audit record written"]
+          "Why these rows: entitlements resolved from the claim", "Row policies under the views", "Rows returned",
+          "Audit record written"]
 
 
 def sign_in(client, persona="maya"):
@@ -16,7 +17,7 @@ def test_ask_requires_sign_in(tmp_path):
     assert client.post("/portal/api/ask", json={"question": "hi"}).status_code == 401
 
 
-def test_sign_in_and_ask_returns_eight_step_trace(tmp_path):
+def test_sign_in_and_ask_returns_nine_step_trace(tmp_path):
     client, services, genie, runner = make_client(tmp_path)
     sign_in(client)
     body = client.post("/portal/api/ask", json={"question": "What is my balance?"}).json()
@@ -132,3 +133,17 @@ def test_redact_mode_scrubs_hosts_and_ids_from_errors(tmp_path):
 def test_untrusted_host_header_is_rejected(tmp_path):
     client, *_ = make_client(tmp_path)
     assert client.get("/portal", headers={"host": "evil.example"}).status_code == 400
+
+
+def test_layered_trace_names_the_row_policy_layer(tmp_path):
+    client, *_ = make_client(tmp_path)
+    sign_in(client)
+    step = client.post("/portal/api/ask", json={"question": "q"}).json()["trace"][6]
+    assert step["title"] == "Row policies under the views" and step["detail"]["enforcement"] == "layered"
+
+
+def test_views_mode_trace_says_there_are_no_row_policies(tmp_path):
+    client, *_ = make_client(tmp_path, enforcement="views")
+    sign_in(client)
+    titles = [s["title"] for s in client.post("/portal/api/ask", json={"question": "q"}).json()["trace"]]
+    assert "Views only: no row policies under the views" in titles and "Row policies under the views" not in titles

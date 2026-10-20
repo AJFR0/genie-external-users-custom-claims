@@ -16,6 +16,10 @@ class Settings:
     redact_ids: bool
     allowed_hosts: tuple = ("127.0.0.1", "localhost")
 
+    @property
+    def enforcement(self) -> str:
+        return self.env.enforcement if self.env else "layered"
+
 
 def load_settings(mapping: dict | None = None) -> Settings:
     m = read_env() if mapping is None else mapping
