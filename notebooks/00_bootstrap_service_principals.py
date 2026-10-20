@@ -14,6 +14,15 @@
 # MAGIC This notebook creates each service principal (with workspace and SQL access), creates an OAuth secret,
 # MAGIC stores the client id and secret in the secret scope, and grants `CAN USE` on the SQL warehouse.
 # MAGIC In production the secret lives in your own vault, or you use workload identity federation and store none.
+# MAGIC
+# MAGIC It also creates one **account group** per application, `genie-claims-ref-<example>-portal-backends`, with the
+# MAGIC service principal as its only member. Grants and row policies name the group, so you can rotate or replace the
+# MAGIC service principal by changing membership, with no grant or policy changes. New memberships can take a few
+# MAGIC minutes to reach Unity Catalog.
+# MAGIC
+# MAGIC With `tag_set=governed` (the default), it also tries to create the two governed tags the row policies use,
+# MAGIC `portal_grain` and `portal_key`. Creating governed tags needs account-level permission; if you don't have it,
+# MAGIC the notebook prints what to ask an account admin for. Keep ASSIGN on these tags to a small governance group.
 
 # COMMAND ----------
 
@@ -31,6 +40,9 @@ dbutils.library.restartPython()  # noqa: F821
 
 from databricks.sdk.service import iam
 from databricks.sdk.service import sql as dbsql
+
+from claims_kit.identity import add_portal_member, create_governed_tags
+from claims_kit.tags import load_tag_set
 
 EXAMPLES = [e.strip() for e in param("examples", "northwind,larkspur").split(",") if e.strip()]
 ROTATE = param("rotate_secrets", "false") == "true"
@@ -53,3 +65,14 @@ for name in EXAMPLES:
         dbsql.WarehouseAccessControlRequest(service_principal_name=sp.application_id,
                                             permission_level=dbsql.WarehousePermissionLevel.CAN_USE)])
     print(f"{name}: {display} ready (application id {sp.application_id})")
+    group = load_example(name).portal_group
+    add_portal_member(w.api_client.do, group, sp.id)
+    print(f"{name}: account group {group} has the portal service principal as its only member")
+
+# COMMAND ----------
+
+TAG_SET_NAME = param("tag_set", "governed")
+if TAG_SET_NAME == "governed":
+    print("\n".join(create_governed_tags(w.api_client.do, load_tag_set(TAG_SET_NAME))))
+else:
+    print(f"tag_set={TAG_SET_NAME}: no governed tags created (evaluation only)")

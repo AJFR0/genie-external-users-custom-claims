@@ -108,6 +108,13 @@ def test_runtime_grants_only_portal_views():
     assert text.count("GRANT SELECT ON VIEW") == len(EX.portal_views) + len(EX.public_views)
 
 
+def test_runtime_grants_go_to_the_application_group_only():
+    admin = Recorder()
+    apply_runtime_grants(EX, admin_sql=admin, **KW)
+    assert admin.statements and all(s.endswith(f"TO `{EX.portal_group}`") for s in admin.statements)
+    assert not any("app-id" in s for s in admin.statements)
+
+
 def _failing_admin(predicate, message):
     statements = []
 
