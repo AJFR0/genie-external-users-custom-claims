@@ -6,6 +6,7 @@ from claims_kit.sql import StatementError
 
 EX = load_example("northwind")
 KW = dict(catalog="cat", portal_sp="app-id", view_owner="owner@example.com")
+REVOKES = revoke_temporary_grants(EX, "cat", "app-id")
 
 
 class Recorder:
@@ -44,7 +45,7 @@ def test_throw_mode_order_and_separation_of_duties():
     kinds = [x.split()[0] for x in admin.statements]
     first_grant, first_alter, first_revoke = kinds.index("GRANT"), kinds.index("ALTER"), kinds.index("REVOKE")
     assert kinds.index("DROP") < first_grant < first_alter < first_revoke
-    assert admin.statements[-3:] == revoke_temporary_grants(EX, "cat", "app-id")
+    assert admin.statements[-len(REVOKES):] == REVOKES
 
 
 def test_redeploy_drops_existing_views_first():
@@ -59,7 +60,7 @@ def test_throw_mode_failure_still_transfers_and_revokes():
     with pytest.raises(StatementError):
         deploy_claim_views(EX, mode="throws", admin_sql=admin, sp_runner=sp, **KW)
     assert sum(x.startswith("ALTER VIEW") for x in admin.statements) == len(EX.claim_views)
-    assert admin.statements[-3:] == revoke_temporary_grants(EX, "cat", "app-id")
+    assert admin.statements[-len(REVOKES):] == REVOKES
 
 
 def test_missing_view_during_ownership_transfer_is_skipped():
@@ -71,7 +72,7 @@ def test_missing_view_during_ownership_transfer_is_skipped():
             raise RuntimeError("[TABLE_OR_VIEW_NOT_FOUND] not there")
 
     log = deploy_claim_views(EX, mode="throws", admin_sql=admin, sp_runner=FakeSP(), **KW)
-    assert any("skipped ownership" in line for line in log) and statements[-3:] == revoke_temporary_grants(EX, "cat", "app-id")
+    assert any("skipped ownership" in line for line in log) and statements[-len(REVOKES):] == REVOKES
 
 
 def test_owner_transfer_error_still_revokes():
@@ -84,7 +85,7 @@ def test_owner_transfer_error_still_revokes():
 
     with pytest.raises(RuntimeError, match="PERMISSION_DENIED"):
         deploy_claim_views(EX, mode="throws", admin_sql=admin, sp_runner=FakeSP(), **KW)
-    assert statements[-3:] == revoke_temporary_grants(EX, "cat", "app-id")
+    assert statements[-len(REVOKES):] == REVOKES
 
 
 def test_mode_validation():
@@ -130,7 +131,7 @@ def test_grant_failure_still_attempts_every_owner_transfer_and_revoke():
     with pytest.raises(RuntimeError, match="grant 3"):
         deploy_claim_views(EX, mode="throws", admin_sql=admin, sp_runner=FakeSP(), **KW)
     assert sum(s.startswith("ALTER VIEW") for s in statements) == len(EX.claim_views)
-    assert statements[-3:] == revoke_temporary_grants(EX, "cat", "app-id")
+    assert statements[-len(REVOKES):] == REVOKES
 
 
 def test_owner_transfer_error_still_attempts_every_view():
@@ -145,7 +146,7 @@ def test_revoke_failure_still_attempts_remaining_revokes():
     admin, statements = _failing_admin(lambda s: s == first_revoke, "[INTERNAL_ERROR] revoke")
     with pytest.raises(RuntimeError, match="revoke"):
         deploy_claim_views(EX, mode="throws", admin_sql=admin, sp_runner=FakeSP(), **KW)
-    assert statements[-3:] == revoke_temporary_grants(EX, "cat", "app-id")
+    assert statements[-len(REVOKES):] == REVOKES
 
 
 def test_several_cleanup_errors_are_reported_together():
@@ -153,7 +154,7 @@ def test_several_cleanup_errors_are_reported_together():
     admin, _ = _failing_admin(lambda s: s.startswith("ALTER VIEW") or s.startswith("REVOKE"), "[PERMISSION_DENIED] nope")
     with pytest.raises(DeployError) as err:
         deploy_claim_views(EX, mode="throws", admin_sql=admin, sp_runner=FakeSP(fail_at=1), **KW)
-    assert len(err.value.errors) == 1 + len(EX.claim_views) + 3
+    assert len(err.value.errors) == 1 + len(EX.claim_views) + len(REVOKES)
 
 
 from claims_kit.deploy import apply_row_policies, deploy_policy_functions, remove_row_policies
@@ -183,7 +184,7 @@ def test_policy_functions_in_throw_mode_run_as_sp_then_change_owner():
     assert all(x.startswith("CREATE OR REPLACE FUNCTION") for x in sp.statements)
     owners = [s for s in admin.statements if s.startswith("ALTER FUNCTION")]
     assert owners == [f"ALTER FUNCTION `cat`.`northwind_governance`.`{f}` OWNER TO `owner@example.com`" for f in EX.claim_functions]
-    assert admin.statements[-3:] == revoke_temporary_grants(EX, "cat", "app-id")
+    assert admin.statements[-len(REVOKES):] == REVOKES
 
 
 def test_policy_functions_in_null_mode_are_created_by_the_admin():
@@ -197,7 +198,7 @@ def test_policy_functions_revoke_even_when_creation_fails():
     admin, sp = Recorder(), FakeSP(fail_at=2)
     with pytest.raises(StatementError):
         deploy_policy_functions(EX, mode="throws", admin_sql=admin, sp_runner=sp, **KW)
-    assert admin.statements[-3:] == revoke_temporary_grants(EX, "cat", "app-id")
+    assert admin.statements[-len(REVOKES):] == REVOKES
 
 
 def test_apply_row_policies_tags_before_policies():
@@ -218,3 +219,17 @@ def test_remove_row_policies_raises_other_errors():
     admin = FailingRecorder("DROP POLICY", "[INSUFFICIENT_PERMISSIONS] no MANAGE")
     with pytest.raises(StatementError):
         remove_row_policies(EX, catalog="cat", admin_sql=admin)
+
+
+def test_revoking_temporary_grants_leaves_the_service_principal_no_direct_grants():
+    """Runtime access comes from the application's group, so every direct grant made for the claim session is revoked."""
+    def privileges(stmts, verb):
+        out = set()
+        for s in stmts:
+            privs, target = s[len(verb) + 1:].split(" ON ", 1)
+            on = target.rsplit(" TO " if verb == "GRANT" else " FROM ", 1)[0]
+            out |= {(p.strip(), on) for p in privs.split(",")}
+        return out
+    granted = privileges(temporary_grants(EX, "cat", "app-id"), "GRANT")
+    revoked = privileges(revoke_temporary_grants(EX, "cat", "app-id"), "REVOKE")
+    assert granted == revoked

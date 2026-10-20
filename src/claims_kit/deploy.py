@@ -42,12 +42,14 @@ def temporary_grants(ex: Example, catalog: str, portal_sp: str) -> list[str]:
 
 
 def revoke_temporary_grants(ex: Example, catalog: str, portal_sp: str) -> list[str]:
-    _, base, gov, portal = _names(ex, catalog)
+    """Revoke everything temporary_grants gave. At runtime the service principal reads through its application's group."""
+    c, base, gov, portal = _names(ex, catalog)
     sp = f"`{portal_sp}`"
     return [
         f"REVOKE USE SCHEMA, SELECT ON SCHEMA {base} FROM {sp}",
         f"REVOKE USE SCHEMA, SELECT, CREATE TABLE, CREATE FUNCTION ON SCHEMA {gov} FROM {sp}",
-        f"REVOKE CREATE TABLE ON SCHEMA {portal} FROM {sp}",
+        f"REVOKE USE SCHEMA, CREATE TABLE ON SCHEMA {portal} FROM {sp}",
+        f"REVOKE USE CATALOG ON CATALOG {c} FROM {sp}",
     ]
 
 
