@@ -1,0 +1,72 @@
+{
+  "example": "northwind",
+  "run_date": "2026-10-20",
+  "persona": "maya",
+  "baseline": {
+    "own": 4,
+    "reach": 4,
+    "total": 444
+  },
+  "results": [
+    {
+      "drill_id": "D1",
+      "mistake": "tag removed from the key column base.account_balances.participant_id",
+      "expect": "own",
+      "layered_rows": 4,
+      "single_layer_rows": 444,
+      "expected_rows": 4,
+      "total_rows": 444,
+      "restored": true,
+      "passed": true,
+      "observed": "held: 4 rows with the mistake in place (expected 4); one layer alone returned 444 of 444"
+    },
+    {
+      "drill_id": "D2",
+      "mistake": "the row policy names another application's group",
+      "expect": "own",
+      "layered_rows": 4,
+      "single_layer_rows": 444,
+      "expected_rows": 4,
+      "total_rows": 444,
+      "restored": true,
+      "passed": true,
+      "observed": "held: 4 rows with the mistake in place (expected 4); one layer alone returned 444 of 444"
+    },
+    {
+      "drill_id": "D3",
+      "mistake": "a view without the claim filter is granted to the portal",
+      "expect": "reach",
+      "layered_rows": 4,
+      "single_layer_rows": 444,
+      "expected_rows": 4,
+      "total_rows": 444,
+      "restored": true,
+      "passed": true,
+      "observed": "held: 4 rows with the mistake in place (expected 4); one layer alone returned 444 of 444"
+    },
+    {
+      "drill_id": "D4",
+      "mistake": "a new untagged table is exposed through a view without the claim filter",
+      "expect": "zero",
+      "layered_rows": 0,
+      "single_layer_rows": 444,
+      "expected_rows": 0,
+      "total_rows": 444,
+      "restored": true,
+      "passed": true,
+      "observed": "held: 0 rows with the mistake in place (expected 0); one layer alone returned 444 of 444"
+    },
+    {
+      "drill_id": "D5",
+      "mistake": "the base table base.account_balances is granted to the portal directly",
+      "expect": "reach",
+      "layered_rows": 4,
+      "single_layer_rows": 444,
+      "expected_rows": 4,
+      "total_rows": 444,
+      "restored": true,
+      "passed": true,
+      "observed": "held: 4 rows with the mistake in place (expected 4); one layer alone returned 444 of 444"
+    }
+  ]
+}

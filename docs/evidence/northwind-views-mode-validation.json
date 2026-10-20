@@ -1,0 +1,691 @@
+{
+  "example": "northwind",
+  "run_date": "2026-10-20",
+  "catalog": "<catalog>",
+  "results": [
+    {
+      "case_id": "visibility/maya/my_access",
+      "category": "visibility",
+      "persona": "maya",
+      "passed": true,
+      "expected": "1 ids (participant|P-1001)",
+      "observed": "1 ids (participant|P-1001)",
+      "statement_id": "<id>"
+    },
+    {
+      "case_id": "visibility/maya/my_accounts",
+      "category": "visibility",
+      "persona": "maya",
+      "passed": true,
+      "expected": "1 ids (P-1001)",
+      "observed": "1 ids (P-1001)",
+      "statement_id": "<id>"
+    },
+    {
+      "case_id": "visibility/maya/my_contributions",
+      "category": "visibility",
+      "persona": "maya",
+      "passed": true,
+      "expected": "1 ids (P-1001)",
+      "observed": "1 ids (P-1001)",
+      "statement_id": "<id>"
+    },
+    {
+      "case_id": "visibility/maya/plan_roster",
+      "category": "visibility",
+      "persona": "maya",
+      "passed": true,
+      "expected": "0 ids",
+      "observed": "0 ids",
+      "statement_id": "<id>"
+    },
+    {
+      "case_id": "visibility/maya/plan_summary",
+      "category": "visibility",
+      "persona": "maya",
+      "passed": true,
+      "expected": "0 ids",
+      "observed": "0 ids",
+      "statement_id": "<id>"
+    },
+    {
+      "case_id": "visibility/james/my_access",
+      "category": "visibility",
+      "persona": "james",
+      "passed": true,
+      "expected": "1 ids (participant|P-1002)",
+      "observed": "1 ids (participant|P-1002)",
+      "statement_id": "<id>"
+    },
+    {
+      "case_id": "visibility/james/my_accounts",
+      "category": "visibility",
+      "persona": "james",
+      "passed": true,
+      "expected": "1 ids (P-1002)",
+      "observed": "1 ids (P-1002)",
+      "statement_id": "<id>"
+    },
+    {
+      "case_id": "visibility/james/my_contributions",
+      "category": "visibility",
+      "persona": "james",
+      "passed": true,
+      "expected": "1 ids (P-1002)",
+      "observed": "1 ids (P-1002)",
+      "statement_id": "<id>"
+    },
+    {
+      "case_id": "visibility/james/plan_roster",
+      "category": "visibility",
+      "persona": "james",
+      "passed": true,
+      "expected": "0 ids",
+      "observed": "0 ids",
+      "statement_id": "<id>"
+    },
+    {
+      "case_id": "visibility/james/plan_summary",
+      "category": "visibility",
+      "persona": "james",
+      "passed": true,
+      "expected": "0 ids",
+      "observed": "0 ids",
+      "statement_id": "<id>"
+    },
+    {
+      "case_id": "visibility/linda/my_access",
+      "category": "visibility",
+      "persona": "linda",
+      "passed": true,
+      "expected": "2 ids (participant|P-2001, sponsor|PLAN-A)",
+      "observed": "2 ids (participant|P-2001, sponsor|PLAN-A)",
+      "statement_id": "<id>"
+    },
+    {
+      "case_id": "visibility/linda/my_accounts",
+      "category": "visibility",
+      "persona": "linda",
+      "passed": true,
+      "expected": "1 ids (P-2001)",
+      "observed": "1 ids (P-2001)",
+      "statement_id": "<id>"
+    },
+    {
+      "case_id": "visibility/linda/my_contributions",
+      "category": "visibility",
+      "persona": "linda",
+      "passed": true,
+      "expected": "1 ids (P-2001)",
+      "observed": "1 ids (P-2001)",
+      "statement_id": "<id>"
+    },
+    {
+      "case_id": "visibility/linda/plan_roster",
+      "category": "visibility",
+      "persona": "linda",
+      "passed": true,
+      "expected": "59 ids (P-0001, P-0002, P-0003, P-0004, P-0005, P-0006, \u2026)",
+      "observed": "59 ids (P-0001, P-0002, P-0003, P-0004, P-0005, P-0006, \u2026)",
+      "statement_id": "<id>"
+    },
+    {
+      "case_id": "visibility/linda/plan_summary",
+      "category": "visibility",
+      "persona": "linda",
+      "passed": true,
+      "expected": "1 ids (PLAN-A)",
+      "observed": "1 ids (PLAN-A)",
+      "statement_id": "<id>"
+    },
+    {
+      "case_id": "visibility/raj/my_access",
+      "category": "visibility",
+      "persona": "raj",
+      "passed": true,
+      "expected": "2 ids (advisor|PLAN-A, advisor|PLAN-C)",
+      "observed": "2 ids (advisor|PLAN-A, advisor|PLAN-C)",
+      "statement_id": "<id>"
+    },
+    {
+      "case_id": "visibility/raj/my_accounts",
+      "category": "visibility",
+      "persona": "raj",
+      "passed": true,
+      "expected": "0 ids",
+      "observed": "0 ids",
+      "statement_id": "<id>"
+    },
+    {
+      "case_id": "visibility/raj/my_contributions",
+      "category": "visibility",
+      "persona": "raj",
+      "passed": true,
+      "expected": "0 ids",
+      "observed": "0 ids",
+      "statement_id": "<id>"
+    },
+    {
+      "case_id": "visibility/raj/plan_roster",
+      "category": "visibility",
+      "persona": "raj",
+      "passed": true,
+      "expected": "99 ids (P-0001, P-0002, P-0003, P-0004, P-0005, P-0006, \u2026)",
+      "observed": "99 ids (P-0001, P-0002, P-0003, P-0004, P-0005, P-0006, \u2026)",
+      "statement_id": "<id>"
+    },
+    {
+      "case_id": "visibility/raj/plan_summary",
+      "category": "visibility",
+      "persona": "raj",
+      "passed": true,
+      "expected": "2 ids (PLAN-A, PLAN-C)",
+      "observed": "2 ids (PLAN-A, PLAN-C)",
+      "statement_id": "<id>"
+    },
+    {
+      "case_id": "visibility/unknown/my_access",
+      "category": "visibility",
+      "persona": "unknown",
+      "passed": true,
+      "expected": "0 ids",
+      "observed": "0 ids",
+      "statement_id": "<id>"
+    },
+    {
+      "case_id": "visibility/unknown/my_accounts",
+      "category": "visibility",
+      "persona": "unknown",
+      "passed": true,
+      "expected": "0 ids",
+      "observed": "0 ids",
+      "statement_id": "<id>"
+    },
+    {
+      "case_id": "visibility/unknown/my_contributions",
+      "category": "visibility",
+      "persona": "unknown",
+      "passed": true,
+      "expected": "0 ids",
+      "observed": "0 ids",
+      "statement_id": "<id>"
+    },
+    {
+      "case_id": "visibility/unknown/plan_roster",
+      "category": "visibility",
+      "persona": "unknown",
+      "passed": true,
+      "expected": "0 ids",
+      "observed": "0 ids",
+      "statement_id": "<id>"
+    },
+    {
+      "case_id": "visibility/unknown/plan_summary",
+      "category": "visibility",
+      "persona": "unknown",
+      "passed": true,
+      "expected": "0 ids",
+      "observed": "0 ids",
+      "statement_id": "<id>"
+    },
+    {
+      "case_id": "no_duplicates/maya/my_access",
+      "category": "visibility",
+      "persona": "maya",
+      "passed": true,
+      "expected": "no duplicated rows",
+      "observed": "1 rows, 1 distinct",
+      "statement_id": "<id>"
+    },
+    {
+      "case_id": "no_duplicates/maya/my_accounts",
+      "category": "visibility",
+      "persona": "maya",
+      "passed": true,
+      "expected": "no duplicated rows",
+      "observed": "4 rows, 4 distinct",
+      "statement_id": "<id>"
+    },
+    {
+      "case_id": "no_duplicates/maya/my_contributions",
+      "category": "visibility",
+      "persona": "maya",
+      "passed": true,
+      "expected": "no duplicated rows",
+      "observed": "18 rows, 18 distinct",
+      "statement_id": "<id>"
+    },
+    {
+      "case_id": "no_duplicates/james/my_access",
+      "category": "visibility",
+      "persona": "james",
+      "passed": true,
+      "expected": "no duplicated rows",
+      "observed": "1 rows, 1 distinct",
+      "statement_id": "<id>"
+    },
+    {
+      "case_id": "no_duplicates/james/my_accounts",
+      "category": "visibility",
+      "persona": "james",
+      "passed": true,
+      "expected": "no duplicated rows",
+      "observed": "3 rows, 3 distinct",
+      "statement_id": "<id>"
+    },
+    {
+      "case_id": "no_duplicates/james/my_contributions",
+      "category": "visibility",
+      "persona": "james",
+      "passed": true,
+      "expected": "no duplicated rows",
+      "observed": "18 rows, 18 distinct",
+      "statement_id": "<id>"
+    },
+    {
+      "case_id": "no_duplicates/linda/my_access",
+      "category": "visibility",
+      "persona": "linda",
+      "passed": true,
+      "expected": "no duplicated rows",
+      "observed": "2 rows, 2 distinct",
+      "statement_id": "<id>"
+    },
+    {
+      "case_id": "no_duplicates/linda/my_accounts",
+      "category": "visibility",
+      "persona": "linda",
+      "passed": true,
+      "expected": "no duplicated rows",
+      "observed": "4 rows, 4 distinct",
+      "statement_id": "<id>"
+    },
+    {
+      "case_id": "no_duplicates/linda/my_contributions",
+      "category": "visibility",
+      "persona": "linda",
+      "passed": true,
+      "expected": "no duplicated rows",
+      "observed": "18 rows, 18 distinct",
+      "statement_id": "<id>"
+    },
+    {
+      "case_id": "no_duplicates/linda/plan_roster",
+      "category": "visibility",
+      "persona": "linda",
+      "passed": true,
+      "expected": "no duplicated rows",
+      "observed": "59 rows, 59 distinct",
+      "statement_id": "<id>"
+    },
+    {
+      "case_id": "no_duplicates/linda/plan_summary",
+      "category": "visibility",
+      "persona": "linda",
+      "passed": true,
+      "expected": "no duplicated rows",
+      "observed": "8 rows, 8 distinct",
+      "statement_id": "<id>"
+    },
+    {
+      "case_id": "no_duplicates/raj/my_access",
+      "category": "visibility",
+      "persona": "raj",
+      "passed": true,
+      "expected": "no duplicated rows",
+      "observed": "2 rows, 2 distinct",
+      "statement_id": "<id>"
+    },
+    {
+      "case_id": "no_duplicates/raj/plan_roster",
+      "category": "visibility",
+      "persona": "raj",
+      "passed": true,
+      "expected": "no duplicated rows",
+      "observed": "99 rows, 99 distinct",
+      "statement_id": "<id>"
+    },
+    {
+      "case_id": "no_duplicates/raj/plan_summary",
+      "category": "visibility",
+      "persona": "raj",
+      "passed": true,
+      "expected": "no duplicated rows",
+      "observed": "16 rows, 16 distinct",
+      "statement_id": "<id>"
+    },
+    {
+      "case_id": "role_effect/linda/plan_roster.date_of_birth",
+      "category": "role_effect",
+      "persona": "linda",
+      "passed": true,
+      "expected": "visible: no NULL values",
+      "observed": "59 of 59 rows non-NULL",
+      "statement_id": "<id>"
+    },
+    {
+      "case_id": "role_effect/raj/plan_roster.date_of_birth",
+      "category": "role_effect",
+      "persona": "raj",
+      "passed": true,
+      "expected": "masked: every value NULL",
+      "observed": "0 of 99 rows non-NULL",
+      "statement_id": "<id>"
+    },
+    {
+      "case_id": "constraint/newline-claim",
+      "category": "constraint",
+      "persona": null,
+      "passed": true,
+      "expected": "rejected by the claim_format CHECK constraint",
+      "observed": "rejected: [DELTA_VIOLATE_CONSTRAINT_WITH_VALUES] CHECK constraint claim_format (regexp_extract(portal_user_id, '^[a-z0-9][a-z0-9._:-]{0,127}', 0) = portal_user_id) violat",
+      "statement_id": "<id>"
+    },
+    {
+      "case_id": "constraint/uppercase-claim",
+      "category": "constraint",
+      "persona": null,
+      "passed": true,
+      "expected": "rejected by the claim_format CHECK constraint",
+      "observed": "rejected: [DELTA_VIOLATE_CONSTRAINT_WITH_VALUES] CHECK constraint claim_format (regexp_extract(portal_user_id, '^[a-z0-9][a-z0-9._:-]{0,127}', 0) = portal_user_id) violat",
+      "statement_id": "<id>"
+    },
+    {
+      "case_id": "constraint/leading-space-claim",
+      "category": "constraint",
+      "persona": null,
+      "passed": true,
+      "expected": "rejected by the claim_format CHECK constraint",
+      "observed": "rejected: [DELTA_VIOLATE_CONSTRAINT_WITH_VALUES] CHECK constraint claim_format (regexp_extract(portal_user_id, '^[a-z0-9][a-z0-9._:-]{0,127}', 0) = portal_user_id) violat",
+      "statement_id": "<id>"
+    },
+    {
+      "case_id": "attack/no-claim",
+      "category": "attack",
+      "persona": null,
+      "passed": true,
+      "expected": "0 rows or an error",
+      "observed": "rejected: [OAUTH_CUSTOM_IDENTITY_CLAIM_NOT_PROVIDED] No custom identity claim was provided. SQLSTATE: 22KD2",
+      "statement_id": "<id>"
+    },
+    {
+      "case_id": "attack/sql-injection",
+      "category": "attack",
+      "persona": null,
+      "passed": true,
+      "expected": "0 rows or an error",
+      "observed": "0 rows",
+      "statement_id": "<id>"
+    },
+    {
+      "case_id": "attack/wildcard",
+      "category": "attack",
+      "persona": null,
+      "passed": true,
+      "expected": "0 rows or an error",
+      "observed": "0 rows",
+      "statement_id": "<id>"
+    },
+    {
+      "case_id": "attack/prefix-wildcard",
+      "category": "attack",
+      "persona": null,
+      "passed": true,
+      "expected": "0 rows or an error",
+      "observed": "0 rows",
+      "statement_id": "<id>"
+    },
+    {
+      "case_id": "attack/uppercase",
+      "category": "attack",
+      "persona": null,
+      "passed": true,
+      "expected": "0 rows or an error",
+      "observed": "0 rows",
+      "statement_id": "<id>"
+    },
+    {
+      "case_id": "attack/control-character",
+      "category": "attack",
+      "persona": null,
+      "passed": true,
+      "expected": "0 rows or an error",
+      "observed": "rejected: BAD_REQUEST: Query could not be scheduled: Header {X-Databricks-Oauth-Identity-Custom-Claim -> pu-1001 } contains characters whose code point is in [0,31] or equal",
+      "statement_id": "<id>"
+    },
+    {
+      "case_id": "attack/admin-without-claim",
+      "category": "attack",
+      "persona": null,
+      "passed": true,
+      "expected": "0 rows or an error",
+      "observed": "rejected: [OAUTH_CUSTOM_IDENTITY_CLAIM_NOT_PROVIDED] No custom identity claim was provided. SQLSTATE: 22KD2",
+      "statement_id": "<id>"
+    },
+    {
+      "case_id": "documented/whitespace-trim",
+      "category": "documented",
+      "persona": "maya",
+      "passed": true,
+      "expected": "a claim with surrounding spaces matches the trimmed claim, so validate claims before minting",
+      "observed": "4 rows vs 4",
+      "statement_id": "<id>"
+    },
+    {
+      "case_id": "privilege/read-base-table",
+      "category": "privilege",
+      "persona": null,
+      "passed": true,
+      "expected": "denied",
+      "observed": "denied: [INSUFFICIENT_PERMISSIONS] Insufficient privileges: User does not have USE SCHEMA on Schema '<catalog>.northwind_base'. SQLSTATE: 42501",
+      "statement_id": "<id>"
+    },
+    {
+      "case_id": "privilege/read-entitlements",
+      "category": "privilege",
+      "persona": null,
+      "passed": true,
+      "expected": "denied",
+      "observed": "denied: [INSUFFICIENT_PERMISSIONS] Insufficient privileges: User does not have USE SCHEMA on Schema '<catalog>.northwind_governance'. SQLSTATE: 42501",
+      "statement_id": "<id>"
+    },
+    {
+      "case_id": "privilege/read-role-policies",
+      "category": "privilege",
+      "persona": null,
+      "passed": true,
+      "expected": "denied",
+      "observed": "denied: [INSUFFICIENT_PERMISSIONS] Insufficient privileges: User does not have USE SCHEMA on Schema '<catalog>.northwind_governance'. SQLSTATE: 42501",
+      "statement_id": "<id>"
+    },
+    {
+      "case_id": "privilege/read-policy-view",
+      "category": "privilege",
+      "persona": null,
+      "passed": true,
+      "expected": "denied",
+      "observed": "denied: [INSUFFICIENT_PERMISSIONS] Insufficient privileges: User does not have USE SCHEMA on Schema '<catalog>.northwind_governance'. SQLSTATE: 42501",
+      "statement_id": "<id>"
+    },
+    {
+      "case_id": "privilege/change-entitlements",
+      "category": "privilege",
+      "persona": null,
+      "passed": true,
+      "expected": "denied",
+      "observed": "denied: [INSUFFICIENT_PERMISSIONS] Insufficient privileges: User does not have USE SCHEMA on Schema '<catalog>.northwind_governance'. SQLSTATE: 42501",
+      "statement_id": "<id>"
+    },
+    {
+      "case_id": "privilege/create-view",
+      "category": "privilege",
+      "persona": null,
+      "passed": true,
+      "expected": "denied",
+      "observed": "denied: BAD_REQUEST: PERMISSION_DENIED: User does not have CREATE TABLE on Schema '<catalog>.northwind_portal'.",
+      "statement_id": "<id>"
+    },
+    {
+      "case_id": "cross_app/other-application",
+      "category": "cross_app",
+      "persona": "maya",
+      "passed": true,
+      "expected": "denied",
+      "observed": "denied: [INSUFFICIENT_PERMISSIONS] Insufficient privileges: User does not have USE SCHEMA on Schema '<catalog>.northwind_portal'. SQLSTATE: 42501",
+      "statement_id": "<id>"
+    },
+    {
+      "case_id": "binding/mistaken-grant",
+      "category": "binding",
+      "persona": "maya",
+      "passed": true,
+      "expected": "0 rows: the view answers only for its own service principal",
+      "observed": "0 rows",
+      "statement_id": "<id>"
+    },
+    {
+      "case_id": "token/valid-baseline",
+      "category": "token",
+      "persona": "maya",
+      "passed": true,
+      "expected": "HTTP 200",
+      "observed": "HTTP 200",
+      "statement_id": null
+    },
+    {
+      "case_id": "token/edited-claim",
+      "category": "token",
+      "persona": "maya",
+      "passed": true,
+      "expected": "rejected (HTTP 400, 401 or 403)",
+      "observed": "HTTP 400",
+      "statement_id": null
+    },
+    {
+      "case_id": "token/unsigned-alg-none",
+      "category": "token",
+      "persona": "maya",
+      "passed": true,
+      "expected": "rejected (HTTP 400, 401 or 403)",
+      "observed": "HTTP 400",
+      "statement_id": null
+    },
+    {
+      "case_id": "token/corrupted-signature",
+      "category": "token",
+      "persona": "maya",
+      "passed": true,
+      "expected": "rejected (HTTP 400, 401 or 403)",
+      "observed": "HTTP 400",
+      "statement_id": null
+    },
+    {
+      "case_id": "side_channel/maya-balance-in-my_accounts",
+      "category": "documented",
+      "persona": "maya",
+      "passed": false,
+      "expected": "blocked: same outcome whether or not the value exists in rows this user can't see",
+      "observed": "leaked: DIVIDE_BY_ZERO only when the value exists in rows this user can't see (another participant's balance)",
+      "statement_id": "<id>"
+    },
+    {
+      "case_id": "side_channel/raj-participant-in-plan_roster",
+      "category": "documented",
+      "persona": "raj",
+      "passed": false,
+      "expected": "blocked: same outcome whether or not the value exists in rows this user can't see",
+      "observed": "leaked: CAST_INVALID_INPUT only when the value exists in rows this user can't see (a Plan B participant, outside Raj's plans)",
+      "statement_id": "<id>"
+    },
+    {
+      "case_id": "side_channel/maya-grant-in-my_access",
+      "category": "documented",
+      "persona": "maya",
+      "passed": true,
+      "expected": "blocked: same outcome whether or not the value exists in rows this user can't see",
+      "observed": "blocked: no error, 1 rows both times",
+      "statement_id": "<id>"
+    },
+    {
+      "case_id": "side_channel/linda-contribution-in-my_contributions",
+      "category": "documented",
+      "persona": "linda",
+      "passed": false,
+      "expected": "blocked: same outcome whether or not the value exists in rows this user can't see",
+      "observed": "leaked: DIVIDE_BY_ZERO only when the value exists in rows this user can't see (a Plan A participant's contribution; Linda sponsors Plan A but never sees contributions)",
+      "statement_id": "<id>"
+    },
+    {
+      "case_id": "genie/maya/1",
+      "category": "genie",
+      "persona": "maya",
+      "passed": null,
+      "expected": "must ['maya_total_balance']; must not ['james_total_balance', 'linda_total_balance', 'plan_a_total']",
+      "observed": "inconclusive: Genie status FAILED",
+      "statement_id": null
+    },
+    {
+      "case_id": "genie/maya/2",
+      "category": "genie",
+      "persona": "maya",
+      "passed": true,
+      "expected": "must []; must not ['james_total_balance']",
+      "observed": "expected values present; no other user's values",
+      "statement_id": null
+    },
+    {
+      "case_id": "genie/james/1",
+      "category": "genie",
+      "persona": "james",
+      "passed": null,
+      "expected": "must ['james_total_balance']; must not ['maya_total_balance']",
+      "observed": "inconclusive: Genie status FAILED",
+      "statement_id": null
+    },
+    {
+      "case_id": "genie/linda/1",
+      "category": "genie",
+      "persona": "linda",
+      "passed": null,
+      "expected": "must ['linda_total_balance']; must not ['maya_total_balance', 'plan_a_total']",
+      "observed": "inconclusive: Genie status FAILED",
+      "statement_id": null
+    },
+    {
+      "case_id": "genie/linda/2",
+      "category": "genie",
+      "persona": "linda",
+      "passed": null,
+      "expected": "must ['plan_a_total']; must not ['plan_b_total', 'plan_c_total']",
+      "observed": "inconclusive: Genie status FAILED",
+      "statement_id": null
+    },
+    {
+      "case_id": "genie/raj/1",
+      "category": "genie",
+      "persona": "raj",
+      "passed": null,
+      "expected": "must ['plan_a_total', 'plan_c_total']; must not ['plan_b_total']",
+      "observed": "inconclusive: Genie status FAILED",
+      "statement_id": null
+    },
+    {
+      "case_id": "genie/unknown/1",
+      "category": "genie",
+      "persona": "unknown",
+      "passed": null,
+      "expected": "must []; must not ['maya_total_balance', 'james_total_balance', 'linda_total_balance']",
+      "observed": "inconclusive: Genie status FAILED",
+      "statement_id": null
+    },
+    {
+      "case_id": "documented/conversation-binding",
+      "category": "documented",
+      "persona": "james",
+      "passed": true,
+      "expected": "readable by another claim from the same service principal, so the backend must bind conversation ids to users",
+      "observed": "readable",
+      "statement_id": null
+    }
+  ]
+}
