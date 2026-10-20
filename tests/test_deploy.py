@@ -147,3 +147,67 @@ def test_several_cleanup_errors_are_reported_together():
     with pytest.raises(DeployError) as err:
         deploy_claim_views(EX, mode="throws", admin_sql=admin, sp_runner=FakeSP(fail_at=1), **KW)
     assert len(err.value.errors) == 1 + len(EX.claim_views) + 3
+
+
+from claims_kit.deploy import apply_row_policies, deploy_policy_functions, remove_row_policies
+from claims_kit.tags import load_tag_set
+
+
+class FailingRecorder(Recorder):
+    def __init__(self, prefix, message):
+        super().__init__()
+        self.prefix, self.message = prefix, message
+
+    def __call__(self, stmt):
+        self.statements.append(stmt)
+        if stmt.startswith(self.prefix):
+            raise StatementError(self.message)
+
+
+def test_temporary_grants_allow_creating_functions_and_revoke_it():
+    assert any("CREATE FUNCTION" in g and "northwind_governance" in g for g in temporary_grants(EX, "cat", "app-id"))
+    assert any("CREATE FUNCTION" in r and "northwind_governance" in r for r in revoke_temporary_grants(EX, "cat", "app-id"))
+
+
+def test_policy_functions_in_throw_mode_run_as_sp_then_change_owner():
+    admin, sp = Recorder(), FakeSP()
+    deploy_policy_functions(EX, mode="throws", admin_sql=admin, sp_runner=sp, **KW)
+    assert len(sp.statements) == len(EX.claim_functions)
+    assert all(x.startswith("CREATE OR REPLACE FUNCTION") for x in sp.statements)
+    owners = [s for s in admin.statements if s.startswith("ALTER FUNCTION")]
+    assert owners == [f"ALTER FUNCTION `cat`.`northwind_governance`.`{f}` OWNER TO `owner@example.com`" for f in EX.claim_functions]
+    assert admin.statements[-3:] == revoke_temporary_grants(EX, "cat", "app-id")
+
+
+def test_policy_functions_in_null_mode_are_created_by_the_admin():
+    admin = Recorder()
+    deploy_policy_functions(EX, mode="null", admin_sql=admin, **KW)
+    assert sum(s.startswith("CREATE OR REPLACE FUNCTION") for s in admin.statements) == len(EX.claim_functions)
+    assert not any(s.startswith("GRANT") for s in admin.statements)
+
+
+def test_policy_functions_revoke_even_when_creation_fails():
+    admin, sp = Recorder(), FakeSP(fail_at=2)
+    with pytest.raises(StatementError):
+        deploy_policy_functions(EX, mode="throws", admin_sql=admin, sp_runner=sp, **KW)
+    assert admin.statements[-3:] == revoke_temporary_grants(EX, "cat", "app-id")
+
+
+def test_apply_row_policies_tags_before_policies():
+    admin = Recorder()
+    apply_row_policies(EX, catalog="cat", tags=load_tag_set("governed"), group=EX.portal_group, admin_sql=admin)
+    first_policy = next(i for i, s in enumerate(admin.statements) if s.startswith("CREATE OR REPLACE POLICY"))
+    assert first_policy > 0 and all(s.startswith("ALTER TABLE") for s in admin.statements[:first_policy])
+    assert all(s.startswith("CREATE OR REPLACE POLICY") for s in admin.statements[first_policy:])
+
+
+def test_remove_row_policies_tolerates_missing():
+    admin = FailingRecorder("DROP POLICY", "[POLICY_NOT_FOUND] Cannot execute deletePolicy command because the policy cannot be found.")
+    log = remove_row_policies(EX, catalog="cat", admin_sql=admin)
+    assert len(log) == 5 and all(line.startswith("skipped (absent)") for line in log)
+
+
+def test_remove_row_policies_raises_other_errors():
+    admin = FailingRecorder("DROP POLICY", "[INSUFFICIENT_PERMISSIONS] no MANAGE")
+    with pytest.raises(StatementError):
+        remove_row_policies(EX, catalog="cat", admin_sql=admin)
