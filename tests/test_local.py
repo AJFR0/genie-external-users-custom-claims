@@ -24,3 +24,9 @@ def test_local_env_reads_the_enforcement_model():
     assert LocalEnv.from_mapping({**base, "ENFORCEMENT": "views"}).enforcement == "views"
     with pytest.raises(ValueError):
         LocalEnv.from_mapping({**base, "ENFORCEMENT": "neither"})
+
+
+def test_local_env_reads_the_tag_set():
+    base = {"DATABRICKS_HOST": "https://h", "WAREHOUSE_ID": "w"}
+    assert LocalEnv.from_mapping(base).tag_set == "governed"
+    assert LocalEnv.from_mapping({**base, "TAG_SET": "stand_in"}).tag_set == "stand_in"
