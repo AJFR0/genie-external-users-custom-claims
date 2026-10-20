@@ -53,3 +53,19 @@ def test_deny_function_returns_false():
     for name in ("northwind", "larkspur"):
         _, fns = _functions(name)
         assert fns["rf_deny"].rstrip().endswith("RETURN false")
+
+
+def _ddl(ex, key, table):
+    text = ex.read_sql(key, ex.template_values("c", "sp", "owner"))
+    return next(s for s in split_sql(text) if re.search(rf"\.`?{table}`?\s*\(", s.split("\n")[0]))
+
+
+def test_protected_tables_cluster_on_their_policy_keys_and_grants_on_the_claim():
+    for name in ("northwind", "larkspur"):
+        ex = load_example(name)
+        for rp in (r for r in ex.row_policies if r.function):
+            table = rp.table.split(".", 1)[1]
+            ddl = _ddl(ex, "base_tables", table)
+            cols = ", ".join(c for c, k in rp.columns if k != "cell_count")
+            assert f"CLUSTER BY ({cols})" in ddl, f"{name}.{table}"
+        assert "CLUSTER BY (portal_user_id)" in _ddl(ex, "governance", "portal_user_grants"), name

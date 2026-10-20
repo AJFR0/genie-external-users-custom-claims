@@ -7,7 +7,7 @@ CREATE OR REPLACE TABLE `{{catalog}}`.`{{gov}}`.portal_user_grants (
   valid_to       DATE               COMMENT 'Last day the grant applies. NULL means open-ended.',
   granted_by     STRING             COMMENT 'Who created the grant',
   granted_at     TIMESTAMP          COMMENT 'When the grant was created'
-) COMMENT 'Per-user entitlements for the Larkspur portal.';
+) CLUSTER BY (portal_user_id) COMMENT 'Per-user entitlements for the Larkspur portal.';
 
 -- regexp_extract instead of RLIKE '^...$': in Java regex `$` also matches before a trailing newline.
 ALTER TABLE `{{catalog}}`.`{{gov}}`.portal_user_grants ADD CONSTRAINT claim_format CHECK (regexp_extract(portal_user_id, '^[a-z0-9][a-z0-9._:-]{0,127}', 0) = portal_user_id);
