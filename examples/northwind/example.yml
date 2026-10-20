@@ -10,9 +10,11 @@ sql:
   base_tables: sql/02_base_tables.sql
   governance: sql/03_governance.sql
   seed_entitlements: sql/04_seed_entitlements.sql
+  derived_tables: sql/05_derived_tables.sql
   policy_views: sql/10_policy_views.sql
   portal_views: sql/11_portal_views.sql
   public_views: sql/12_public_views.sql
+  policy_functions: sql/30_policy_functions.sql
   runtime_grants: sql/20_runtime_grants.sql
 # Created from a claim-carrying session when the workspace raises without a claim. Order matters.
 claim_views:
@@ -32,3 +34,17 @@ role_policy_fields:
   can_view_roster: boolean
   mask_dob: boolean
 base_probe_table: account_balances
+# Layered enforcement: every base table a portal view reads, with the ABAC row policy that protects it.
+# A table's policy admits exactly the rows some portal view exposes from it, for the signed-in user. Governance
+# tables are the policies' inputs and carry no policy: Unity Catalog doesn't let a policy function read a table
+# that has its own policy.
+row_policies:
+  - {table: base.account_balances, grain: accounts, function: rf_accounts, columns: [[participant_id, member], [plan_id, tenant]]}
+  - {table: base.contributions, grain: contributions, function: rf_contributions, columns: [[participant_id, member]]}
+  - {table: base.participants, grain: roster, function: rf_roster, columns: [[plan_id, tenant]]}
+  - {table: base.plans, grain: tenant, function: rf_plans, columns: [[plan_id, tenant]]}
+  - {table: base.funds, grain: reference}
+# Row-filter functions, created from a claim-carrying session when the workspace raises without a claim. Order matters.
+claim_functions: [rf_accounts, rf_contributions, rf_roster, rf_plans, rf_deny]
+# Misconfiguration drills: which persona, protected table, key column and portal view they exercise.
+drills: {persona: maya, table: base.account_balances, key_column: participant_id, view: my_accounts}

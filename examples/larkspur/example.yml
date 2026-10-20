@@ -10,9 +10,11 @@ sql:
   base_tables: sql/02_base_tables.sql
   governance: sql/03_governance.sql
   seed_entitlements: sql/04_seed_entitlements.sql
+  derived_tables: sql/05_derived_tables.sql
   policy_views: sql/10_policy_views.sql
   portal_views: sql/11_portal_views.sql
   public_views: sql/12_public_views.sql
+  policy_functions: sql/30_policy_functions.sql
   runtime_grants: sql/20_runtime_grants.sql
 # Created from a claim-carrying session when the workspace raises without a claim. Order matters.
 claim_views:
@@ -32,3 +34,19 @@ role_policy_fields:
   mask_identity: boolean
   min_cell_size: int
 base_probe_table: pharmacy_claims
+# Layered enforcement: every base table a portal view reads, with the ABAC row policy that protects it.
+# A table's policy admits exactly the rows some portal view exposes from it, for the signed-in user. Governance
+# tables are the policies' inputs and carry no policy: Unity Catalog doesn't let a policy function read a table
+# that has its own policy.
+row_policies:
+  - {table: base.members, grain: members, function: rf_members, columns: [[member_id, member]]}
+  - {table: base.pharmacy_claims, grain: claims, function: rf_claims, columns: [[member_id, member], [pharmacy_id, pharmacy]]}
+  - {table: base.accumulators, grain: accumulators, function: rf_accumulators, columns: [[member_id, member]]}
+  - {table: base.sponsors, grain: tenant, function: rf_sponsors, columns: [[sponsor_id, tenant]]}
+  - {table: base.sponsor_spend_cells, grain: cells, function: rf_cells, columns: [[sponsor_id, tenant], [members, cell_count]]}
+  - {table: base.drugs, grain: reference}
+  - {table: base.pharmacies, grain: reference}
+# Row-filter functions, created from a claim-carrying session when the workspace raises without a claim. Order matters.
+claim_functions: [rf_members, rf_claims, rf_accumulators, rf_sponsors, rf_cells, rf_deny]
+# Misconfiguration drills: which persona, protected table, key column and portal view they exercise.
+drills: {persona: ana, table: base.pharmacy_claims, key_column: member_id, view: my_claims}
