@@ -70,7 +70,7 @@ CREATE VIEW `{{catalog}}`.`{{portal}}`.sponsor_spend_summary (
   member_paid COMMENT 'Paid by members in US dollars',
   generic_claims COMMENT 'Paid claims for generic drugs'
 )
-COMMENT 'Paid pharmacy spend by sponsor, quarter and drug class for the sponsors in scope. Groups with fewer members than the role minimum cell size are hidden for privacy, so totals cover the visible groups only. No member-level data.'
+COMMENT 'Paid pharmacy spend by sponsor, quarter and drug class for the sponsors in scope. Groups with fewer members than the role minimum cell size are hidden for privacy, so totals cover the visible groups only. Read from precomputed spend cells, so no member-level data is involved.'
 AS
 WITH my_sponsors AS (
   SELECT scope_id AS sponsor_id, min(min_cell_size) AS min_cell_size
@@ -78,19 +78,12 @@ WITH my_sponsors AS (
   WHERE scope_type = 'sponsor' AND detail_level = 'aggregate'
   GROUP BY scope_id
 )
-SELECT c.sponsor_id, s.sponsor_name,
-       concat(CAST(year(c.fill_date) AS STRING), '-Q', CAST(quarter(c.fill_date) AS STRING)),
-       d.drug_class,
-       COUNT(DISTINCT c.member_id), COUNT(*),
-       CAST(SUM(c.plan_paid) AS DECIMAL(14,2)), CAST(SUM(c.member_paid) AS DECIMAL(14,2)),
-       SUM(CASE WHEN d.generic_flag THEN 1 ELSE 0 END)
-FROM `{{catalog}}`.`{{base}}`.pharmacy_claims AS c
+SELECT c.sponsor_id, s.sponsor_name, c.fill_quarter, c.drug_class, c.members, c.claims, c.plan_paid, c.member_paid,
+       c.generic_claims
+FROM `{{catalog}}`.`{{base}}`.sponsor_spend_cells AS c
 JOIN my_sponsors AS ms ON ms.sponsor_id = c.sponsor_id
 JOIN `{{catalog}}`.`{{base}}`.sponsors AS s ON s.sponsor_id = c.sponsor_id
-JOIN `{{catalog}}`.`{{base}}`.drugs AS d ON d.ndc = c.ndc
-WHERE c.claim_status = 'paid'
-GROUP BY c.sponsor_id, s.sponsor_name, year(c.fill_date), quarter(c.fill_date), d.drug_class, ms.min_cell_size
-HAVING COUNT(DISTINCT c.member_id) >= ms.min_cell_size;
+WHERE c.members >= ms.min_cell_size;
 
 CREATE VIEW `{{catalog}}`.`{{portal}}`.pharmacy_remittance (
   claim_id COMMENT 'Claim identifier',
@@ -108,19 +101,16 @@ CREATE VIEW `{{catalog}}`.`{{portal}}`.pharmacy_remittance (
   member_paid COMMENT 'Paid by the member in US dollars',
   claim_status COMMENT 'paid, reversed or rejected'
 )
-COMMENT 'Claims filled at the pharmacies in scope, for remittance reconciliation. Member identity is masked for pharmacy users.'
+COMMENT 'Claims filled at the pharmacies in scope, for remittance reconciliation. Member identity is a one-way reference, precomputed, so pharmacy users never reach member ids.'
 AS
 WITH my_pharmacies AS (
-  SELECT scope_id AS pharmacy_id, bool_and(mask_identity) AS mask_identity
+  SELECT DISTINCT scope_id AS pharmacy_id
   FROM `{{catalog}}`.`{{gov}}`.my_effective_grants
   WHERE scope_type = 'pharmacy' AND detail_level = 'pharmacy'
-  GROUP BY scope_id
 )
-SELECT c.claim_id, c.pharmacy_id, ph.pharmacy_name, c.fill_date, c.ndc, d.drug_name, c.quantity, c.days_supply,
-       -- Demo-grade masking. In production use a keyed hash or a token vault so references can't be reversed.
-       CASE WHEN mp.mask_identity THEN substr(sha2(concat('larkspur-demo:', c.member_id), 256), 1, 16) ELSE c.member_id END,
-       c.ingredient_cost, c.dispensing_fee, c.plan_paid, c.member_paid, c.claim_status
-FROM `{{catalog}}`.`{{base}}`.pharmacy_claims AS c
-JOIN my_pharmacies AS mp ON mp.pharmacy_id = c.pharmacy_id
-JOIN `{{catalog}}`.`{{base}}`.pharmacies AS ph ON ph.pharmacy_id = c.pharmacy_id
-JOIN `{{catalog}}`.`{{base}}`.drugs AS d ON d.ndc = c.ndc;
+SELECT r.claim_id, r.pharmacy_id, ph.pharmacy_name, r.fill_date, r.ndc, d.drug_name, r.quantity, r.days_supply,
+       r.member_ref, r.ingredient_cost, r.dispensing_fee, r.plan_paid, r.member_paid, r.claim_status
+FROM `{{catalog}}`.`{{base}}`.pharmacy_remittance_rows AS r
+JOIN my_pharmacies AS mp ON mp.pharmacy_id = r.pharmacy_id
+JOIN `{{catalog}}`.`{{base}}`.pharmacies AS ph ON ph.pharmacy_id = r.pharmacy_id
+JOIN `{{catalog}}`.`{{base}}`.drugs AS d ON d.ndc = r.ndc;

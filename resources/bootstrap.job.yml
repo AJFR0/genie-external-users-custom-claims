@@ -8,6 +8,7 @@ resources:
         - {name: secret_scope, default: "${var.secret_scope}"}
         - {name: warehouse_id, default: "${var.warehouse_id}"}
         - {name: rotate_secrets, default: "false"}
+        - {name: tag_set, default: "${var.tag_set}"}
       tasks:
         - task_key: bootstrap
           notebook_task:

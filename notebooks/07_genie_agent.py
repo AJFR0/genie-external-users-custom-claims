@@ -1,6 +1,6 @@
 # Databricks notebook source
 # MAGIC %md
-# MAGIC # 06 · Create the Genie Agent
+# MAGIC # 07 · Create the Genie Agent
 # MAGIC The agent sees **only** the portal views. Settings that matter for isolation:
 # MAGIC
 # MAGIC * **Prompt matching is off** on every claim-keyed view. It samples column values with the author's permissions

@@ -10,6 +10,8 @@ resources:
         - {name: warehouse_id, default: "${var.warehouse_id}"}
         - {name: secret_scope, default: "${var.secret_scope}"}
         - {name: view_owner, default: "${var.view_owner}"}
+        - {name: enforcement, default: "${var.enforcement}"}
+        - {name: tag_set, default: "${var.tag_set}"}
         - {name: include_genie, default: "true"}
       tasks:
         - task_key: check_availability
@@ -27,15 +29,19 @@ resources:
           depends_on: [{task_key: entitlements}]
           notebook_task:
             notebook_path: ../notebooks/04_claim_views.py
-        - task_key: runtime_grants
+        - task_key: row_policies
           depends_on: [{task_key: claim_views}]
           notebook_task:
-            notebook_path: ../notebooks/05_runtime_grants.py
+            notebook_path: ../notebooks/05_row_policies.py
+        - task_key: runtime_grants
+          depends_on: [{task_key: row_policies}]
+          notebook_task:
+            notebook_path: ../notebooks/06_runtime_grants.py
         - task_key: genie_agent
           depends_on: [{task_key: runtime_grants}]
           notebook_task:
-            notebook_path: ../notebooks/06_genie_agent.py
+            notebook_path: ../notebooks/07_genie_agent.py
         - task_key: validate_isolation
           depends_on: [{task_key: genie_agent}]
           notebook_task:
-            notebook_path: ../notebooks/07_validate_isolation.py
+            notebook_path: ../notebooks/08_validate_isolation.py

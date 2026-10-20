@@ -64,24 +64,63 @@ def request_flow() -> Svg:
 
 
 def layers() -> Svg:
-    s = Svg(1240, 590)
-    s.text(40, 40, "Four layers, each proved by the isolation suite", size=22, weight="bold")
+    s = Svg(1240, 712)
+    s.text(40, 40, "Five layers, each proved by the isolation suite", size=22, weight="bold")
     rows = [
-        ("1  Unity Catalog grants", "Which application's service principal can read which views", "cross_app"),
-        ("2  Service principal binding", "session_user() = this application's service principal, inside the view", "binding"),
-        ("3  Claim → entitlements", "Grant rows for the user named in the signed token", "visibility · attack"),
-        ("4  Role policy", "What that role may see: detail level, masking, minimum group size", "role_effect"),
+        ("1  Reach: Unity Catalog grants", "The application's group reads its portal views and nothing else", "privilege · cross_app"),
+        ("2  Row policies (ABAC)", "Each base table admits only this user's rows, before the query's own conditions run",
+         "side_channel · drills"),
+        ("3  Service principal binding", "session_user() = this application's service principal, in every view", "binding"),
+        ("4  Claim → entitlements", "Grant rows for the user named in the signed token", "visibility · attack"),
+        ("5  Role policy", "What that role may see: detail level, masking, minimum group size", "role_effect"),
     ]
-    stops = [("Another application's service principal", "PERMISSION_DENIED"), ("A mistaken grant to another application", "0 rows"),
-             ("A forged, unknown or malformed claim", "0 rows"), ("An advisor asks for dates of birth", "masked")]
+    stops = [("Another application's service principal", "PERMISSION_DENIED"), ("An error probe for another user's value", "blocked"),
+             ("A mistaken grant to another application", "0 rows"), ("A forged, unknown or malformed claim", "0 rows"),
+             ("An advisor asks for dates of birth", "masked")]
     for i, ((title, body, test), (who, result)) in enumerate(zip(rows, stops)):
-        y = 70 + i * 122
-        s.rect(40, y, 740, 104, fill="claim_bg" if i < 2 else "white", stroke="claim")
+        y = 66 + i * 126
+        s.rect(40, y, 740, 106, fill="claim_bg" if i < 3 else "white", stroke="claim")
         s.text(62, y + 34, title, size=17, weight="bold", color="claim")
         s.text(62, y + 62, body, size=13.5)
-        s.pill(62, y + 74, f"proved by: {test}", color="muted", size=11)
-        s.box(860, y + 10, 340, 84, who, [f"stops at layer {i + 1}: {result}"], fill="deny_bg", stroke="deny", size=13.5)
-        s.arrow([(856, y + 52), (784, y + 52)], color="deny")
+        s.pill(62, y + 76, f"proved by: {test}", color="muted", size=11)
+        s.box(860, y + 11, 340, 84, who, [f"stops at layer {i + 1}: {result}"], fill="deny_bg", stroke="deny", size=13.5)
+        s.arrow([(856, y + 53), (784, y + 53)], color="deny")
+    return s
+
+
+def failure_matrix() -> Svg:
+    s = Svg(1240, 760)
+    s.text(40, 40, "One mistake at a time: what reaches a portal user", size=22, weight="bold")
+    s.text(40, 66, "Single-layer cells were measured on synthetic data; the layered column is the misconfiguration drills.",
+           size=13, color="muted")
+    cols = [("Views only", 430), ("ABAC only", 700), ("Layered", 970)]
+    for label, x in cols:
+        s.rect(x, 88, 250, 44, fill="panel", stroke="soft", rx=8)
+        s.text(x + 125, 116, label, size=15, weight="bold", anchor="middle")
+    tone = {"red": ("deny_bg", "deny"), "amber": ("mask_bg", "mask"), "green": ("ok_bg", "ok"), "grey": ("panel", "soft")}
+    rows = [
+        ("Error probe in a user's query", "for a value in another user's rows",
+         [("red", "Leaks: one fact per question"), ("green", "Blocked"), ("green", "Blocked")]),
+        ("New table, protection forgotten", "granted, but no view or no tags",
+         [("green", "Invisible: no grant"), ("red", "Whole table"), ("green", "0 rows: default-deny")]),
+        ("View without its filter", "a new view, granted to the portal",
+         [("red", "Whole table"), ("grey", "No views in this design"), ("green", "Own rows: the policy filters")]),
+        ("Tag removed from a key column", "the policy no longer matches",
+         [("grey", "No tags in this design"), ("red", "Whole table"), ("green", "Own rows: the view filters")]),
+        ("Policy names another group", "for example after a rotation",
+         [("grey", "No policies in this design"), ("red", "Whole table"), ("green", "Own rows: the view filters")]),
+        ("Base table granted to the portal", "a direct grant by mistake",
+         [("red", "Whole table"), ("grey", "Normal state here"), ("green", "Own rows: the policy filters")]),
+    ]
+    for i, (mistake, detail, cells) in enumerate(rows):
+        y = 148 + i * 98
+        s.text(40, y + 38, mistake, size=15.5, weight="bold")
+        s.text(40, y + 62, detail, size=12.5, color="muted")
+        for (kind, text), (_, x) in zip(cells, cols):
+            fill, stroke = tone[kind]
+            s.rect(x, y + 8, 250, 76, fill=fill, stroke=stroke, rx=8)
+            s.text(x + 125, y + 52, text, size=13, anchor="middle", color="ink" if kind == "grey" else stroke,
+                   weight="normal" if kind == "grey" else "bold")
     return s
 
 
@@ -206,7 +245,7 @@ def decision_tree() -> Svg:
 
 DIAGRAMS = {"previous-patterns": previous_patterns, "request-flow": request_flow, "layers": layers,
             "entitlement-route": entitlement_route, "object-map": object_map, "deploy-flow": deploy_flow,
-            "decision-tree": decision_tree}
+            "decision-tree": decision_tree, "failure-matrix": failure_matrix}
 
 
 def main() -> None:

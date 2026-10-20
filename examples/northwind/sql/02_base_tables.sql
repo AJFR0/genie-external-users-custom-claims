@@ -4,7 +4,7 @@ CREATE OR REPLACE TABLE `{{catalog}}`.`{{base}}`.plans (
   plan_name    STRING NOT NULL COMMENT 'Plan display name',
   sponsor_name STRING NOT NULL COMMENT 'Employer that sponsors the plan',
   plan_type    STRING NOT NULL COMMENT 'Plan type, for example 401(k)'
-) COMMENT 'Retirement plans administered by Northwind.';
+) CLUSTER BY (plan_id) COMMENT 'Retirement plans administered by Northwind.';
 
 CREATE OR REPLACE TABLE `{{catalog}}`.`{{base}}`.participants (
   participant_id STRING NOT NULL COMMENT 'Participant identifier, for example P-1001',
@@ -14,7 +14,7 @@ CREATE OR REPLACE TABLE `{{catalog}}`.`{{base}}`.participants (
   date_of_birth  DATE   NOT NULL COMMENT 'Date of birth',
   hire_date      DATE   NOT NULL COMMENT 'Date hired by the plan sponsor',
   status         STRING NOT NULL COMMENT 'active or terminated'
-) COMMENT 'People enrolled in a plan.';
+) CLUSTER BY (plan_id) COMMENT 'People enrolled in a plan.';
 
 CREATE OR REPLACE TABLE `{{catalog}}`.`{{base}}`.funds (
   fund_id       STRING       NOT NULL COMMENT 'Fund identifier',
@@ -29,7 +29,7 @@ CREATE OR REPLACE TABLE `{{catalog}}`.`{{base}}`.account_balances (
   fund_id        STRING        NOT NULL COMMENT 'Fund the balance is invested in',
   balance        DECIMAL(14,2) NOT NULL COMMENT 'Market value in US dollars',
   as_of_date     DATE          NOT NULL COMMENT 'Valuation date'
-) COMMENT 'Current balance per participant and fund.';
+) CLUSTER BY (participant_id) COMMENT 'Current balance per participant and fund.';
 
 CREATE OR REPLACE TABLE `{{catalog}}`.`{{base}}`.contributions (
   participant_id    STRING        NOT NULL COMMENT 'Participant the contribution belongs to',
@@ -37,4 +37,21 @@ CREATE OR REPLACE TABLE `{{catalog}}`.`{{base}}`.contributions (
   contribution_date DATE          NOT NULL COMMENT 'Payroll date',
   source            STRING        NOT NULL COMMENT 'employee_pretax, employee_roth or employer_match',
   amount            DECIMAL(12,2) NOT NULL COMMENT 'Amount in US dollars'
-) COMMENT 'Payroll contributions in 2026.';
+) CLUSTER BY (participant_id) COMMENT 'Payroll contributions in 2026.';
+
+-- Precomputed totals for sponsors and advisors. Their views show plan totals and per-participant totals, never
+-- per-fund balances of individual participants, so they read these tables and never reach account_balances rows.
+CREATE OR REPLACE TABLE `{{catalog}}`.`{{base}}`.plan_fund_balances (
+  plan_id         STRING        NOT NULL COMMENT 'Plan',
+  fund_id         STRING        NOT NULL COMMENT 'Fund',
+  participants    BIGINT        NOT NULL COMMENT 'Participants holding the fund in this plan',
+  total_balance   DECIMAL(16,2) NOT NULL COMMENT 'Sum of balances in US dollars',
+  average_balance DECIMAL(14,2) NOT NULL COMMENT 'Average balance in US dollars',
+  as_of_date      DATE          NOT NULL COMMENT 'Valuation date'
+) CLUSTER BY (plan_id) COMMENT 'Plan totals by fund, precomputed so aggregate roles never reach participant balance rows.';
+
+CREATE OR REPLACE TABLE `{{catalog}}`.`{{base}}`.participant_plan_balances (
+  participant_id STRING        NOT NULL COMMENT 'Participant',
+  plan_id        STRING        NOT NULL COMMENT 'Plan',
+  total_balance  DECIMAL(16,2) NOT NULL COMMENT 'Total balance across funds in this plan, in US dollars'
+) CLUSTER BY (plan_id) COMMENT 'Per-participant totals for plan rosters, precomputed so roster roles never reach per-fund rows.';

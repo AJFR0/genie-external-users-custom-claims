@@ -15,10 +15,15 @@ def main() -> None:
     parser.add_argument("--warehouse-id", required=True)
     parser.add_argument("--scope", default="genie-claims-ref")
     parser.add_argument("--catalog", default="genie_claims_ref")
+    parser.add_argument("--enforcement", choices=("layered", "views"), default="layered",
+                        help="the enforcement model you deployed with (bundle variable enforcement)")
+    parser.add_argument("--tag-set", choices=("governed", "stand_in"), default="governed",
+                        help="the tag set you deployed with (bundle variable tag_set)")
     args = parser.parse_args()
     w = WorkspaceClient(profile=args.profile)
     values = {"DATABRICKS_HOST": w.config.host.rstrip("/"), "WAREHOUSE_ID": args.warehouse_id, "ADMIN_PROFILE": args.profile,
-              "CATALOG": args.catalog, "BUNDLE_VAR_warehouse_id": args.warehouse_id, "BUNDLE_VAR_catalog": args.catalog}
+              "CATALOG": args.catalog, "ENFORCEMENT": args.enforcement, "TAG_SET": args.tag_set, "BUNDLE_VAR_warehouse_id": args.warehouse_id,
+              "BUNDLE_VAR_catalog": args.catalog}
     for name in ("northwind", "larkspur"):
         for key, env in (("client-id", "CLIENT_ID"), ("client-secret", "CLIENT_SECRET")):
             secret = w.secrets.get_secret(scope=args.scope, key=f"{name}-{key}")

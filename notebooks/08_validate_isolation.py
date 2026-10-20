@@ -1,11 +1,13 @@
 # Databricks notebook source
 # MAGIC %md
-# MAGIC # 07 · Prove the isolation
+# MAGIC # 08 · Prove the isolation
 # MAGIC Mints real tokens for every persona and checks each security layer:
 # MAGIC
 # MAGIC | Layer | What is proved |
 # MAGIC |---|---|
+# MAGIC | Deployment | the row policies on the base schema match the enforcement model (all of them in layered mode, none in views mode) |
 # MAGIC | Unity Catalog grants | the portal service principal can't read base or governance objects, change entitlements or run DDL; another application's service principal can't read these views |
+# MAGIC | Row and mask policies | error probes can't reveal values in rows or columns the persona may not see (layered mode; recorded as documented in views mode) |
 # MAGIC | Service principal binding | even with a mistaken grant, a view answers only for its own application |
 # MAGIC | Claim → entitlements | each persona sees exactly the rows its grants allow; forged and malformed claims see nothing |
 # MAGIC | Role policies | masking and other role rules hold |
@@ -45,7 +47,7 @@ except Exception as exc:  # the other example may not be bootstrapped
 space_id = dbutils.jobs.taskValues.get(taskKey="genie_agent", key="genie_space_id", default="", debugValue="")  # noqa: F821
 ctx = SuiteContext(example=ex, catalog=CATALOG, host=HOST, warehouse_id=WAREHOUSE_ID, provider=sp_provider(), admin=admin_runner(),
                    other_provider=other_provider, genie_space_id=space_id or None,
-                   include_genie=param("include_genie", "true") == "true")
+                   include_genie=param("include_genie", "true") == "true", enforcement=ENFORCEMENT)
 results = run_suite(ctx)
 print(summarize(results))
 

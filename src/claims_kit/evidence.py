@@ -37,3 +37,16 @@ def write_evidence(ctx, results, out_dir: Path) -> list[Path]:
     paths[0].write_text(json.dumps(validation, indent=2), encoding="utf-8")
     paths[1].write_text(json.dumps(cards, indent=2), encoding="utf-8")
     return paths
+
+
+def write_drill_evidence(ctx, results, out_dir: Path, *, baseline: dict | None = None, persona: str | None = None) -> Path:
+    """The misconfiguration drill results, scrubbed the same way as the validation evidence."""
+    from .drills import results_as_dicts as drill_dicts
+    out_dir = Path(out_dir)
+    out_dir.mkdir(parents=True, exist_ok=True)
+    secrets = {ctx.host: "https://<workspace-host>", ctx.warehouse_id: "<warehouse-id>", ctx.provider.client_id: "<portal-sp>"}
+    doc = {"example": ctx.example.name, "run_date": datetime.now(timezone.utc).strftime("%Y-%m-%d"), "persona": persona,
+           "baseline": baseline, "results": drill_dicts(results)}
+    path = out_dir / f"{ctx.example.name}-drills.json"
+    path.write_text(json.dumps(replace_identifier(scrub(doc, secrets), ctx.catalog, "<catalog>"), indent=2), encoding="utf-8")
+    return path

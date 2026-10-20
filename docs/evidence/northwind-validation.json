@@ -1,8 +1,17 @@
 {
   "example": "northwind",
-  "run_date": "2026-10-19",
+  "run_date": "2026-10-20",
   "catalog": "<catalog>",
   "results": [
+    {
+      "case_id": "setup/enforcement-matches-deployment",
+      "category": "setup",
+      "persona": null,
+      "passed": true,
+      "expected": "layered: the deployed row policies match",
+      "observed": "8 policies on the base schema",
+      "statement_id": "<id>"
+    },
     {
       "case_id": "visibility/maya/my_access",
       "category": "visibility",
@@ -578,6 +587,51 @@
       "expected": "rejected (HTTP 400, 401 or 403)",
       "observed": "HTTP 400",
       "statement_id": null
+    },
+    {
+      "case_id": "side_channel/linda-fund-balance-in-my_accounts",
+      "category": "side_channel",
+      "persona": "linda",
+      "passed": true,
+      "expected": "blocked: same outcome whether or not the value exists in rows this user can't see",
+      "observed": "blocked: no error, 4 rows both times",
+      "statement_id": "<id>"
+    },
+    {
+      "case_id": "side_channel/maya-balance-in-my_accounts",
+      "category": "side_channel",
+      "persona": "maya",
+      "passed": true,
+      "expected": "blocked: same outcome whether or not the value exists in rows this user can't see",
+      "observed": "blocked: no error, 4 rows both times",
+      "statement_id": "<id>"
+    },
+    {
+      "case_id": "side_channel/raj-participant-in-plan_roster",
+      "category": "side_channel",
+      "persona": "raj",
+      "passed": true,
+      "expected": "blocked: same outcome whether or not the value exists in rows this user can't see",
+      "observed": "blocked: no error, 99 rows both times",
+      "statement_id": "<id>"
+    },
+    {
+      "case_id": "side_channel/maya-grant-in-my_access",
+      "category": "side_channel",
+      "persona": "maya",
+      "passed": true,
+      "expected": "blocked: same outcome whether or not the value exists in rows this user can't see",
+      "observed": "blocked: no error, 1 rows both times",
+      "statement_id": "<id>"
+    },
+    {
+      "case_id": "side_channel/linda-contribution-in-my_contributions",
+      "category": "side_channel",
+      "persona": "linda",
+      "passed": true,
+      "expected": "blocked: same outcome whether or not the value exists in rows this user can't see",
+      "observed": "blocked: no error, 18 rows both times",
+      "statement_id": "<id>"
     },
     {
       "case_id": "genie/maya/1",

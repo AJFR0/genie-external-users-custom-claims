@@ -1,0 +1,347 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Admin Runbook</title>
+  <style>:root { --ink:#1f2933; --muted:#52606d; --line:#d9e2ec; --panel:#f5f7fa; --claim:#2f6fde; --ok:#1f9d55; --deny:#d64545; --mask:#b7791f; }
+* { box-sizing: border-box; }
+body { margin:0; color:var(--ink); font:16px/1.6 -apple-system, "Segoe UI", Helvetica, Arial, sans-serif; }
+.masthead { padding:36px 48px 18px; border-bottom:1px solid var(--line); background:linear-gradient(180deg, #f7f9fc, #fff); }
+.kicker { color:var(--claim); font-weight:600; letter-spacing:.04em; text-transform:uppercase; font-size:12px; }
+h1 { font-size:34px; line-height:1.2; margin:8px 0 10px; }
+.disclaimer { color:var(--muted); font-size:14px; margin:0 0 14px; max-width:900px; }
+.guides a { margin-right:18px; color:var(--muted); text-decoration:none; font-size:14px; } .guides a.active { color:var(--claim); font-weight:600; }
+.layout { display:grid; grid-template-columns: 260px minmax(0, 1fr); gap:40px; padding:24px 48px 64px; max-width:1400px; }
+.toc { position:sticky; top:16px; align-self:start; font-size:13px; } .toc ul { list-style:none; padding-left:12px; } .toc > ul { padding-left:0; }
+.toc a { color:var(--muted); text-decoration:none; } .toc a:hover { color:var(--claim); }
+article { max-width:960px; } h2 { font-size:25px; margin-top:44px; border-top:1px solid var(--line); padding-top:22px; } h3 { font-size:19px; margin-top:28px; }
+code { font-family: ui-monospace, Menlo, Consolas, monospace; font-size:.88em; background:var(--panel); padding:1px 4px; border-radius:4px; }
+pre, .codehilite pre { background:var(--panel); border:1px solid var(--line); border-radius:8px; padding:12px 14px; overflow:auto; font-size:13px; line-height:1.45; }
+pre code { background:none; padding:0; }
+table { border-collapse:collapse; margin:14px 0; font-size:14px; } th, td { border:1px solid var(--line); padding:6px 10px; vertical-align:top; text-align:left; } th { background:var(--panel); }
+figure.diagram { margin:22px 0; } figure.diagram svg { width:100%; height:auto; border:1px solid var(--line); border-radius:10px; }
+figcaption { color:var(--muted); font-size:13px; margin-top:6px; }
+.admonition { border-left:4px solid var(--claim); background:#f4f8fe; padding:10px 14px; border-radius:6px; margin:16px 0; } .admonition-title { font-weight:700; margin:0 0 4px; }
+.admonition.warning { border-color:var(--mask); background:#fffaf0; } .admonition.danger { border-color:var(--deny); background:#fdf3f3; }
+.trace-card { border:1px solid var(--line); border-left:4px solid var(--claim); border-radius:8px; padding:12px 16px; margin:16px 0; background:#fff; }
+.tc-head { font-size:15px; margin-bottom:6px; } .tc-route li { margin:6px 0; } .tc-note, .dim { color:var(--muted); font-size:13px; } .missing { color:var(--deny); }
+@page { size: Letter; margin: 16mm 14mm; @bottom-right { content: counter(page); color:#52606d; font-size:9pt; } }
+@media print {
+  body { font-size:10.5pt; } .masthead { padding:0 0 10px; background:none; } .guides, .toc { display:none; }
+  .layout { display:block; padding:0; } article { max-width:none; } h2 { margin-top:28px; } h2, h3 { break-after:avoid; }
+  figure, .trace-card, .admonition, tr { break-inside:avoid; } pre { white-space:pre-wrap; word-break:break-word; }
+  a { color:inherit; text-decoration:none; }
+}
+pre { line-height: 125%; }
+td.linenos .normal { color: #666666; background-color: transparent; padding-left: 5px; padding-right: 5px; }
+span.linenos { color: #666666; background-color: transparent; padding-left: 5px; padding-right: 5px; }
+td.linenos .special { color: #000000; background-color: #ffffc0; padding-left: 5px; padding-right: 5px; }
+span.linenos.special { color: #000000; background-color: #ffffc0; padding-left: 5px; padding-right: 5px; }
+.codehilite .hll { background-color: #ffffcc }
+.codehilite { background: #f0f0f0; }
+.codehilite .c { color: #60A0B0; font-style: italic } /* Comment */
+.codehilite .err { border: 1px solid #F00 } /* Error */
+.codehilite .k { color: #007020; font-weight: bold } /* Keyword */
+.codehilite .o { color: #666 } /* Operator */
+.codehilite .ch { color: #60A0B0; font-style: italic } /* Comment.Hashbang */
+.codehilite .cm { color: #60A0B0; font-style: italic } /* Comment.Multiline */
+.codehilite .cp { color: #007020 } /* Comment.Preproc */
+.codehilite .cpf { color: #60A0B0; font-style: italic } /* Comment.PreprocFile */
+.codehilite .c1 { color: #60A0B0; font-style: italic } /* Comment.Single */
+.codehilite .cs { color: #60A0B0; background-color: #FFF0F0 } /* Comment.Special */
+.codehilite .gd { color: #A00000 } /* Generic.Deleted */
+.codehilite .ge { font-style: italic } /* Generic.Emph */
+.codehilite .ges { font-weight: bold; font-style: italic } /* Generic.EmphStrong */
+.codehilite .gr { color: #F00 } /* Generic.Error */
+.codehilite .gh { color: #000080; font-weight: bold } /* Generic.Heading */
+.codehilite .gi { color: #00A000 } /* Generic.Inserted */
+.codehilite .go { color: #888 } /* Generic.Output */
+.codehilite .gp { color: #C65D09; font-weight: bold } /* Generic.Prompt */
+.codehilite .gs { font-weight: bold } /* Generic.Strong */
+.codehilite .gu { color: #800080; font-weight: bold } /* Generic.Subheading */
+.codehilite .gt { color: #04D } /* Generic.Traceback */
+.codehilite .kc { color: #007020; font-weight: bold } /* Keyword.Constant */
+.codehilite .kd { color: #007020; font-weight: bold } /* Keyword.Declaration */
+.codehilite .kn { color: #007020; font-weight: bold } /* Keyword.Namespace */
+.codehilite .kp { color: #007020 } /* Keyword.Pseudo */
+.codehilite .kr { color: #007020; font-weight: bold } /* Keyword.Reserved */
+.codehilite .kt { color: #902000 } /* Keyword.Type */
+.codehilite .m { color: #40A070 } /* Literal.Number */
+.codehilite .s { color: #4070A0 } /* Literal.String */
+.codehilite .na { color: #4070A0 } /* Name.Attribute */
+.codehilite .nb { color: #007020 } /* Name.Builtin */
+.codehilite .nc { color: #0E84B5; font-weight: bold } /* Name.Class */
+.codehilite .no { color: #60ADD5 } /* Name.Constant */
+.codehilite .nd { color: #555; font-weight: bold } /* Name.Decorator */
+.codehilite .ni { color: #D55537; font-weight: bold } /* Name.Entity */
+.codehilite .ne { color: #007020 } /* Name.Exception */
+.codehilite .nf { color: #06287E } /* Name.Function */
+.codehilite .nl { color: #002070; font-weight: bold } /* Name.Label */
+.codehilite .nn { color: #0E84B5; font-weight: bold } /* Name.Namespace */
+.codehilite .nt { color: #062873; font-weight: bold } /* Name.Tag */
+.codehilite .nv { color: #BB60D5 } /* Name.Variable */
+.codehilite .ow { color: #007020; font-weight: bold } /* Operator.Word */
+.codehilite .w { color: #BBB } /* Text.Whitespace */
+.codehilite .mb { color: #40A070 } /* Literal.Number.Bin */
+.codehilite .mf { color: #40A070 } /* Literal.Number.Float */
+.codehilite .mh { color: #40A070 } /* Literal.Number.Hex */
+.codehilite .mi { color: #40A070 } /* Literal.Number.Integer */
+.codehilite .mo { color: #40A070 } /* Literal.Number.Oct */
+.codehilite .sa { color: #4070A0 } /* Literal.String.Affix */
+.codehilite .sb { color: #4070A0 } /* Literal.String.Backtick */
+.codehilite .sc { color: #4070A0 } /* Literal.String.Char */
+.codehilite .dl { color: #4070A0 } /* Literal.String.Delimiter */
+.codehilite .sd { color: #4070A0; font-style: italic } /* Literal.String.Doc */
+.codehilite .s2 { color: #4070A0 } /* Literal.String.Double */
+.codehilite .se { color: #4070A0; font-weight: bold } /* Literal.String.Escape */
+.codehilite .sh { color: #4070A0 } /* Literal.String.Heredoc */
+.codehilite .si { color: #70A0D0; font-style: italic } /* Literal.String.Interpol */
+.codehilite .sx { color: #C65D09 } /* Literal.String.Other */
+.codehilite .sr { color: #235388 } /* Literal.String.Regex */
+.codehilite .s1 { color: #4070A0 } /* Literal.String.Single */
+.codehilite .ss { color: #517918 } /* Literal.String.Symbol */
+.codehilite .bp { color: #007020 } /* Name.Builtin.Pseudo */
+.codehilite .fm { color: #06287E } /* Name.Function.Magic */
+.codehilite .vc { color: #BB60D5 } /* Name.Variable.Class */
+.codehilite .vg { color: #BB60D5 } /* Name.Variable.Global */
+.codehilite .vi { color: #BB60D5 } /* Name.Variable.Instance */
+.codehilite .vm { color: #BB60D5 } /* Name.Variable.Magic */
+.codehilite .il { color: #40A070 } /* Literal.Number.Integer.Long */</style>
+</head>
+<body>
+  <header class="masthead">
+    <div class="kicker">Genie for external users · OAuth custom identity claims</div>
+    <h1>Admin Runbook</h1>
+    <p class="disclaimer">Community reference, not official Databricks documentation. OAuth custom identity claims are announced on the Databricks <em>What's coming?</em> page; check your workspace with <code>sql/check_availability.sql</code>.</p>
+    <nav class="guides"><a href="solution-brief.html">Solution Brief: Genie for Your Application's Users</a><a href="overview.html">Genie for External Users: Who It Is For and What Changes</a><a href="choosing-an-enforcement-model.html">Choosing an Enforcement Model</a><a href="implementation-guide.html">Implementation Guide</a><a href="admin-runbook.html" class="active">Admin Runbook</a><a href="demo-runbook.html">Demo Runbook</a></nav>
+  </header>
+  <div class="layout">
+    <aside class="toc"><div class="toc">
+<ul>
+<li><a href="#who-needs-what">Who needs what</a></li>
+<li><a href="#1-create-the-governed-tags">1. Create the governed tags</a><ul>
+<li><a href="#evaluation-workspaces-the-stand-in-set">Evaluation workspaces: the stand-in set</a></li>
+</ul>
+</li>
+<li><a href="#2-groups-and-service-principal-rotation">2. Groups and service principal rotation</a></li>
+<li><a href="#3-add-a-protected-table">3. Add a protected table</a></li>
+<li><a href="#4-change-a-policy-function">4. Change a policy function</a></li>
+<li><a href="#5-guardrail-queries-for-ci">5. Guardrail queries for CI</a></li>
+<li><a href="#6-run-the-misconfiguration-drills">6. Run the misconfiguration drills</a></li>
+<li><a href="#7-operate-views-only-mode">7. Operate views-only mode</a></li>
+<li><a href="#8-troubleshooting">8. Troubleshooting</a></li>
+</ul>
+</div>
+</aside>
+    <article><p>This runbook is for the people who operate the deployment: platform administrators, data stewards and the team that owns the portal backend. It covers both enforcement models, the layered default and views alone. <a href="choosing-an-enforcement-model.html">Choosing an Enforcement Model</a> explains when to use which.</p>
+<figure class="diagram"><svg xmlns="http://www.w3.org/2000/svg" width="1240" height="712" viewBox="0 0 1240 712" role="img"><defs><marker id="arrow-ink" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#1f2933"/></marker><marker id="arrow-muted" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#52606d"/></marker><marker id="arrow-line" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#9aa5b1"/></marker><marker id="arrow-soft" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#d9e2ec"/></marker><marker id="arrow-panel" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#f5f7fa"/></marker><marker id="arrow-white" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#ffffff"/></marker><marker id="arrow-claim" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#2f6fde"/></marker><marker id="arrow-claim_bg" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#eaf1fd"/></marker><marker id="arrow-ok" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#1f9d55"/></marker><marker id="arrow-ok_bg" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#e6f6ed"/></marker><marker id="arrow-deny" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#d64545"/></marker><marker id="arrow-deny_bg" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#fdecec"/></marker><marker id="arrow-mask" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#b7791f"/></marker><marker id="arrow-mask_bg" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#fdf4e3"/></marker><marker id="arrow-genie" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#7b5bd6"/></marker><marker id="arrow-genie_bg" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#f1edfb"/></marker></defs><rect width="100%" height="100%" fill="#ffffff"/><text x="40" y="40" font-family="Helvetica, Arial, sans-serif" font-size="22" fill="#1f2933" font-weight="bold" text-anchor="start">Five layers, each proved by the isolation suite</text><rect x="40" y="66" width="740" height="106" rx="10" fill="#eaf1fd" stroke="#2f6fde" stroke-width="1.5"/><text x="62" y="100" font-family="Helvetica, Arial, sans-serif" font-size="17" fill="#2f6fde" font-weight="bold" text-anchor="start">1  Reach: Unity Catalog grants</text><text x="62" y="128" font-family="Helvetica, Arial, sans-serif" font-size="13.5" fill="#1f2933" font-weight="normal" text-anchor="start">The application's group reads its portal views and nothing else</text><rect x="62" y="142" width="213.12" height="23" rx="11.5" fill="#ffffff" stroke="#52606d" stroke-width="1.2"/><text x="168.56" y="156" font-family="Helvetica, Arial, sans-serif" font-size="11" fill="#52606d" font-weight="normal" text-anchor="middle">proved by: privilege · cross_app</text><rect x="860" y="77" width="340" height="84" rx="10" fill="#fdecec" stroke="#d64545" stroke-width="1.5"/><text x="874" y="103" font-family="Helvetica, Arial, sans-serif" font-size="13.5" fill="#1f2933" font-weight="bold" text-anchor="start">Another application's service principal</text><text x="874" y="125.0" font-family="Helvetica, Arial, sans-serif" font-size="12.5" fill="#52606d" font-weight="normal" text-anchor="start">stops at layer 1: PERMISSION_DENIED</text><polyline points="856,119 784,119" fill="none" stroke="#d64545" stroke-width="2" marker-end="url(#arrow-deny)"/><rect x="40" y="192" width="740" height="106" rx="10" fill="#eaf1fd" stroke="#2f6fde" stroke-width="1.5"/><text x="62" y="226" font-family="Helvetica, Arial, sans-serif" font-size="17" fill="#2f6fde" font-weight="bold" text-anchor="start">2  Row policies (ABAC)</text><text x="62" y="254" font-family="Helvetica, Arial, sans-serif" font-size="13.5" fill="#1f2933" font-weight="normal" text-anchor="start">Each base table admits only this user's rows, before the query's own conditions run</text><rect x="62" y="268" width="213.12" height="23" rx="11.5" fill="#ffffff" stroke="#52606d" stroke-width="1.2"/><text x="168.56" y="282" font-family="Helvetica, Arial, sans-serif" font-size="11" fill="#52606d" font-weight="normal" text-anchor="middle">proved by: side_channel · drills</text><rect x="860" y="203" width="340" height="84" rx="10" fill="#fdecec" stroke="#d64545" stroke-width="1.5"/><text x="874" y="229" font-family="Helvetica, Arial, sans-serif" font-size="13.5" fill="#1f2933" font-weight="bold" text-anchor="start">An error probe for another user's value</text><text x="874" y="251.0" font-family="Helvetica, Arial, sans-serif" font-size="12.5" fill="#52606d" font-weight="normal" text-anchor="start">stops at layer 2: blocked</text><polyline points="856,245 784,245" fill="none" stroke="#d64545" stroke-width="2" marker-end="url(#arrow-deny)"/><rect x="40" y="318" width="740" height="106" rx="10" fill="#eaf1fd" stroke="#2f6fde" stroke-width="1.5"/><text x="62" y="352" font-family="Helvetica, Arial, sans-serif" font-size="17" fill="#2f6fde" font-weight="bold" text-anchor="start">3  Service principal binding</text><text x="62" y="380" font-family="Helvetica, Arial, sans-serif" font-size="13.5" fill="#1f2933" font-weight="normal" text-anchor="start">session_user() = this application's service principal, in every view</text><rect x="62" y="394" width="126.88000000000001" height="23" rx="11.5" fill="#ffffff" stroke="#52606d" stroke-width="1.2"/><text x="125.44" y="408" font-family="Helvetica, Arial, sans-serif" font-size="11" fill="#52606d" font-weight="normal" text-anchor="middle">proved by: binding</text><rect x="860" y="329" width="340" height="84" rx="10" fill="#fdecec" stroke="#d64545" stroke-width="1.5"/><text x="874" y="355" font-family="Helvetica, Arial, sans-serif" font-size="13.5" fill="#1f2933" font-weight="bold" text-anchor="start">A mistaken grant to another application</text><text x="874" y="377.0" font-family="Helvetica, Arial, sans-serif" font-size="12.5" fill="#52606d" font-weight="normal" text-anchor="start">stops at layer 3: 0 rows</text><polyline points="856,371 784,371" fill="none" stroke="#d64545" stroke-width="2" marker-end="url(#arrow-deny)"/><rect x="40" y="444" width="740" height="106" rx="10" fill="#ffffff" stroke="#2f6fde" stroke-width="1.5"/><text x="62" y="478" font-family="Helvetica, Arial, sans-serif" font-size="17" fill="#2f6fde" font-weight="bold" text-anchor="start">4  Claim → entitlements</text><text x="62" y="506" font-family="Helvetica, Arial, sans-serif" font-size="13.5" fill="#1f2933" font-weight="normal" text-anchor="start">Grant rows for the user named in the signed token</text><rect x="62" y="520" width="200.8" height="23" rx="11.5" fill="#ffffff" stroke="#52606d" stroke-width="1.2"/><text x="162.4" y="534" font-family="Helvetica, Arial, sans-serif" font-size="11" fill="#52606d" font-weight="normal" text-anchor="middle">proved by: visibility · attack</text><rect x="860" y="455" width="340" height="84" rx="10" fill="#fdecec" stroke="#d64545" stroke-width="1.5"/><text x="874" y="481" font-family="Helvetica, Arial, sans-serif" font-size="13.5" fill="#1f2933" font-weight="bold" text-anchor="start">A forged, unknown or malformed claim</text><text x="874" y="503.0" font-family="Helvetica, Arial, sans-serif" font-size="12.5" fill="#52606d" font-weight="normal" text-anchor="start">stops at layer 4: 0 rows</text><polyline points="856,497 784,497" fill="none" stroke="#d64545" stroke-width="2" marker-end="url(#arrow-deny)"/><rect x="40" y="570" width="740" height="106" rx="10" fill="#ffffff" stroke="#2f6fde" stroke-width="1.5"/><text x="62" y="604" font-family="Helvetica, Arial, sans-serif" font-size="17" fill="#2f6fde" font-weight="bold" text-anchor="start">5  Role policy</text><text x="62" y="632" font-family="Helvetica, Arial, sans-serif" font-size="13.5" fill="#1f2933" font-weight="normal" text-anchor="start">What that role may see: detail level, masking, minimum group size</text><rect x="62" y="646" width="151.52" height="23" rx="11.5" fill="#ffffff" stroke="#52606d" stroke-width="1.2"/><text x="137.76" y="660" font-family="Helvetica, Arial, sans-serif" font-size="11" fill="#52606d" font-weight="normal" text-anchor="middle">proved by: role_effect</text><rect x="860" y="581" width="340" height="84" rx="10" fill="#fdecec" stroke="#d64545" stroke-width="1.5"/><text x="874" y="607" font-family="Helvetica, Arial, sans-serif" font-size="13.5" fill="#1f2933" font-weight="bold" text-anchor="start">An advisor asks for dates of birth</text><text x="874" y="629.0" font-family="Helvetica, Arial, sans-serif" font-size="12.5" fill="#52606d" font-weight="normal" text-anchor="start">stops at layer 5: masked</text><polyline points="856,623 784,623" fill="none" stroke="#d64545" stroke-width="2" marker-end="url(#arrow-deny)"/></svg><figcaption>What each layer stops. Layers 1 and 2 are the ones this runbook operates.</figcaption></figure>
+
+<h2 id="who-needs-what">Who needs what</h2>
+<table>
+<thead>
+<tr>
+<th>Task</th>
+<th>Needs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Create the two governed tags</td>
+<td>An account admin, or a principal with permission to create governed tags</td>
+</tr>
+<tr>
+<td>Create service principals and account groups (bootstrap)</td>
+<td>A workspace admin</td>
+</tr>
+<tr>
+<td>Create row filter policies</td>
+<td><code>MANAGE</code> on the base schema, or ownership of it</td>
+</tr>
+<tr>
+<td>Create the claim-keyed views and policy functions</td>
+<td><code>CREATE TABLE</code> and <code>CREATE FUNCTION</code> on the governance and portal schemas</td>
+</tr>
+<tr>
+<td>Run portal queries</td>
+<td>Serverless compute, a SQL warehouse, or Databricks Runtime 16.4+ for the principals the policies apply to</td>
+</tr>
+</tbody>
+</table>
+<h2 id="1-create-the-governed-tags">1. Create the governed tags</h2>
+<p>The row policies find their tables and columns through two governed tags. They're defined in <code>config/tags.yml</code>:</p>
+<table>
+<thead>
+<tr>
+<th>Tag</th>
+<th>Set on</th>
+<th>Allowed values</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>portal_grain</code></td>
+<td>tables</td>
+<td><code>accounts</code>, <code>contributions</code>, <code>roster</code>, <code>tenant</code>, <code>reference</code>, <code>members</code>, <code>claims</code>, <code>accumulators</code>, <code>cells</code>, <code>plan_totals</code>, <code>roster_totals</code>, <code>remittance</code></td>
+</tr>
+<tr>
+<td><code>portal_key</code></td>
+<td>columns</td>
+<td><code>member</code>, <code>tenant</code>, <code>pharmacy</code>, <code>cell_count</code>, <code>birth_date</code></td>
+</tr>
+</tbody>
+</table>
+<p>An account admin creates them once per account, in the UI or with the API:</p>
+<div class="codehilite"><pre><span></span><code>databricks<span class="w"> </span>tag-policies<span class="w"> </span>create-tag-policy<span class="w"> </span>portal_grain<span class="w"> </span>--json<span class="w"> </span><span class="s1">'{"tag_key": "portal_grain",</span>
+<span class="s1">  "values": [{"name": "accounts"}, {"name": "contributions"}, {"name": "roster"}, {"name": "tenant"},</span>
+<span class="s1">             {"name": "reference"}, {"name": "members"}, {"name": "claims"}, {"name": "accumulators"}, {"name": "cells"},</span>
+<span class="s1">             {"name": "plan_totals"}, {"name": "roster_totals"}, {"name": "remittance"}]}'</span>
+databricks<span class="w"> </span>tag-policies<span class="w"> </span>create-tag-policy<span class="w"> </span>portal_key<span class="w"> </span>--json<span class="w"> </span><span class="s1">'{"tag_key": "portal_key",</span>
+<span class="s1">  "values": [{"name": "member"}, {"name": "tenant"}, {"name": "pharmacy"}, {"name": "cell_count"}, {"name": "birth_date"}]}'</span>
+</code></pre></div>
+
+<p>The bootstrap job tries this for you with <code>tag_set=governed</code> and prints these instructions when it isn't allowed. Then give <code>ASSIGN</code> on both tags to a small governance group only (<a href="https://docs.databricks.com/aws/en/admin/tag-policies/manage-permissions">manage tag policy permissions</a>). Tagging is a security boundary: whoever can change these tags can change which rows the portal sees.</p>
+<p>The row policies task refuses to run when either tag isn't governed or lacks a value. A free-form tag with the same name would leave the policies matching nothing.</p>
+<h3 id="evaluation-workspaces-the-stand-in-set">Evaluation workspaces: the stand-in set</h3>
+<p>If you can't create governed tags yet, deploy with <code>--var tag_set=stand_in</code>. It maps each logical tag to a platform system tag. Those tags aren't reserved for access control, so never use this set in production.</p>
+<h2 id="2-groups-and-service-principal-rotation">2. Groups and service principal rotation</h2>
+<p>Bootstrap creates one account group per application (<code>genie-claims-ref-&lt;example&gt;-portal-backends</code>) with the application's service principal as its only member. Grants and row policies name the group, never the service principal.</p>
+<p>Grants and policies never need to change when the service principal does. The views and policy functions do: their <code>session_user()</code> check names the application's service principal. To replace it:</p>
+<ol>
+<li>Create the new service principal and its credential, and store them in the secret scope under the example's keys.</li>
+<li>Add it to the group, and wait until it can read a portal view. New memberships can take a few minutes to reach Unity Catalog.</li>
+<li>Rerun the deploy job. Tasks 04 and 05 recreate the views and functions for the new service principal; from this point the old one gets no rows.</li>
+<li>Switch the backend to the new credential, in the same change window as step 3.</li>
+<li>Remove the old service principal from the group.</li>
+</ol>
+<p>Rotating only the secret of the same service principal needs none of this: the application id stays the same.</p>
+<h2 id="3-add-a-protected-table">3. Add a protected table</h2>
+<p>Order matters. Grant last.</p>
+<ol>
+<li>Add the table to <code>row_policies</code> in the example's <code>example.yml</code>, with its grain and its key columns in function-argument order.</li>
+<li>If it's a new grain, add a <code>rf_&lt;grain&gt;</code> function to <code>sql/30_policy_functions.sql</code>. A policy function may read only tables that carry no policy of their own. If the rule needs facts from a protected table, derive them into a governance table in <code>sql/05_derived_tables.sql</code>.</li>
+<li>Deploy. Task 05 tags the table and its columns, creates the policy and checks coverage.</li>
+<li>Add or change the claim-keyed view that reads it, then its grant in <code>sql/20_runtime_grants.sql</code>.</li>
+<li>Run the isolation suite. A test in <code>tests/test_config.py</code> also fails offline if a portal view reads a base table that has no row policy.</li>
+</ol>
+<p>If someone grants a new table before it's tagged, default-deny returns no rows to the portal until a steward tags it.</p>
+<h2 id="4-change-a-policy-function">4. Change a policy function</h2>
+<p>Edit <code>sql/30_policy_functions.sql</code> and rerun the deploy job. Task 05 checks the tags first, replaces each function in place, then re-applies the policies and checks that every one is deployed. The policies stay attached throughout, so no table is ever unfiltered for the portal. In workspaces that raise without a claim, the service principal does the replacing: it gets <code>MANAGE</code> on each existing function and governance-only rights for the duration, and loses both again.</p>
+<h2 id="5-guardrail-queries-for-ci">5. Guardrail queries for CI</h2>
+<p>Run these after every change to tags, policies, views or grants, and fail the build when one returns rows. Replace <code>&lt;catalog&gt;</code>, <code>&lt;base&gt;</code>, <code>&lt;governance&gt;</code> and <code>&lt;group&gt;</code>.</p>
+<p>Base tables without a grain tag. These return nothing to the portal under default-deny, so a row here usually means a forgotten step:</p>
+<div class="codehilite"><pre><span></span><code><span class="k">SELECT</span><span class="w"> </span><span class="n">t</span><span class="p">.</span><span class="k">table_name</span>
+<span class="k">FROM</span><span class="w"> </span><span class="o">&lt;</span><span class="k">catalog</span><span class="o">&gt;</span><span class="p">.</span><span class="n">information_schema</span><span class="p">.</span><span class="n">tables</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="n">t</span>
+<span class="k">LEFT</span><span class="w"> </span><span class="k">JOIN</span><span class="w"> </span><span class="o">&lt;</span><span class="k">catalog</span><span class="o">&gt;</span><span class="p">.</span><span class="n">information_schema</span><span class="p">.</span><span class="n">table_tags</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="k">g</span>
+<span class="w">  </span><span class="k">ON</span><span class="w"> </span><span class="k">g</span><span class="p">.</span><span class="k">schema_name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">t</span><span class="p">.</span><span class="n">table_schema</span><span class="w"> </span><span class="k">AND</span><span class="w"> </span><span class="k">g</span><span class="p">.</span><span class="k">table_name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">t</span><span class="p">.</span><span class="k">table_name</span><span class="w"> </span><span class="k">AND</span><span class="w"> </span><span class="k">g</span><span class="p">.</span><span class="n">tag_name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s1">'portal_grain'</span>
+<span class="k">WHERE</span><span class="w"> </span><span class="n">t</span><span class="p">.</span><span class="n">table_schema</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s1">'&lt;base&gt;'</span><span class="w"> </span><span class="k">AND</span><span class="w"> </span><span class="n">t</span><span class="p">.</span><span class="n">table_type</span><span class="w"> </span><span class="o">&lt;&gt;</span><span class="w"> </span><span class="s1">'VIEW'</span><span class="w"> </span><span class="k">AND</span><span class="w"> </span><span class="k">g</span><span class="p">.</span><span class="n">tag_name</span><span class="w"> </span><span class="k">IS</span><span class="w"> </span><span class="k">NULL</span><span class="p">;</span>
+</code></pre></div>
+
+<p>Key tags on more than one column of the same table, which make a policy ambiguous:</p>
+<div class="codehilite"><pre><span></span><code><span class="k">SELECT</span><span class="w"> </span><span class="k">table_name</span><span class="p">,</span><span class="w"> </span><span class="n">tag_value</span><span class="p">,</span><span class="w"> </span><span class="k">count</span><span class="p">(</span><span class="o">*</span><span class="p">)</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="n">columns</span>
+<span class="k">FROM</span><span class="w"> </span><span class="o">&lt;</span><span class="k">catalog</span><span class="o">&gt;</span><span class="p">.</span><span class="n">information_schema</span><span class="p">.</span><span class="n">column_tags</span>
+<span class="k">WHERE</span><span class="w"> </span><span class="k">schema_name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s1">'&lt;base&gt;'</span><span class="w"> </span><span class="k">AND</span><span class="w"> </span><span class="n">tag_name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s1">'portal_key'</span>
+<span class="k">GROUP</span><span class="w"> </span><span class="k">BY</span><span class="w"> </span><span class="k">table_name</span><span class="p">,</span><span class="w"> </span><span class="n">tag_value</span>
+<span class="k">HAVING</span><span class="w"> </span><span class="k">count</span><span class="p">(</span><span class="o">*</span><span class="p">)</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="mi">1</span><span class="p">;</span>
+</code></pre></div>
+
+<p>Grain-tagged tables (other than reference tables) with no key tag at all, so no row policy can bind to them:</p>
+<div class="codehilite"><pre><span></span><code><span class="k">SELECT</span><span class="w"> </span><span class="k">g</span><span class="p">.</span><span class="k">table_name</span>
+<span class="k">FROM</span><span class="w"> </span><span class="o">&lt;</span><span class="k">catalog</span><span class="o">&gt;</span><span class="p">.</span><span class="n">information_schema</span><span class="p">.</span><span class="n">table_tags</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="k">g</span>
+<span class="k">LEFT</span><span class="w"> </span><span class="k">JOIN</span><span class="w"> </span><span class="o">&lt;</span><span class="k">catalog</span><span class="o">&gt;</span><span class="p">.</span><span class="n">information_schema</span><span class="p">.</span><span class="n">column_tags</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="n">k</span>
+<span class="w">  </span><span class="k">ON</span><span class="w"> </span><span class="n">k</span><span class="p">.</span><span class="k">schema_name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">g</span><span class="p">.</span><span class="k">schema_name</span><span class="w"> </span><span class="k">AND</span><span class="w"> </span><span class="n">k</span><span class="p">.</span><span class="k">table_name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">g</span><span class="p">.</span><span class="k">table_name</span><span class="w"> </span><span class="k">AND</span><span class="w"> </span><span class="n">k</span><span class="p">.</span><span class="n">tag_name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s1">'portal_key'</span>
+<span class="k">WHERE</span><span class="w"> </span><span class="k">g</span><span class="p">.</span><span class="k">schema_name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s1">'&lt;base&gt;'</span><span class="w"> </span><span class="k">AND</span><span class="w"> </span><span class="k">g</span><span class="p">.</span><span class="n">tag_name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s1">'portal_grain'</span><span class="w"> </span><span class="k">AND</span><span class="w"> </span><span class="k">g</span><span class="p">.</span><span class="n">tag_value</span><span class="w"> </span><span class="o">&lt;&gt;</span><span class="w"> </span><span class="s1">'reference'</span>
+<span class="k">GROUP</span><span class="w"> </span><span class="k">BY</span><span class="w"> </span><span class="k">g</span><span class="p">.</span><span class="k">table_name</span>
+<span class="k">HAVING</span><span class="w"> </span><span class="k">count</span><span class="p">(</span><span class="n">k</span><span class="p">.</span><span class="k">column_name</span><span class="p">)</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span>
+</code></pre></div>
+
+<p>Any grant to the portal's group, or directly to its service principal, outside the portal schema, at table, schema or catalog level:</p>
+<div class="codehilite"><pre><span></span><code><span class="k">SELECT</span><span class="w"> </span><span class="s1">'table'</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="k">level</span><span class="p">,</span><span class="w"> </span><span class="n">table_schema</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="n">name</span><span class="p">,</span><span class="w"> </span><span class="n">privilege_type</span><span class="w"> </span><span class="k">FROM</span><span class="w"> </span><span class="o">&lt;</span><span class="k">catalog</span><span class="o">&gt;</span><span class="p">.</span><span class="n">information_schema</span><span class="p">.</span><span class="n">table_privileges</span>
+<span class="k">WHERE</span><span class="w"> </span><span class="n">grantee</span><span class="w"> </span><span class="k">IN</span><span class="w"> </span><span class="p">(</span><span class="s1">'&lt;group&gt;'</span><span class="p">,</span><span class="w"> </span><span class="s1">'&lt;service principal application id&gt;'</span><span class="p">)</span><span class="w"> </span><span class="k">AND</span><span class="w"> </span><span class="n">table_schema</span><span class="w"> </span><span class="k">IN</span><span class="w"> </span><span class="p">(</span><span class="s1">'&lt;base&gt;'</span><span class="p">,</span><span class="w"> </span><span class="s1">'&lt;governance&gt;'</span><span class="p">)</span>
+<span class="k">UNION</span><span class="w"> </span><span class="k">ALL</span>
+<span class="k">SELECT</span><span class="w"> </span><span class="s1">'schema'</span><span class="p">,</span><span class="w"> </span><span class="k">schema_name</span><span class="p">,</span><span class="w"> </span><span class="n">privilege_type</span><span class="w"> </span><span class="k">FROM</span><span class="w"> </span><span class="o">&lt;</span><span class="k">catalog</span><span class="o">&gt;</span><span class="p">.</span><span class="n">information_schema</span><span class="p">.</span><span class="n">schema_privileges</span>
+<span class="k">WHERE</span><span class="w"> </span><span class="n">grantee</span><span class="w"> </span><span class="k">IN</span><span class="w"> </span><span class="p">(</span><span class="s1">'&lt;group&gt;'</span><span class="p">,</span><span class="w"> </span><span class="s1">'&lt;service principal application id&gt;'</span><span class="p">)</span><span class="w"> </span><span class="k">AND</span><span class="w"> </span><span class="k">schema_name</span><span class="w"> </span><span class="k">IN</span><span class="w"> </span><span class="p">(</span><span class="s1">'&lt;base&gt;'</span><span class="p">,</span><span class="w"> </span><span class="s1">'&lt;governance&gt;'</span><span class="p">)</span>
+<span class="k">UNION</span><span class="w"> </span><span class="k">ALL</span>
+<span class="k">SELECT</span><span class="w"> </span><span class="s1">'catalog'</span><span class="p">,</span><span class="w"> </span><span class="k">catalog_name</span><span class="p">,</span><span class="w"> </span><span class="n">privilege_type</span><span class="w"> </span><span class="k">FROM</span><span class="w"> </span><span class="o">&lt;</span><span class="k">catalog</span><span class="o">&gt;</span><span class="p">.</span><span class="n">information_schema</span><span class="p">.</span><span class="n">catalog_privileges</span>
+<span class="k">WHERE</span><span class="w"> </span><span class="n">grantee</span><span class="w"> </span><span class="k">IN</span><span class="w"> </span><span class="p">(</span><span class="s1">'&lt;group&gt;'</span><span class="p">,</span><span class="w"> </span><span class="s1">'&lt;service principal application id&gt;'</span><span class="p">)</span><span class="w"> </span><span class="k">AND</span><span class="w"> </span><span class="n">privilege_type</span><span class="w"> </span><span class="k">NOT</span><span class="w"> </span><span class="k">IN</span><span class="w"> </span><span class="p">(</span><span class="s1">'USE_CATALOG'</span><span class="p">,</span><span class="w"> </span><span class="s1">'USE CATALOG'</span><span class="p">);</span>
+</code></pre></div>
+
+<p>The policies in place:</p>
+<div class="codehilite"><pre><span></span><code><span class="k">SHOW</span><span class="w"> </span><span class="n">POLICIES</span><span class="w"> </span><span class="k">ON</span><span class="w"> </span><span class="k">SCHEMA</span><span class="w"> </span><span class="o">&lt;</span><span class="k">catalog</span><span class="o">&gt;</span><span class="p">.</span><span class="o">&lt;</span><span class="n">base</span><span class="o">&gt;</span><span class="p">;</span>
+</code></pre></div>
+
+<p>Notebook 05 runs the same coverage check (<code>claims_kit.policies.coverage_problems</code>) and a check that every policy is deployed (<code>policy_problems</code>) on every deploy, and the isolation suite repeats the second one. Also alert on tag changes in the <a href="https://docs.databricks.com/aws/en/admin/system-tables/audit-logs">audit log system table</a> for your catalog, made by anyone outside the governance group.</p>
+<h2 id="6-run-the-misconfiguration-drills">6. Run the misconfiguration drills</h2>
+<p>The <code>northwind_drills</code> and <code>larkspur_drills</code> jobs (or <code>python -m claims_kit.drills --example &lt;name&gt;</code>) make five mistakes one at a time:
+- untag a key column;
+- point a policy at another group;
+- grant a view without the claim filter;
+- expose a new untagged table;
+- grant a base table directly;
+- expose a masked column through a view without the claim filter, read by a persona whose role masks it.</p>
+<p>Each drill measures what the portal returns with the mistake in place and with one layer alone, restores the original state, and verifies every layer: the portal view, the policy's reach, the tags and the deployed policies. The drills stop if a restore can't be verified, and don't start on a broken deployment. Run them on a test deployment, never one that serves real users.</p>
+<h2 id="7-operate-views-only-mode">7. Operate views-only mode</h2>
+<p><code>--var enforcement=views</code> deploys the claim-keyed views without row policies. It's reasonable when your application controls every query. With free-form questions, users can learn facts about other users' rows through errors (see the probe results in the enforcement model guide). If you must run it for a while:</p>
+<ul>
+<li>return a generic message to users when a query fails, never the error text (this narrows the channel; answered or failed is still one bit);</li>
+<li>alert when the portal's service principal hits <code>DIVIDE_BY_ZERO</code>, <code>CAST_INVALID_INPUT</code> or similar errors in query history, which is what probing looks like;</li>
+<li>plan the move to layered: create the governed tags and redeploy with the default.</li>
+</ul>
+<h2 id="8-troubleshooting">8. Troubleshooting</h2>
+<table>
+<thead>
+<tr>
+<th>Symptom</th>
+<th>Cause and fix</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Task 05 says the governed tags aren't ready</td>
+<td>Create <code>portal_grain</code> and <code>portal_key</code> with every value (step 1), or use <code>tag_set=stand_in</code> for evaluation</td>
+</tr>
+<tr>
+<td>Task 05 reports coverage problems</td>
+<td>A table lacks its grain tag, a key column lacks its tag, or a key tag sits on two columns. Fix the tags; never remove a tag to silence the check.</td>
+</tr>
+<tr>
+<td><code>UC_ABAC_MULTIPLE_ROW_FILTERS</code></td>
+<td>Two row policies match one table. Give each table exactly one <code>portal_grain</code> value.</td>
+</tr>
+<tr>
+<td><code>UNSUPPORTED_NESTED_ROW_OR_COLUMN_ACCESS_POLICY</code></td>
+<td>A policy function reads a table that has its own policy. Read a governance table instead (step 3).</td>
+</tr>
+<tr>
+<td><code>UC_USING_REF_OF_MASKED_COLUMNS</code></td>
+<td>A column-mask policy masks a column that a row filter on the same table also reads. Mask a different column, or give the role a precomputed copy (as Larkspur does for pharmacy staff).</td>
+</tr>
+<tr>
+<td><code>UC_DEPENDENCY_DOES_NOT_EXIST</code> on a protected table during task 04</td>
+<td>A policy function still reads a governance view that task 04 is rebuilding, usually after you changed which views the functions read. Remove the example's policies once (deploy with <code>enforcement=views</code>), then redeploy layered.</td>
+</tr>
+<tr>
+<td><code>ROW_LEVEL_SECURITY_FEATURE_NOT_SUPPORTED.VIEWS</code></td>
+<td>A schema-level policy matched a view. Keep row policies on schemas that hold only tables (the base schema here).</td>
+</tr>
+<tr>
+<td><code>OAUTH_CUSTOM_IDENTITY_CLAIM_NOT_PROVIDED</code> creating a policy function</td>
+<td>The workspace raises without a claim; the functions must be created from a claim session, which task 05 does</td>
+</tr>
+<tr>
+<td><code>INSUFFICIENT_PERMISSIONS</code> right after bootstrap</td>
+<td>Group membership hasn't reached Unity Catalog yet. Wait a few minutes; the isolation suite waits up to five.</td>
+</tr>
+<tr>
+<td><code>POLICY_NOT_FOUND</code> on <code>DROP POLICY</code></td>
+<td><code>DROP POLICY</code> has no <code>IF EXISTS</code>; the tooling treats this as already removed</td>
+</tr>
+<tr>
+<td>Query history shows 0 bytes read for portal queries</td>
+<td>Expected for principals that policies apply to. Tune performance with a principal outside the policy.</td>
+</tr>
+</tbody>
+</table></article>
+  </div>
+</body>
+</html>

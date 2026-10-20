@@ -63,7 +63,7 @@ class FakeRunner:
         return self.result or StatementResult("s", ["role", "scope_id"], [["participant", "P-1001"]])
 
 
-def make_client(tmp_path, *, genie=None, runner=None, admin=None, redact_ids=False, host=None):
+def make_client(tmp_path, *, genie=None, runner=None, admin=None, redact_ids=False, host=None, enforcement=None):
     ex = load_example("northwind")
     runtime = ExampleRuntime(ex, load_personas(ex), FakeProvider(), "space-1")
     genie = genie or FakeGenie()
@@ -71,7 +71,8 @@ def make_client(tmp_path, *, genie=None, runner=None, admin=None, redact_ids=Fal
     services = Services(catalog="cat", examples={"northwind": runtime}, conversations=ConversationStore(),
                         audit=AuditLog(tmp_path / "audit.jsonl"), admin_runner=admin,
                         make_runner=lambda auth: runner, make_genie=lambda space_id, auth: genie)
-    env = LocalEnv(host=host, warehouse_id="wh-123", admin_profile=None, catalog="cat", examples={}) if host else None
+    env = (LocalEnv(host=host or "https://h", warehouse_id="wh-123", admin_profile=None, catalog="cat", examples={},
+                    enforcement=enforcement or "layered") if host or enforcement else None)
     settings = Settings(env=env, session_secret="test-secret", audit_path=tmp_path / "audit.jsonl", redact_ids=redact_ids,
                         allowed_hosts=("testserver", "127.0.0.1", "localhost"))
     return TestClient(create_app(settings, services)), services, genie, runner

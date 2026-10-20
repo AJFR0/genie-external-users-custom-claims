@@ -26,9 +26,14 @@ for p in (str(REPO / "src"), str(REPO)):
 
 from claims_kit.config import load_example  # noqa: E402
 from claims_kit.personas import load_fixtures  # noqa: E402
+from claims_kit.policies import policy_sql  # noqa: E402
+from claims_kit.tags import load_tag_set  # noqa: E402
 
-GUIDES = (("overview", "Genie for External Users: Who It Is For and What Changes"),
+GUIDES = (("solution-brief", "Solution Brief: Genie for Your Application's Users"),
+          ("overview", "Genie for External Users: Who It Is For and What Changes"),
+          ("choosing-an-enforcement-model", "Choosing an Enforcement Model"),
           ("implementation-guide", "Implementation Guide"),
+          ("admin-runbook", "Admin Runbook"),
           ("demo-runbook", "Demo Runbook"))
 EXAMPLES = ("northwind", "larkspur")
 FENCE = "`" * 3
@@ -92,9 +97,52 @@ def validation_summary(example: str) -> str:
             f'<p class="dim">{html.escape(ev["example"].title())}, live run on {html.escape(ev["run_date"])}.</p></div>')
 
 
+def _outcome(observed: str) -> str:
+    if observed.startswith("leaked"):
+        return "leaked: " + observed.split(":", 1)[1].split(" only")[0].strip()
+    return observed.split(":", 1)[0]
+
+
+def probe_comparison(example: str) -> str:
+    """Side-channel probes: what each returned with views alone and with the layered model."""
+    layered, views = _evidence(example, "validation"), _evidence(example, "views-mode-validation")
+    if layered is None or views is None:
+        return '<p class="missing">Run the isolation suite in both modes with --evidence to generate this table.</p>'
+    sources = {p.id: p.source for p in load_fixtures(load_example(example)).probes}
+
+    def by_id(ev):
+        return {r["case_id"].split("/", 1)[1]: r for r in ev["results"] if r["case_id"].startswith("side_channel/")}
+
+    lay, vw = by_id(layered), by_id(views)
+    rows = [[pid, lay[pid]["persona"], sources.get(pid, ""), _outcome(vw[pid]["observed"]), _outcome(lay[pid]["observed"])]
+            for pid in lay if pid in vw]
+    return (f'<div class="evidence">{_table(["probe", "persona", "looks for", "Views only", "Layered"], rows)}'
+            f'<p class="dim">{html.escape(example.title())}, live runs on {html.escape(views["run_date"])} (views only) and '
+            f'{html.escape(layered["run_date"])} (layered).</p></div>')
+
+
+def drills_summary(example: str) -> str:
+    ev = _evidence(example, "drills")
+    if ev is None:
+        return '<p class="missing">Run python -m claims_kit.drills with --evidence to generate this table.</p>'
+    label = {True: "held", False: "leak", None: "inconclusive"}
+    rows = [[r["drill_id"], r["mistake"], f"{r['layered_rows']} rows (expected {r['expected_rows']})",
+             f"{r['single_layer_rows']} of {r['total_rows']} rows", label[r["passed"]]] for r in ev["results"]]
+    return (f'<div class="evidence">{_table(["drill", "mistake", "layered, with the mistake", "one layer alone", "result"], rows)}'
+            f'<p class="dim">{html.escape(example.title())}, persona {html.escape(str(ev.get("persona")))}, live run on '
+            f'{html.escape(ev["run_date"])}. Every drill restored and verified the original state.</p></div>')
+
+
+def policy_example(example: str, table: str) -> str:
+    ex = load_example(example)
+    rp = next(r for r in ex.row_policies if r.table == table)
+    return f"{FENCE}sql\n{policy_sql(ex, '<catalog>', load_tag_set('governed'), rp, ex.portal_group)}\n{FENCE}"
+
+
 def context() -> dict:
     values = {name: {k: _money(v) for k, v in load_fixtures(load_example(name)).genie_values.items()} for name in EXAMPLES}
-    return {"values": values, "sql": sql_block, "diagram": diagram, "trace_card": trace_card, "validation_summary": validation_summary}
+    return {"values": values, "sql": sql_block, "diagram": diagram, "trace_card": trace_card, "validation_summary": validation_summary,
+            "probe_comparison": probe_comparison, "drills_summary": drills_summary, "policy_example": policy_example}
 
 
 def render(slug: str, title: str, ctx: dict, css: str) -> str:

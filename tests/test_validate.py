@@ -238,3 +238,119 @@ def test_constraint_cases_pass_when_rejected_and_fail_and_clean_up_when_accepted
     bad = SuiteContext(example=EX, catalog="cat", host="h", warehouse_id="wh", provider=Provider(), admin=bad_admin)
     assert all(r.passed is False for r in constraint_cases(bad, FX))
     assert sum(s.startswith("DELETE FROM") for s in bad_admin.statements) == 3
+
+
+import dataclasses
+
+import pytest
+
+from claims_kit.personas import SideChannelProbe, sql_literal
+from claims_kit.validate import judge_probe, probe_sql, side_channel_cases, wait_for_access
+
+PROBE = SideChannelProbe("maya-balance", "maya", "my_accounts", (("balance", "878.95"),), (("balance", "0.01"),))
+
+
+def _err(cls):
+    return StatementError(f"[{cls}] boom")
+
+
+def test_probe_sql_wraps_the_condition_in_an_erroring_case():
+    sql = probe_sql("`c`.`p`.`v`", (("balance", "878.95"), ("plan_id", "PLAN-A")), "DIVIDE_BY_ZERO")
+    assert sql == ("SELECT count(*) FROM `c`.`p`.`v` WHERE 1 / (CASE WHEN balance = 878.95 AND plan_id = 'PLAN-A' "
+                   "THEN 0 ELSE 1 END) > 0")
+    cast = probe_sql("`v`", (("participant_id", "P-2002"),), "CAST_INVALID_INPUT")
+    assert cast.endswith("WHERE CAST(CASE WHEN participant_id = 'P-2002' THEN 'x' ELSE '1' END AS INT) = 1")
+
+
+def test_sql_literal_quotes_strings_and_rejects_quotes():
+    assert sql_literal("878.95") == "878.95" and sql_literal("PLAN-A") == "'PLAN-A'" and sql_literal("2026-Q1") == "'2026-Q1'"
+    assert sql_literal("NaN") == "'NaN'" and sql_literal("Infinity") == "'Infinity'" and sql_literal("-12") == "-12"
+    with pytest.raises(ValueError):
+        sql_literal("x' OR '1'='1")
+
+
+def test_error_only_with_the_present_value_is_a_leak():
+    r = judge_probe("side_channel/x", "side_channel", PROBE, ("error", _err("DIVIDE_BY_ZERO"), "s1"), ("ok", 3, "s2"))
+    assert r.passed is False and r.observed.startswith("leaked")
+
+
+def test_same_outcome_both_times_is_blocked():
+    r = judge_probe("side_channel/x", "side_channel", PROBE, ("ok", 3, "s1"), ("ok", 3, "s2"))
+    assert r.passed is True and r.observed.startswith("blocked")
+
+
+def test_transient_or_unexpected_errors_are_inconclusive():
+    for err in (_err("TEMPORARILY_UNAVAILABLE"), _err("INSUFFICIENT_PERMISSIONS")):
+        assert judge_probe("side_channel/x", "side_channel", PROBE, ("error", err, "s1"), ("ok", 3, "s2")).passed is None
+
+
+def test_changed_row_count_means_the_value_is_visible_to_the_user():
+    r = judge_probe("side_channel/x", "side_channel", PROBE, ("ok", 2, "s1"), ("ok", 3, "s2"))
+    assert r.passed is None and "visible" in r.observed
+
+
+def _probe_handler(leaks):
+    def handler(headers, sql):
+        if leaks and "878.95" in sql:
+            raise StatementError("[DIVIDE_BY_ZERO] Division by zero")
+        return StatementResult("s", ["n"], [["3"]])
+    return handler
+
+
+def test_side_channel_category_depends_on_the_enforcement_mode():
+    fx = dataclasses.replace(FX, probes=(PROBE,))
+    layered = side_channel_cases(ctx_with(_probe_handler(leaks=False)), fx)
+    assert [(r.category, r.passed) for r in layered] == [("side_channel", True)]
+    views = side_channel_cases(ctx_with(_probe_handler(leaks=True), enforcement="views"), fx)
+    assert [(r.category, r.passed) for r in views] == [("documented", False)]
+    assert failures(views) == []
+
+
+def test_wait_for_access_retries_permission_errors_until_grants_arrive():
+    calls, slept = [], []
+
+    def handler(headers, sql):
+        calls.append(sql)
+        if len(calls) < 3:
+            raise StatementError("[INSUFFICIENT_PERMISSIONS] User does not have USE SCHEMA")
+        return StatementResult("s", ["n"], [["1"]])
+
+    assert wait_for_access(ctx_with(handler), FX, timeout_s=60, sleep=slept.append) is True
+    assert len(calls) == 3 and slept == [10, 10]
+
+
+def test_wait_for_access_gives_up_after_the_timeout():
+    def handler(headers, sql):
+        raise StatementError("[INSUFFICIENT_PERMISSIONS] no")
+
+    slept = []
+    assert wait_for_access(ctx_with(handler), FX, timeout_s=25, sleep=slept.append) is False
+    assert sum(slept) >= 20
+
+
+
+from claims_kit.validate import enforcement_case
+
+
+class PolicyAdmin(Admin):
+    def __init__(self, names):
+        super().__init__()
+        self.names = names
+
+    def execute(self, sql, parameters=None):
+        if sql.startswith("SHOW POLICIES"):
+            return StatementResult("s", ["name"], [[n] for n in self.names])
+        return super().execute(sql, parameters)
+
+
+def test_enforcement_case_fails_when_layered_policies_are_missing():
+    """Review #8/#9: the deployment, not .env, decides; a layered run with no policies must fail."""
+    from claims_kit.policies import expected_policy_names
+    ok = SuiteContext(example=EX, catalog="cat", host="h", warehouse_id="wh", provider=Provider(),
+                      admin=PolicyAdmin(expected_policy_names(EX)))
+    assert [r.passed for r in enforcement_case(ok, FX)] == [True]
+    missing = SuiteContext(example=EX, catalog="cat", host="h", warehouse_id="wh", provider=Provider(), admin=PolicyAdmin([]))
+    assert [r.passed for r in enforcement_case(missing, FX)] == [False]
+    views = SuiteContext(example=EX, catalog="cat", host="h", warehouse_id="wh", provider=Provider(),
+                         admin=PolicyAdmin(expected_policy_names(EX)), enforcement="views")
+    assert [r.passed for r in enforcement_case(views, FX)] == [False]

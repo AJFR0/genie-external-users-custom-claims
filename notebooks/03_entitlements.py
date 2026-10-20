@@ -26,3 +26,17 @@ run_admin_script(ex.read_sql("governance", values))
 run_admin_script(ex.read_sql("seed_entitlements", values))
 display(spark.table(f"`{CATALOG}`.`{ex.schemas['governance']}`.`portal_user_grants`"))  # noqa: F821
 display(spark.table(f"`{CATALOG}`.`{ex.schemas['governance']}`.`role_policies`"))  # noqa: F821
+
+# COMMAND ----------
+
+# MAGIC %md
+# MAGIC ### Derived tables
+# MAGIC Row-filter functions may read only tables that carry no policy of their own, so the facts the rules need are
+# MAGIC copied into the governance schema: which plans a participant's accounts are in (Northwind) and each member's
+# MAGIC household (Larkspur). Larkspur also precomputes its spend cells here, so aggregate-only roles never reach
+# MAGIC member rows. Groups smaller than the smallest minimum of any aggregate role are never stored. In production, refresh these with
+# MAGIC the pipeline that loads the base tables.
+
+# COMMAND ----------
+
+run_admin_script(ex.read_sql("derived_tables", values))

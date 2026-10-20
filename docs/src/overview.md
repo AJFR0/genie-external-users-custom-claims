@@ -1,6 +1,6 @@
 Your application's own users can ask a Genie Agent free-form questions about your data, and each of them sees only what their entitlements allow. None of them needs a Databricks account. Your backend authenticates as one service principal, stamps every request with the signed-in user's id inside an OAuth token that Databricks signs, and Unity Catalog filters every query by that id.
 
-This guide explains who the pattern is for, what teams did before it, and what it changes. The [Implementation Guide](implementation-guide.html) walks through building it, and the [Demo Runbook](demo-runbook.html) shows it end to end with two fictional companies.
+This guide explains who the pattern is for, what teams did before it, and what it changes. [Choosing an Enforcement Model](choosing-an-enforcement-model.html) explains why the repo layers views and ABAC policies, the [Implementation Guide](implementation-guide.html) walks through building it, the [Admin Runbook](admin-runbook.html) covers operating it, and the [Demo Runbook](demo-runbook.html) shows it end to end with two fictional companies.
 
 ## Who this is for
 
@@ -66,18 +66,27 @@ Four things make it work:
 2. **Stamp.** Your backend requests an OAuth token for its service principal and adds `custom_claim=<user id>`. Databricks returns a signed, short-lived token.
 3. **Ask.** Your backend sends the question to the Genie Conversation API with that token.
 4. **Write SQL.** Genie writes SQL. It is the same SQL for every user who asks the same question.
-5. **Filter.** Unity Catalog evaluates the views. It reads the claim from the token, looks it up in your entitlements table and returns only the permitted rows.
+5. **Filter.** Unity Catalog evaluates the views and the row policies on the tables behind them. It reads the claim from the token, looks it up in your entitlements table and returns only the permitted rows.
 
 According to the announcement, the Genie Conversation API, the SQL Statement Execution API and the Databricks JDBC driver honor the claim. You can use the same pattern from your own agent or service, without Genie.
 
-## Four layers of isolation
+> **Which Genie?** This pattern serves **Genie Agents through the Genie Conversation API**, called by your backend. Genie One, the assistant people use inside Databricks, runs as the person signed in to Databricks, so it isn't a path for your application's users.
+
+## Five layers of isolation
 
 [[ diagram("layers", "Each layer is checked separately by the isolation suite in this repo.") ]]
 
-1. **Unity Catalog grants** decide which application can read which views. Another application's service principal has no grant, so its queries are denied.
-2. **Service principal binding** inside each view (`session_user()` must be this application's service principal) means that even a mistaken grant to another application returns no rows.
-3. **Claim to entitlements** decides which end user. A forged, unknown or malformed claim matches no grant.
-4. **Role policy** decides how much that user's role may see: their own records, aggregates only, masked columns, or a minimum group size.
+1. **Reach: Unity Catalog grants** decide which application can read which views. Each application's account group can read its own portal views and nothing else, so another application is denied.
+2. **Row and mask policies** on every base table that holds user data admit only the rows and values the user's role may see, and Unity Catalog applies them before any condition in the query runs. A user can't probe other users' rows through errors. Public reference tables, such as the fund list, carry a tag instead, so default-deny skips them.
+3. **Service principal binding** inside each view (`session_user()` must be this application's service principal) means that even a mistaken grant to another application returns no rows.
+4. **Claim to entitlements** decides which end user. A forged, unknown or malformed claim matches no grant.
+5. **Role policy** decides how much that user's role may see: their own records, aggregates only, masked columns, or a minimum group size.
+
+Layers 1 and 2 cover each other's failure modes. A missing tag or a mis-targeted policy still leaves the views filtering by the claim, and a view written without its filter still sits on tables the policies protect. The misconfiguration drills in this repo make each mistake on a live deployment and show that every user still sees only what their role may see.
+
+## Why views and policies together
+
+Claim-keyed views alone stay closed when someone forgets a step, but a user who can shape the SQL, as every Genie question does, can learn facts about other users' rows through errors. ABAC row filter policies alone block that, but an untagged table or column comes back unfiltered. Layering them gives you both properties. [Choosing an Enforcement Model](choosing-an-enforcement-model.html) has the failure matrix, the live probe results and the performance numbers, and when a single layer is enough.
 
 ## Entitlements are data: per user and per role
 
@@ -144,3 +153,9 @@ The third check is a test token request with `custom_claim` set. The [Implementa
 **What happens when a user has no grants?** Every view returns no rows, and Genie says the account has no access to that information.
 
 **Can we use this without Genie?** Yes. The Statement Execution API and JDBC honor the claim too, so your own services and agents can query the same views.
+
+**Can the claim carry roles or a list of plans?** The claim is one string. Keep it an opaque user id and keep roles and scopes in the entitlement tables: a change then applies on the user's next question without reissuing tokens, and every rule lives in one place you can audit.
+
+**Does it scale to millions of users and thousands of tenants?** Users and tenants are rows in your tables, so onboarding stays an insert. Cluster the protected tables on the columns the policies filter by (tenant, member). The entitlement lookup then prunes files, so a scoped user reads only the files that hold their rows.
+
+**Does this work with Genie One?** No. Use a Genie Agent through the Genie Conversation API (see "Which Genie?" above).

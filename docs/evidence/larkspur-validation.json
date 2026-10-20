@@ -1,8 +1,17 @@
 {
   "example": "larkspur",
-  "run_date": "2026-10-19",
+  "run_date": "2026-10-20",
   "catalog": "<catalog>",
   "results": [
+    {
+      "case_id": "setup/enforcement-matches-deployment",
+      "category": "setup",
+      "persona": null,
+      "passed": true,
+      "expected": "layered: the deployed row policies match",
+      "observed": "7 policies on the base schema",
+      "statement_id": "<id>"
+    },
     {
       "case_id": "visibility/ana/my_access",
       "category": "visibility",
@@ -616,6 +625,51 @@
       "statement_id": null
     },
     {
+      "case_id": "side_channel/priya-member-in-my_claims",
+      "category": "side_channel",
+      "persona": "priya",
+      "passed": true,
+      "expected": "blocked: same outcome whether or not the value exists in rows this user can't see",
+      "observed": "blocked: no error, 0 rows both times",
+      "statement_id": "<id>"
+    },
+    {
+      "case_id": "side_channel/ana-spouse-claim-in-my_claims",
+      "category": "side_channel",
+      "persona": "ana",
+      "passed": true,
+      "expected": "blocked: same outcome whether or not the value exists in rows this user can't see",
+      "observed": "blocked: no error, 27 rows both times",
+      "statement_id": "<id>"
+    },
+    {
+      "case_id": "side_channel/priya-other-pharmacy-in-pharmacy_remittance",
+      "category": "side_channel",
+      "persona": "priya",
+      "passed": true,
+      "expected": "blocked: same outcome whether or not the value exists in rows this user can't see",
+      "observed": "blocked: no error, 322 rows both times",
+      "statement_id": "<id>"
+    },
+    {
+      "case_id": "side_channel/theo-cell-in-sponsor_spend_summary",
+      "category": "side_channel",
+      "persona": "theo",
+      "passed": true,
+      "expected": "blocked: same outcome whether or not the value exists in rows this user can't see",
+      "observed": "blocked: no error, 9 rows both times",
+      "statement_id": "<id>"
+    },
+    {
+      "case_id": "side_channel/dana-sponsor-in-sponsor_spend_summary",
+      "category": "side_channel",
+      "persona": "dana",
+      "passed": true,
+      "expected": "blocked: same outcome whether or not the value exists in rows this user can't see",
+      "observed": "blocked: no error, 21 rows both times",
+      "statement_id": "<id>"
+    },
+    {
       "case_id": "genie/ana/1",
       "category": "genie",
       "persona": "ana",
@@ -631,7 +685,7 @@
       "passed": true,
       "expected": "must []; must not ['marco_member_paid']",
       "observed": "expected values present; no other user's values",
-      "statement_id": null
+      "statement_id": "<id>"
     },
     {
       "case_id": "genie/marco/1",

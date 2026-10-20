@@ -1,0 +1,91 @@
+{
+  "example": "larkspur",
+  "run_date": "2026-10-20",
+  "persona": "ana, priya",
+  "baseline": {
+    "ana": {
+      "own": 27,
+      "reach": 27,
+      "total": 2079
+    },
+    "priya": {
+      "own": 322,
+      "reach": 0,
+      "total": 2079
+    }
+  },
+  "results": [
+    {
+      "drill_id": "D1",
+      "mistake": "tag removed from the key column base.pharmacy_claims.member_id",
+      "expect": "own",
+      "layered_rows": 27,
+      "single_layer_rows": 2079,
+      "expected_rows": 27,
+      "total_rows": 2079,
+      "restored": true,
+      "passed": true,
+      "observed": "held: 27 rows with the mistake in place (expected 27); one layer alone returned 2079 of 2079"
+    },
+    {
+      "drill_id": "D2",
+      "mistake": "the row policy names another application's group",
+      "expect": "own",
+      "layered_rows": 27,
+      "single_layer_rows": 2079,
+      "expected_rows": 27,
+      "total_rows": 2079,
+      "restored": true,
+      "passed": true,
+      "observed": "held: 27 rows with the mistake in place (expected 27); one layer alone returned 2079 of 2079"
+    },
+    {
+      "drill_id": "D3",
+      "mistake": "a view without the claim filter is granted to the portal",
+      "expect": "reach",
+      "layered_rows": 27,
+      "single_layer_rows": 2079,
+      "expected_rows": 27,
+      "total_rows": 2079,
+      "restored": true,
+      "passed": true,
+      "observed": "held: 27 rows with the mistake in place (expected 27); one layer alone returned 2079 of 2079"
+    },
+    {
+      "drill_id": "D4",
+      "mistake": "a new untagged table is exposed through a view without the claim filter",
+      "expect": "zero",
+      "layered_rows": 0,
+      "single_layer_rows": 2079,
+      "expected_rows": 0,
+      "total_rows": 2079,
+      "restored": true,
+      "passed": true,
+      "observed": "held: 0 rows with the mistake in place (expected 0); one layer alone returned 2079 of 2079"
+    },
+    {
+      "drill_id": "D5",
+      "mistake": "the base table base.pharmacy_claims is granted to the portal directly",
+      "expect": "reach",
+      "layered_rows": 27,
+      "single_layer_rows": 2079,
+      "expected_rows": 27,
+      "total_rows": 2079,
+      "restored": true,
+      "passed": true,
+      "observed": "held: 27 rows with the mistake in place (expected 27); one layer alone returned 2079 of 2079"
+    },
+    {
+      "drill_id": "D6",
+      "mistake": "a view without the claim filter exposes raw values in base.pharmacy_claims to a role that reads only a precomputed copy",
+      "expect": "zero",
+      "layered_rows": 0,
+      "single_layer_rows": 2079,
+      "expected_rows": 0,
+      "total_rows": 2079,
+      "restored": true,
+      "passed": true,
+      "observed": "held: 0 rows with the mistake in place (expected 0); one layer alone returned 2079 of 2079"
+    }
+  ]
+}

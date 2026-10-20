@@ -77,16 +77,12 @@ WITH my_plans AS (
   FROM `{{catalog}}`.`{{gov}}`.my_effective_grants
   WHERE scope_type = 'plan' AND can_view_plan_aggregates
 )
-SELECT b.plan_id, pl.plan_name, pl.sponsor_name, f.fund_name, f.asset_class,
-       COUNT(DISTINCT b.participant_id),
-       CAST(SUM(b.balance) AS DECIMAL(16,2)),
-       CAST(AVG(b.balance) AS DECIMAL(14,2)),
-       MAX(b.as_of_date)
-FROM `{{catalog}}`.`{{base}}`.account_balances AS b
-JOIN my_plans AS m ON m.plan_id = b.plan_id
-JOIN `{{catalog}}`.`{{base}}`.plans AS pl ON pl.plan_id = b.plan_id
-JOIN `{{catalog}}`.`{{base}}`.funds AS f ON f.fund_id = b.fund_id
-GROUP BY b.plan_id, pl.plan_name, pl.sponsor_name, f.fund_name, f.asset_class;
+SELECT t.plan_id, pl.plan_name, pl.sponsor_name, f.fund_name, f.asset_class,
+       t.participants, t.total_balance, t.average_balance, t.as_of_date
+FROM `{{catalog}}`.`{{base}}`.plan_fund_balances AS t
+JOIN my_plans AS m ON m.plan_id = t.plan_id
+JOIN `{{catalog}}`.`{{base}}`.plans AS pl ON pl.plan_id = t.plan_id
+JOIN `{{catalog}}`.`{{base}}`.funds AS f ON f.fund_id = t.fund_id;
 
 CREATE VIEW `{{catalog}}`.`{{portal}}`.plan_roster (
   participant_id COMMENT 'Participant identifier',
@@ -106,16 +102,11 @@ WITH roster_plans AS (
   FROM `{{catalog}}`.`{{gov}}`.my_effective_grants
   WHERE scope_type = 'plan' AND can_view_roster
   GROUP BY scope_id
-),
-balances AS (
-  SELECT participant_id, plan_id, SUM(balance) AS total_balance
-  FROM `{{catalog}}`.`{{base}}`.account_balances
-  GROUP BY participant_id, plan_id
 )
 SELECT p.participant_id, p.plan_id, pl.plan_name, p.first_name, p.last_name,
        CASE WHEN r.mask_dob THEN NULL ELSE p.date_of_birth END,
-       p.hire_date, p.status, CAST(b.total_balance AS DECIMAL(16,2))
+       p.hire_date, p.status, b.total_balance
 FROM `{{catalog}}`.`{{base}}`.participants AS p
 JOIN roster_plans AS r ON r.plan_id = p.plan_id
 JOIN `{{catalog}}`.`{{base}}`.plans AS pl ON pl.plan_id = p.plan_id
-LEFT JOIN balances AS b ON b.participant_id = p.participant_id AND b.plan_id = p.plan_id;
+LEFT JOIN `{{catalog}}`.`{{base}}`.participant_plan_balances AS b ON b.participant_id = p.participant_id AND b.plan_id = p.plan_id;

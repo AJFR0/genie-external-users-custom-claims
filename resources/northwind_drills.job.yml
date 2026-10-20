@@ -1,0 +1,17 @@
+resources:
+  jobs:
+    northwind_drills:
+      name: genie-claims-ref · Northwind misconfiguration drills
+      max_concurrent_runs: 1
+      parameters:
+        - {name: example, default: northwind}
+        - {name: catalog, default: "${var.catalog}"}
+        - {name: warehouse_id, default: "${var.warehouse_id}"}
+        - {name: secret_scope, default: "${var.secret_scope}"}
+        - {name: view_owner, default: "${var.view_owner}"}
+        - {name: enforcement, default: "${var.enforcement}"}
+        - {name: tag_set, default: "${var.tag_set}"}
+      tasks:
+        - task_key: drills
+          notebook_task:
+            notebook_path: ../notebooks/09_misconfiguration_drills.py

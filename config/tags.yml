@@ -1,0 +1,34 @@
+# Logical tags used by the row policies (layered enforcement). A tag set maps each one to a real governed tag.
+#   grains  one table-level tag value per kind of protected table; each row-filter policy selects one grain
+#   keys    column-level tags that bind a table's columns to the policy function's arguments
+grains: [accounts, contributions, roster, tenant, reference, members, claims, accumulators, cells, plan_totals, roster_totals, remittance]
+keys: [member, tenant, pharmacy, cell_count, birth_date]
+
+sets:
+  governed:
+    # Two custom governed tags. An account admin creates them with these allowed values (see the Admin Runbook)
+    # and keeps ASSIGN on them to a small governance group: tagging is a security boundary.
+    grain_key: portal_grain
+    key_key: portal_key
+  stand_in:
+    # Evaluation only, for workspaces where you can't create governed tags. Platform system tags stand in for
+    # the custom ones. They are not reserved for access control, so never use this set in production.
+    grains:
+      accounts: class.de_id_card
+      contributions: class.de_passport
+      roster: class.de_tax_id
+      tenant: class.uk_nino
+      reference: class.au_medicare
+      members: class.br_cnpj
+      claims: class.br_rg
+      accumulators: class.in_pan
+      cells: class.in_voter_id
+      plan_totals: class.br_titulo_eleitor
+      roster_totals: class.in_aadhaar
+      remittance: class.uk_nhs
+    keys:
+      member: class.jp_my_number
+      tenant: class.ca_pr_card
+      pharmacy: class.br_pis
+      cell_count: class.de_svnr
+      birth_date: class.ca_social_insurance_number

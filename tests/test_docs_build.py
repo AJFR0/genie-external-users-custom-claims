@@ -12,3 +12,38 @@ def test_every_guide_renders_without_unresolved_helpers():
 
 def test_sql_helper_keeps_template_placeholders():
     assert "{{catalog}}" in context()["sql"]("northwind", "policy_views")
+
+
+from docs.build import drills_summary, policy_example, probe_comparison
+
+
+def test_guides_include_the_enforcement_model_and_admin_runbook():
+    slugs = [slug for slug, _ in GUIDES]
+    assert "choosing-an-enforcement-model" in slugs and "admin-runbook" in slugs
+
+
+def test_drills_summary_renders_each_drill_from_evidence():
+    html = drills_summary("northwind")
+    assert "<table>" in html and "D1" in html and "D5" in html and "held" in html
+
+
+def test_probe_comparison_shows_views_only_and_layered_outcomes():
+    html = probe_comparison("larkspur")
+    assert "Views only" in html and "Layered" in html and "theo-cell" in html
+    assert "leaked" in html and "blocked" in html
+
+
+def test_policy_example_is_the_generated_policy_sql():
+    sql = policy_example("northwind", "base.account_balances")
+    assert "CREATE OR REPLACE POLICY portal_accounts_rows" in sql and "has_tag_value('portal_grain', 'accounts')" in sql
+    assert "<catalog>" in sql
+
+
+def test_solution_brief_is_a_short_non_technical_guide():
+    import re
+    slugs = dict(GUIDES)
+    assert "solution-brief" in slugs
+    html = render("solution-brief", slugs["solution-brief"], context(), css="")
+    text = re.sub(r"<[^>]+>", " ", html)
+    assert len(text.split()) < 1100, "two pages, not a guide"
+    assert "<pre" not in html.split("Is it available")[0], "no code before the availability check"

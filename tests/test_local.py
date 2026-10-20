@@ -1,3 +1,5 @@
+import pytest
+
 from claims_kit.local import LocalEnv, read_env
 
 
@@ -14,3 +16,17 @@ def test_local_env_from_mapping():
     assert env.host == "https://h" and env.catalog == "genie_claims_ref" and env.admin_profile is None
     assert env.examples["northwind"].client_id == "a" and env.examples["northwind"].genie_space_id is None
     assert "larkspur" not in env.examples
+
+
+def test_local_env_reads_the_enforcement_model():
+    base = {"DATABRICKS_HOST": "https://h", "WAREHOUSE_ID": "w"}
+    assert LocalEnv.from_mapping(base).enforcement == "layered"
+    assert LocalEnv.from_mapping({**base, "ENFORCEMENT": "views"}).enforcement == "views"
+    with pytest.raises(ValueError):
+        LocalEnv.from_mapping({**base, "ENFORCEMENT": "neither"})
+
+
+def test_local_env_reads_the_tag_set():
+    base = {"DATABRICKS_HOST": "https://h", "WAREHOUSE_ID": "w"}
+    assert LocalEnv.from_mapping(base).tag_set == "governed"
+    assert LocalEnv.from_mapping({**base, "TAG_SET": "stand_in"}).tag_set == "stand_in"

@@ -30,30 +30,32 @@ def _names(ex: Example, catalog: str) -> tuple[str, str, str, str]:
     return c, f"{c}.`{ex.schemas['base']}`", f"{c}.`{ex.schemas['governance']}`", f"{c}.`{ex.schemas['portal']}`"
 
 
-def temporary_grants(ex: Example, catalog: str, portal_sp: str) -> list[str]:
+ALL_SCHEMAS = ("base", "governance", "portal")
+
+
+def temporary_grants(ex: Example, catalog: str, portal_sp: str, schemas: tuple = ALL_SCHEMAS) -> list[str]:
+    """What the claim session needs. The views read all three schemas; the policy functions read governance only."""
     c, base, gov, portal = _names(ex, catalog)
     sp = f"`{portal_sp}`"
-    return [
-        f"GRANT USE CATALOG ON CATALOG {c} TO {sp}",
-        f"GRANT USE SCHEMA, SELECT ON SCHEMA {base} TO {sp}",
-        f"GRANT USE SCHEMA, SELECT, CREATE TABLE ON SCHEMA {gov} TO {sp}",
-        f"GRANT USE SCHEMA, CREATE TABLE ON SCHEMA {portal} TO {sp}",
-    ]
+    lines = {"base": f"GRANT USE SCHEMA, SELECT ON SCHEMA {base} TO {sp}",
+             "governance": f"GRANT USE SCHEMA, SELECT, CREATE TABLE, CREATE FUNCTION ON SCHEMA {gov} TO {sp}",
+             "portal": f"GRANT USE SCHEMA, CREATE TABLE ON SCHEMA {portal} TO {sp}"}
+    return [f"GRANT USE CATALOG ON CATALOG {c} TO {sp}"] + [lines[s] for s in ALL_SCHEMAS if s in schemas]
 
 
-def revoke_temporary_grants(ex: Example, catalog: str, portal_sp: str) -> list[str]:
-    _, base, gov, portal = _names(ex, catalog)
+def revoke_temporary_grants(ex: Example, catalog: str, portal_sp: str, schemas: tuple = ALL_SCHEMAS) -> list[str]:
+    """Revoke everything temporary_grants gave. At runtime the service principal reads through its application's group."""
+    c, base, gov, portal = _names(ex, catalog)
     sp = f"`{portal_sp}`"
-    return [
-        f"REVOKE USE SCHEMA, SELECT ON SCHEMA {base} FROM {sp}",
-        f"REVOKE USE SCHEMA, SELECT, CREATE TABLE ON SCHEMA {gov} FROM {sp}",
-        f"REVOKE CREATE TABLE ON SCHEMA {portal} FROM {sp}",
-    ]
+    lines = {"base": f"REVOKE USE SCHEMA, SELECT ON SCHEMA {base} FROM {sp}",
+             "governance": f"REVOKE USE SCHEMA, SELECT, CREATE TABLE, CREATE FUNCTION ON SCHEMA {gov} FROM {sp}",
+             "portal": f"REVOKE USE SCHEMA, CREATE TABLE ON SCHEMA {portal} FROM {sp}"}
+    return [lines[s] for s in ALL_SCHEMAS if s in schemas] + [f"REVOKE USE CATALOG ON CATALOG {c} FROM {sp}"]
 
 
 def _missing(exc: Exception) -> bool:
     text = str(exc).upper()
-    return "TABLE_OR_VIEW_NOT_FOUND" in text or "DOES NOT EXIST" in text
+    return "TABLE_OR_VIEW_NOT_FOUND" in text or "ROUTINE_NOT_FOUND" in text or "DOES NOT EXIST" in text
 
 
 def deploy_claim_views(ex: Example, *, catalog: str, portal_sp: str, view_owner: str, mode: str,
@@ -80,26 +82,44 @@ def deploy_claim_views(ex: Example, *, catalog: str, portal_sp: str, view_owner:
             admin(f"ALTER VIEW {ex.fq(catalog, view)} OWNER TO `{view_owner}`")
         return log
 
-    # Every cleanup step runs even when an earlier step failed, so the portal service principal never keeps
-    # temporary rights or owns a view. Errors are collected and raised together at the end.
+    owned = [("VIEW", ex.fq(catalog, view)) for view in ex.claim_views]
+    log += _claim_session(ex, catalog=catalog, portal_sp=portal_sp, view_owner=view_owner, admin_sql=admin_sql,
+                          sp_runner=sp_runner, statements=statements, owned=owned)
+    return log
+
+
+def _claim_session(ex: Example, *, catalog: str, portal_sp: str, view_owner: str, admin_sql: AdminSql, sp_runner,
+                   statements: list[str], owned: list[tuple[str, str]], schemas: tuple = ALL_SCHEMAS) -> list[str]:
+    """Throw mode: the portal service principal runs `statements` in a claim session with temporary rights, then the
+    admin takes ownership of every object in `owned` and revokes the rights.
+
+    Every cleanup step runs even when an earlier step failed, so the portal service principal never keeps temporary
+    rights or owns an object. Errors are collected and raised together at the end.
+    """
+    log: list[str] = []
+
+    def admin(stmt: str) -> None:
+        log.append(f"admin: {stmt}")
+        admin_sql(stmt)
+
     errors: list[Exception] = []
     try:
-        for grant in temporary_grants(ex, catalog, portal_sp):
+        for grant in temporary_grants(ex, catalog, portal_sp, schemas):
             admin(grant)
         for stmt in statements:
             log.append(f"portal service principal (claim session): {stmt}")
             sp_runner.execute(stmt)
     except Exception as exc:
         errors.append(exc)
-    for view in ex.claim_views:
+    for kind, fq in owned:
         try:
-            admin(f"ALTER VIEW {ex.fq(catalog, view)} OWNER TO `{view_owner}`")
+            admin(f"ALTER {kind} {fq} OWNER TO `{view_owner}`")
         except Exception as exc:
             if _missing(exc):
-                log.append(f"skipped ownership (not created): {view}")
+                log.append(f"skipped ownership (not created): {fq}")
             else:
                 errors.append(exc)
-    for revoke in revoke_temporary_grants(ex, catalog, portal_sp):
+    for revoke in revoke_temporary_grants(ex, catalog, portal_sp, schemas):
         try:
             admin(revoke)
         except Exception as exc:
@@ -108,6 +128,90 @@ def deploy_claim_views(ex: Example, *, catalog: str, portal_sp: str, view_owner:
         raise errors[0]
     if errors:
         raise DeployError(errors) from errors[0]
+    return log
+
+
+def deploy_policy_functions(ex: Example, *, catalog: str, portal_sp: str, view_owner: str, mode: str,
+                            admin_sql: AdminSql, sp_runner=None) -> list[str]:
+    """Create or replace the row-filter and mask functions without ever detaching a policy.
+
+    In throw mode a claim session creates them. After a first deploy the admin owns them, so the service principal gets
+    MANAGE on each existing function and governance-only rights, replaces them in place, and loses both again. The
+    policies stay attached throughout, so there is no moment when a table goes unfiltered.
+    """
+    if mode not in ("null", "throws"):
+        raise ValueError(f"unknown deploy mode {mode!r}")
+    values = ex.template_values(catalog, portal_sp, view_owner)
+    statements = split_sql(ex.read_sql("policy_functions", values))
+    owned = [("FUNCTION", ex.fq(catalog, f"governance.{f}")) for f in ex.claim_functions]
+    if mode == "null":
+        log = []
+        for stmt in statements + [f"ALTER FUNCTION {fq} OWNER TO `{view_owner}`" for _, fq in owned]:
+            log.append(f"admin: {stmt}")
+            admin_sql(stmt)
+        return log
+    if sp_runner is None:
+        raise ValueError("throw mode needs a claim-carrying sp_runner")
+    log, managed = [], []
+    try:
+        for _, fq in owned:
+            try:
+                admin_sql(f"GRANT MANAGE ON FUNCTION {fq} TO `{portal_sp}`")
+                log.append(f"admin: GRANT MANAGE ON FUNCTION {fq} (replace in place)")
+                managed.append(fq)
+            except Exception as exc:
+                if not _missing(exc):
+                    raise
+        log += _claim_session(ex, catalog=catalog, portal_sp=portal_sp, view_owner=view_owner, admin_sql=admin_sql,
+                              sp_runner=sp_runner, statements=statements, owned=owned, schemas=("governance",))
+    finally:
+        for _, fq in owned:
+            try:
+                admin_sql(f"REVOKE MANAGE ON FUNCTION {fq} FROM `{portal_sp}`")
+            except Exception as exc:
+                if not _missing(exc):
+                    raise
+    return log
+
+
+def apply_tags(ex: Example, *, catalog: str, tags, admin_sql: AdminSql) -> list[str]:
+    """Tag every protected table and policy column. Safe to rerun; existing policies stay attached."""
+    from .policies import tag_statements
+    log = []
+    for stmt in tag_statements(ex, catalog, tags):
+        log.append(f"admin: {stmt}")
+        admin_sql(stmt)
+    return log
+
+
+def apply_policies(ex: Example, *, catalog: str, tags, group: str, admin_sql: AdminSql) -> list[str]:
+    """Create or replace the row-filter policies, the column-mask policies and default-deny."""
+    from .policies import policy_statements
+    log = []
+    for stmt in policy_statements(ex, catalog, tags, group):
+        log.append(f"admin: {' '.join(stmt.split())}")
+        admin_sql(stmt)
+    return log
+
+
+def apply_row_policies(ex: Example, *, catalog: str, tags, group: str, admin_sql: AdminSql) -> list[str]:
+    """Tags, then policies (used by the drills to restore a whole layer)."""
+    return apply_tags(ex, catalog=catalog, tags=tags, admin_sql=admin_sql) + apply_policies(
+        ex, catalog=catalog, tags=tags, group=group, admin_sql=admin_sql)
+
+
+def remove_row_policies(ex: Example, *, catalog: str, admin_sql: AdminSql) -> list[str]:
+    """Views-only mode: drop this example's row policies if a layered deploy created them."""
+    from .policies import drop_statements
+    log = []
+    for stmt in drop_statements(ex, catalog):
+        try:
+            admin_sql(stmt)
+            log.append(f"admin: {stmt}")
+        except Exception as exc:
+            if "POLICY_NOT_FOUND" not in str(exc).upper():
+                raise
+            log.append(f"skipped (absent): {stmt}")
     return log
 
 
