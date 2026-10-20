@@ -37,3 +37,13 @@ def test_policy_example_is_the_generated_policy_sql():
     sql = policy_example("northwind", "base.account_balances")
     assert "CREATE OR REPLACE POLICY portal_accounts_rows" in sql and "has_tag_value('portal_grain', 'accounts')" in sql
     assert "<catalog>" in sql
+
+
+def test_solution_brief_is_a_short_non_technical_guide():
+    import re
+    slugs = dict(GUIDES)
+    assert "solution-brief" in slugs
+    html = render("solution-brief", slugs["solution-brief"], context(), css="")
+    text = re.sub(r"<[^>]+>", " ", html)
+    assert len(text.split()) < 1100, "two pages, not a guide"
+    assert "<pre" not in html.split("Is it available")[0], "no code before the availability check"

@@ -164,6 +164,7 @@ The admin console: per-user grants (Theo's expired Cedar grant is struck through
 
 | Guide | For | Read it |
 |---|---|---|
+| Solution Brief: the problem, the two locks and what we proved, in plain terms | decision makers, customers | [PDF](docs/pdf/solution-brief.pdf) |
 | Overview: who it's for, what teams did before, what changes | everyone | [PDF](docs/pdf/overview.pdf) |
 | Choosing an Enforcement Model: views, ABAC or layered, with live failure results and performance | architects | [PDF](docs/pdf/choosing-an-enforcement-model.pdf) |
 | Implementation Guide: availability, deployment, every object, the pattern catalog, backend integration, checklist | builders | [PDF](docs/pdf/implementation-guide.pdf) |

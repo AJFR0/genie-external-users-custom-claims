@@ -29,7 +29,8 @@ from claims_kit.personas import load_fixtures  # noqa: E402
 from claims_kit.policies import policy_sql  # noqa: E402
 from claims_kit.tags import load_tag_set  # noqa: E402
 
-GUIDES = (("overview", "Genie for External Users: Who It Is For and What Changes"),
+GUIDES = (("solution-brief", "Solution Brief: Genie for Your Application's Users"),
+          ("overview", "Genie for External Users: Who It Is For and What Changes"),
           ("choosing-an-enforcement-model", "Choosing an Enforcement Model"),
           ("implementation-guide", "Implementation Guide"),
           ("admin-runbook", "Admin Runbook"),
