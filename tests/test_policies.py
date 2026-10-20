@@ -22,14 +22,14 @@ def test_tag_statements_tag_each_table_and_policy_column():
 
 
 def test_policy_sql_binds_columns_by_tag_in_argument_order():
-    sql = policy_sql(LK, "c", GOV, _rp(LK, "base.pharmacy_claims"), LK.portal_group)
-    assert sql.startswith("CREATE OR REPLACE POLICY portal_claims_rows ON SCHEMA `c`.`larkspur_base`")
-    assert "ROW FILTER `c`.`larkspur_governance`.`rf_claims`" in sql
+    sql = policy_sql(LK, "c", GOV, _rp(LK, "base.sponsor_spend_cells"), LK.portal_group)
+    assert sql.startswith("CREATE OR REPLACE POLICY portal_cells_rows ON SCHEMA `c`.`larkspur_base`")
+    assert "ROW FILTER `c`.`larkspur_governance`.`rf_cells`" in sql
     assert f"TO `{LK.portal_group}`" in sql
-    assert "FOR TABLES WHEN has_tag_value('portal_grain', 'claims')" in sql
-    assert ("MATCH COLUMNS has_tag_value('portal_key', 'member') AS member, "
-            "has_tag_value('portal_key', 'pharmacy') AS pharmacy") in sql
-    assert sql.rstrip().endswith("USING COLUMNS (member, pharmacy)")
+    assert "FOR TABLES WHEN has_tag_value('portal_grain', 'cells')" in sql
+    assert ("MATCH COLUMNS has_tag_value('portal_key', 'tenant') AS tenant, "
+            "has_tag_value('portal_key', 'cell_count') AS cell_count") in sql
+    assert sql.rstrip().endswith("USING COLUMNS (tenant, cell_count)")
 
 
 def test_reference_tables_get_tags_but_no_policy():
@@ -48,7 +48,7 @@ def test_default_deny_covers_the_base_schema_only():
 
 def test_stand_in_default_deny_lists_every_grain_key():
     sql = default_deny_sql(NW, "c", load_tag_set("stand_in"), "base", GROUP)
-    assert sql.count("has_tag('class.") == 11
+    assert sql.count("has_tag('class.") == 12
 
 
 def test_drop_statements_name_every_policy_without_if_exists():
@@ -128,3 +128,9 @@ def test_policy_problems_compare_deployed_policies_with_the_enforcement_model():
     assert any("missing" in p for p in policy_problems(NW, names[1:], "layered"))
     assert policy_problems(NW, [], "views") == []
     assert any("views" in p for p in policy_problems(NW, names[:1], "views"))
+
+
+def test_stale_portal_policies_are_dropped_and_others_left_alone():
+    from claims_kit.policies import stale_policy_statements
+    deployed = expected_policy_names(LK) + ["portal_claims_member_mask", "finance_team_policy"]
+    assert stale_policy_statements(LK, "c", deployed) == ["DROP POLICY portal_claims_member_mask ON SCHEMA `c`.`larkspur_base`"]

@@ -41,17 +41,17 @@ base_probe_table: pharmacy_claims
 # that has its own policy.
 row_policies:
   - {table: base.members, grain: members, function: rf_members, columns: [[member_id, member]]}
-  - {table: base.pharmacy_claims, grain: claims, function: rf_claims, columns: [[member_id, member], [pharmacy_id, pharmacy]]}
+  - {table: base.pharmacy_claims, grain: claims, function: rf_claims, columns: [[member_id, member]]}
+  - {table: base.pharmacy_remittance_rows, grain: remittance, function: rf_remittance, columns: [[pharmacy_id, pharmacy]]}
   - {table: base.accumulators, grain: accumulators, function: rf_accumulators, columns: [[member_id, member]]}
   - {table: base.sponsors, grain: tenant, function: rf_sponsors, columns: [[sponsor_id, tenant]]}
   - {table: base.sponsor_spend_cells, grain: cells, function: rf_cells, columns: [[sponsor_id, tenant], [members, cell_count]]}
   - {table: base.drugs, grain: reference}
   - {table: base.pharmacies, grain: reference}
-# Column masks in the policy layer: pharmacy staff never reach a raw member id, even through a mistaken grant.
-column_masks:
-  - {table: base.pharmacy_claims, grain: claims, function: cm_member_id, column: [member_id, member], using: [[pharmacy_id, pharmacy]]}
+# No column masks here: a row filter can't take a masked column as an argument, so pharmacy staff read precomputed
+# remittance rows that hold only a one-way member reference, and never reach pharmacy_claims at all.
 # Row-filter and mask functions, created from a claim-carrying session when the workspace raises without a claim. Order matters.
-claim_functions: [rf_members, rf_claims, rf_accumulators, rf_sponsors, rf_cells, cm_member_id, rf_deny]
+claim_functions: [rf_members, rf_claims, rf_accumulators, rf_sponsors, rf_cells, rf_remittance, rf_deny]
 # Misconfiguration drills: which persona, protected table, key column and portal view they exercise.
 drills: {persona: ana, table: base.pharmacy_claims, key_column: member_id, view: my_claims,
          mask: {persona: priya, table: base.pharmacy_claims, view: pharmacy_remittance, raw_where: "member_id LIKE 'M-%'"}}

@@ -113,3 +113,12 @@ def test_priya_probe_targets_a_raw_member_id_at_her_pharmacy():
     p = {x.id: x for x in expectations.side_channel_probes(data)}["priya-member-in-my_claims"]
     member = dict(p.match)["member_id"]
     assert any(c["member_id"] == member and c["pharmacy_id"] == "PH-0007" for c in data["pharmacy_claims"])
+
+
+
+def test_pharmacy_staff_read_precomputed_references_never_raw_member_ids():
+    derived = _LK.read_sql("derived_tables", _V)
+    remit = derived[derived.index("pharmacy_remittance_rows"):]
+    assert "sha2(concat('larkspur-demo:', c.member_id), 256)" in remit and "c.member_id," not in remit
+    view = _view_sql("portal_views", "pharmacy_remittance")
+    assert "pharmacy_remittance_rows" in view and "pharmacy_claims" not in view

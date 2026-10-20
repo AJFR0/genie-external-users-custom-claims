@@ -25,3 +25,12 @@ WHERE c.claim_status = 'paid'
 GROUP BY c.sponsor_id, year(c.fill_date), quarter(c.fill_date), d.drug_class
 HAVING COUNT(DISTINCT c.member_id) >= (
   SELECT min(min_cell_size) FROM `{{catalog}}`.`{{gov}}`.role_policies WHERE detail_level = 'aggregate');
+
+-- Remittance rows for pharmacy staff. They see a one-way member reference, never a member id, so they read this copy
+-- and never reach pharmacy_claims: not through a probe, and not through a mistaken grant. Demo-grade reference: in
+-- production use a keyed hash or a token vault so a reference can't be reversed by hashing every member id.
+INSERT OVERWRITE `{{catalog}}`.`{{base}}`.pharmacy_remittance_rows
+SELECT c.claim_id, c.pharmacy_id, c.fill_date, c.ndc, c.quantity, c.days_supply,
+       substr(sha2(concat('larkspur-demo:', c.member_id), 256), 1, 16),
+       c.ingredient_cost, c.dispensing_fee, c.plan_paid, c.member_paid, c.claim_status
+FROM `{{catalog}}`.`{{base}}`.pharmacy_claims AS c;

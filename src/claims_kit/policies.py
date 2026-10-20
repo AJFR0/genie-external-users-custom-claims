@@ -96,6 +96,13 @@ def expected_policy_names(ex: Example) -> list[str]:
             + [DEFAULT_DENY])
 
 
+def stale_policy_statements(ex: Example, catalog: str, deployed_names) -> list[str]:
+    """DROP statements for portal policies this version no longer defines (renamed or removed). Others are left alone."""
+    expected = set(expected_policy_names(ex))
+    return [f"DROP POLICY {n} ON SCHEMA {_schema(ex, catalog, 'base')}" for n in sorted(deployed_names)
+            if n.startswith("portal_") and n not in expected]
+
+
 def policy_problems(ex: Example, deployed_names, enforcement: str) -> list[str]:
     """The deployment decides the enforcement model, not the local configuration."""
     expected, deployed = set(expected_policy_names(ex)), set(deployed_names)

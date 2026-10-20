@@ -85,7 +85,7 @@ def test_policy_functions_read_the_policy_household_view_not_the_view_layer_one(
     """Review #5: the view layer reads live members; the policies read the governance copy, so the layers disagree
     toward fewer rows when the copy is stale."""
     _, fns = _functions("larkspur")
-    for fn in ("rf_members", "rf_claims", "rf_accumulators", "cm_member_id"):
+    for fn in ("rf_members", "rf_claims", "rf_accumulators"):
         assert "policy_members" in fns[fn] and ".my_members" not in fns[fn], fn
     lk = load_example("larkspur")
     views = split_sql(lk.read_sql("policy_views", lk.template_values("c", "sp", "o")))

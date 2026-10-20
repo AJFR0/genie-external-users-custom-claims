@@ -41,7 +41,7 @@ dbutils.library.restartPython()  # noqa: F821
 from claims_kit.availability import classify_no_claim
 from claims_kit.deploy import DEPLOY_CLAIM, apply_policies, apply_tags, deploy_policy_functions, remove_row_policies
 from claims_kit.identity import require_governed_tags
-from claims_kit.policies import coverage_problems, coverage_queries, policy_problems
+from claims_kit.policies import coverage_problems, coverage_queries, policy_problems, stale_policy_statements
 from claims_kit.tags import load_tag_set
 
 if ENFORCEMENT == "views":
@@ -62,7 +62,12 @@ problems = coverage_problems(ex, tags, rows(table_q), rows(column_q))
 if problems:
     raise RuntimeError("Row policy coverage problems: " + "; ".join(problems))
 
-# 2. Replace the functions in place (a claim session in throw mode), then 3. create or replace the policies.
+# 2. Drop portal policies this version no longer defines, 3. replace the functions in place (a claim session in throw
+# mode), then 4. create or replace the policies.
+deployed = [r[0] for r in rows(f"SHOW POLICIES ON SCHEMA `{CATALOG}`.`{ex.schemas['base']}`")]
+for stmt in stale_policy_statements(ex, CATALOG, deployed):
+    log.append(f"admin: {stmt}")
+    admin_sql(stmt)
 behavior = classify_no_claim(lambda q: spark.sql(q).collect()[0][0])  # noqa: F821
 mode = "null" if behavior == "null" else "throws"
 log += deploy_policy_functions(ex, catalog=CATALOG, portal_sp=portal_sp(), view_owner=VIEW_OWNER, mode=mode,

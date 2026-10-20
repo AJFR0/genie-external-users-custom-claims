@@ -55,6 +55,6 @@ def test_row_policies_notebook_never_removes_policies_in_layered_mode():
     nb = (ROOT / "notebooks" / "05_row_policies.py").read_text()
     layered = nb.split('dbutils.notebook.exit("enforcement=views: no row policies")', 1)[1]
     assert "remove_row_policies(" not in layered
-    order = [layered.index(k) for k in ("apply_tags(", "coverage_problems(", "deploy_policy_functions(", "apply_policies(",
-                                         "policy_problems(")]
+    order = [layered.index(k) for k in ("apply_tags(", "coverage_problems(", "stale_policy_statements(", "deploy_policy_functions(",
+                                         "apply_policies(", "policy_problems(")]
     assert order == sorted(order)

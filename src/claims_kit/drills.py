@@ -103,13 +103,19 @@ def _mask_drill(ex, catalog, tags, group, plain, drop_plain, base) -> list:
     cfg = (ex.drills or {}).get("mask")
     if not cfg:
         return []
-    m = next(x for x in ex.column_masks if x.table == cfg["table"])
-    table = ex.fq(catalog, m.table)
+    table = ex.fq(catalog, cfg["table"])
     raw = f"SELECT count(*) FROM {plain} WHERE {cfg['raw_where']}"
-    return [Drill("D6", f"a view without the claim filter exposes the masked column {m.table}.{m.column[0]}",
+    mask = next((x for x in ex.column_masks if x.table == cfg["table"]), None)
+    if mask:  # the column-mask policy is the layer that hides the raw value
+        what = f"the masked column {mask.table}.{mask.column[0]}"
+        drop, restore = f"DROP POLICY {mask_policy_name(mask)} ON SCHEMA {base}", mask_sql(ex, catalog, tags, mask, group)
+    else:     # the role reads a precomputed copy; the table's row policy keeps it from the raw rows
+        rp = next(r for r in ex.row_policies if r.table == cfg["table"])
+        what = f"raw values in {rp.table} to a role that reads only a precomputed copy"
+        drop, restore = f"DROP POLICY {policy_name(rp)} ON SCHEMA {base}", policy_sql(ex, catalog, tags, rp, group)
+    return [Drill("D6", f"a view without the claim filter exposes {what}",
                   (f"CREATE OR REPLACE VIEW {plain} AS SELECT * FROM {table}", f"GRANT SELECT ON VIEW {plain} TO `{group}`"),
-                  raw, (f"DROP POLICY {mask_policy_name(m)} ON SCHEMA {base}",), raw,
-                  (mask_sql(ex, catalog, tags, m, group), drop_plain), "zero", persona=cfg["persona"])]
+                  raw, (drop,), raw, (restore, drop_plain), "zero", persona=cfg["persona"])]
 
 
 def measure_baseline(ex: Example, catalog: str, group: str, *, admin, sp_count, admin_count, view: str | None = None,

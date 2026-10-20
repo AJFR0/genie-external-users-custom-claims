@@ -169,3 +169,11 @@ def test_drill_evidence_is_scrubbed(tmp_path):
     text = path.read_text()
     assert "secret_catalog" not in text and "h.example" not in text
     assert json.loads(text)["results"][0]["drill_id"] == "D1"
+
+
+
+def test_mask_drill_falls_back_to_the_row_policy_when_a_table_has_no_mask():
+    lk = load_example("larkspur")
+    d6 = next(d for d in build_drills(lk, "c", TAGS, lk.portal_group, "other-group") if d.id == "D6")
+    assert d6.persona == "priya" and "member_id LIKE 'M-%'" in d6.layered_sql
+    assert d6.break_layer == ("DROP POLICY portal_claims_rows ON SCHEMA `c`.`larkspur_base`",)

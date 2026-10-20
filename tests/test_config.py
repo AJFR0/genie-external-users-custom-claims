@@ -31,9 +31,9 @@ from claims_kit.tags import load_tag_set
 
 
 def test_row_policies_keep_argument_order():
-    rp = next(r for r in load_example("larkspur").row_policies if r.table == "base.pharmacy_claims")
-    assert (rp.grain, rp.function, rp.schema) == ("claims", "rf_claims", "base")
-    assert rp.columns == (("member_id", "member"), ("pharmacy_id", "pharmacy"))
+    rp = next(r for r in load_example("larkspur").row_policies if r.table == "base.sponsor_spend_cells")
+    assert (rp.grain, rp.function, rp.schema) == ("cells", "rf_cells", "base")
+    assert rp.columns == (("sponsor_id", "tenant"), ("members", "cell_count"))
 
 
 def test_every_grain_and_key_exists_in_the_tag_file():
@@ -105,7 +105,12 @@ def test_masks_live_in_the_policy_layer():
     nw, lk = load_example("northwind"), load_example("larkspur")
     assert nw.column_masks == (ColumnMask("base.participants", "roster", "cm_date_of_birth", ("date_of_birth", "birth_date"),
                                           (("plan_id", "tenant"),)),)
-    assert lk.column_masks[0].table == "base.pharmacy_claims" and lk.column_masks[0].column == ("member_id", "member")
+    # A row filter can't take a masked column as an argument (UC_USING_REF_OF_MASKED_COLUMNS), so pharmacy staff read
+    # precomputed remittance rows that hold only the one-way reference, and the claims policy admits members only.
+    assert lk.column_masks == ()
+    claims = next(r for r in lk.row_policies if r.table == "base.pharmacy_claims")
+    remit = next(r for r in lk.row_policies if r.table == "base.pharmacy_remittance_rows")
+    assert claims.columns == (("member_id", "member"),) and remit.columns == (("pharmacy_id", "pharmacy"),)
     for ex in (nw, lk):
         for m in ex.column_masks:
             assert m.function in ex.claim_functions
