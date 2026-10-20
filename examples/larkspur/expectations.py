@@ -5,7 +5,7 @@ from collections import defaultdict
 from datetime import date
 from decimal import Decimal
 
-from claims_kit.personas import ViewExpect
+from claims_kit.personas import SideChannelProbe, ViewExpect
 
 ACCESS = ("role", "scope_id")
 MEMBER = ("member_id",)
@@ -100,3 +100,38 @@ def genie_values(data: dict) -> dict[str, Decimal]:
         "cedar_total_plan_paid": sponsor_plan_paid("SPN-CEDAR"),
         "priya_pharmacy_plan_paid": sum((c["plan_paid"] for c in paid if c["pharmacy_id"] == "PH-0007"), Decimal(0)),
     }
+
+
+def _absent_money(values) -> Decimal:
+    """The smallest x.01 amount that appears in no row, so a probe for it can only ever match nothing."""
+    n = 1
+    while Decimal(f"{n}.01") in values:
+        n += 1
+    return Decimal(f"{n}.01")
+
+
+def side_channel_probes(data: dict) -> list[SideChannelProbe]:
+    """Error probes: each value exists only in rows the persona may not see, and each control value exists nowhere."""
+    claims = data["pharmacy_claims"]
+    ana_visible = household(data, "M-1001")
+    ana_paid = {c["plan_paid"] for c in claims if c["member_id"] in ana_visible}
+    spouse_paid = min(c["plan_paid"] for c in claims if c["member_id"] == "M-1002" and c["plan_paid"] not in ana_paid)
+    other_pharmacy_claim = min(c["claim_id"] for c in claims if c["pharmacy_id"] != "PH-0007")
+    members = _cell_members(data, {"SPN-ALDER", "SPN-BIRCH"})
+    theo_hidden = min(k for k, v in members.items() if 11 <= len(v) < 20 and "(" not in k[2])
+    names = {s["sponsor_id"]: s["sponsor_name"] for s in data["sponsors"]}
+    cell = (("sponsor_id", theo_hidden[0]), ("fill_quarter", theo_hidden[1]), ("drug_class", theo_hidden[2]))
+    return [
+        SideChannelProbe("ana-spouse-claim-in-my_claims", "ana", "my_claims",
+                         (("plan_paid", str(spouse_paid)),), (("plan_paid", str(_absent_money({c["plan_paid"] for c in claims}))),),
+                         source="her spouse's claim; adult household members stay private"),
+        SideChannelProbe("priya-other-pharmacy-in-pharmacy_remittance", "priya", "pharmacy_remittance",
+                         (("claim_id", other_pharmacy_claim),), (("claim_id", "C-999999"),), error="CAST_INVALID_INPUT",
+                         source="a claim filled at another pharmacy"),
+        SideChannelProbe("theo-cell-in-sponsor_spend_summary", "theo", "sponsor_spend_summary",
+                         cell, cell[:2] + (("drug_class", "No such class"),), error="CAST_INVALID_INPUT",
+                         source="a spend group below Theo's minimum group size of 20"),
+        SideChannelProbe("dana-sponsor-in-sponsor_spend_summary", "dana", "sponsor_spend_summary",
+                         (("sponsor_name", names["SPN-BIRCH"]),), (("sponsor_name", "No Such Sponsor"),),
+                         source="a sponsor Dana has no grant for; the client list stays private"),
+    ]

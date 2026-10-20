@@ -45,7 +45,7 @@ except Exception as exc:  # the other example may not be bootstrapped
 space_id = dbutils.jobs.taskValues.get(taskKey="genie_agent", key="genie_space_id", default="", debugValue="")  # noqa: F821
 ctx = SuiteContext(example=ex, catalog=CATALOG, host=HOST, warehouse_id=WAREHOUSE_ID, provider=sp_provider(), admin=admin_runner(),
                    other_provider=other_provider, genie_space_id=space_id or None,
-                   include_genie=param("include_genie", "true") == "true")
+                   include_genie=param("include_genie", "true") == "true", enforcement=ENFORCEMENT)
 results = run_suite(ctx)
 print(summarize(results))
 

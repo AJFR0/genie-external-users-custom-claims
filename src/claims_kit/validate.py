@@ -9,6 +9,7 @@
   binding      even with a mistaken grant, a view answers only for its own application's service principal
   token        edited, unsigned and corrupted tokens are rejected
   genie        Genie answers contain the persona's numbers and none of anyone else's
+  side_channel error probes can't reveal values in rows the user can't see (layered mode; documented in views mode)
   documented   platform behaviors a backend must account for; never fails the run
 """
 from __future__ import annotations
@@ -18,6 +19,7 @@ import base64
 import json
 import re
 import sys
+import time
 from dataclasses import asdict, dataclass
 from decimal import Decimal, InvalidOperation
 from pathlib import Path
@@ -27,11 +29,12 @@ import requests
 
 from .config import Example, load_example
 from .genie import GenieAnswer, GenieClient, GenieError
-from .personas import ExampleFixtures, GenieCase, load_fixtures
+from .personas import ExampleFixtures, GenieCase, load_fixtures, sql_literal
 from .sql import StatementError, StatementRunner
 from .tokens import ClaimTokenProvider, TokenError, decode_jwt_unverified
 
-CATEGORIES = ("visibility", "role_effect", "constraint", "attack", "privilege", "cross_app", "binding", "token", "genie", "documented")
+CATEGORIES = ("visibility", "role_effect", "constraint", "attack", "privilege", "cross_app", "binding", "token", "genie",
+              "side_channel", "documented")
 ATTACK_VARIANTS = (
     ("sql-injection", "{claim}' OR '1'='1"),
     ("wildcard", "%"),
@@ -66,6 +69,7 @@ class SuiteContext:
     http: object = requests
     make_runner: Callable | None = None
     make_genie: Callable | None = None
+    enforcement: str = "layered"
 
     def runner(self, auth):
         return self.make_runner(auth) if self.make_runner else StatementRunner(self.host, self.warehouse_id, auth, http=self.http)
@@ -484,11 +488,78 @@ def genie_cases(ctx: SuiteContext, fx: ExampleFixtures) -> list[CaseResult]:
     return out
 
 
-SUITE = (visibility_cases, duplicate_cases, role_effect_cases, constraint_cases, attack_cases, privilege_cases, cross_app_cases, binding_case, token_cases, genie_cases)
+_PROBE_ERRORS = ("DIVIDE_BY_ZERO", "CAST_INVALID_INPUT")
+
+
+def probe_sql(view_fq: str, match, error: str) -> str:
+    """A count whose condition raises only on rows matching `match`. Without a barrier, the engine may evaluate it on
+    rows the view would remove, so the error itself reveals that such a row exists."""
+    cond = " AND ".join(f"{col} = {sql_literal(val)}" for col, val in match)
+    if error == "CAST_INVALID_INPUT":
+        return f"SELECT count(*) FROM {view_fq} WHERE CAST(CASE WHEN {cond} THEN 'x' ELSE '1' END AS INT) = 1"
+    return f"SELECT count(*) FROM {view_fq} WHERE 1 / (CASE WHEN {cond} THEN 0 ELSE 1 END) > 0"
+
+
+def _run_probe(runner, sql):
+    try:
+        res = runner.execute(sql)
+        return ("ok", int(res.scalar()), res.statement_id)
+    except StatementError as e:
+        return ("error", e, e.statement_id)
+
+
+def judge_probe(case_id: str, category: str, probe, present, absent) -> CaseResult:
+    want = "blocked: same outcome whether or not the value exists in rows this user can't see"
+    for kind, val, sid in (present, absent):
+        if kind == "error" and (val.is_transient or (val.error_class or "") not in _PROBE_ERRORS):
+            return CaseResult(case_id, category, probe.persona, None, want, f"inconclusive: {_err(val)}", sid)
+    if present[0] == "error" and absent[0] == "ok":
+        return CaseResult(case_id, category, probe.persona, False, want,
+                          f"leaked: {present[1].error_class} only when the value exists in rows this user can't see"
+                          f" ({probe.source or probe.view})", present[2])
+    if present[0] == "ok" and absent[0] == "ok":
+        if present[1] != absent[1]:
+            return CaseResult(case_id, category, probe.persona, None, want,
+                              f"inconclusive: row count changed ({present[1]} vs {absent[1]}), the value is visible to this user",
+                              present[2])
+        return CaseResult(case_id, category, probe.persona, True, want,
+                          f"blocked: no error, {present[1]} rows both times", present[2])
+    return CaseResult(case_id, category, probe.persona, None, want, "inconclusive: the control value also raised", absent[2])
+
+
+def side_channel_cases(ctx: SuiteContext, fx: ExampleFixtures) -> list[CaseResult]:
+    category = "side_channel" if ctx.enforcement == "layered" else "documented"
+    out = []
+    for probe in fx.probes:
+        runner = ctx.sp_runner(fx.persona(probe.persona).claim)
+        present = _run_probe(runner, probe_sql(ctx.view(probe.view), probe.match, probe.error))
+        absent = _run_probe(runner, probe_sql(ctx.view(probe.view), probe.absent, probe.error))
+        out.append(judge_probe(f"side_channel/{probe.id}", category, probe, present, absent))
+    return out
+
+
+def wait_for_access(ctx: SuiteContext, fx: ExampleFixtures, *, timeout_s: float = 300, sleep=time.sleep) -> bool:
+    """Grants to a new group, or a new member of one, can take minutes to reach Unity Catalog. Wait for them."""
+    persona, view = _target(fx)
+    waited = 0
+    while True:
+        try:
+            ctx.sp_runner(persona.claim).execute(f"SELECT count(*) FROM {ctx.view(view)}")
+            return True
+        except StatementError as e:
+            if not e.is_permission_error or waited >= timeout_s:
+                return False
+        sleep(10)
+        waited += 10
+
+
+SUITE = (visibility_cases, duplicate_cases, role_effect_cases, constraint_cases, attack_cases, privilege_cases, cross_app_cases, binding_case, token_cases, side_channel_cases,
+         genie_cases)
 
 
 def run_suite(ctx: SuiteContext, fixtures: ExampleFixtures | None = None) -> list[CaseResult]:
     fx = fixtures or load_fixtures(ctx.example)
+    wait_for_access(ctx, fx)
     results: list[CaseResult] = []
     for case_fn in SUITE:
         results.extend(case_fn(ctx, fx))
@@ -532,7 +603,7 @@ def build_local_context(example_name: str, *, include_genie: bool = True) -> Sui
         provider=ClaimTokenProvider(env.host, creds.client_id, creds.client_secret),
         admin=StatementRunner(env.host, env.warehouse_id, w.config.authenticate),
         other_provider=ClaimTokenProvider(env.host, other.client_id, other.client_secret) if other else None,
-        genie_space_id=space_id, include_genie=include_genie)
+        genie_space_id=space_id, include_genie=include_genie, enforcement=env.enforcement)
 
 
 def main(argv: list[str] | None = None) -> int:

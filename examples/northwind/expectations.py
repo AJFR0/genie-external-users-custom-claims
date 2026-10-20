@@ -4,7 +4,7 @@ from __future__ import annotations
 from collections import defaultdict
 from decimal import Decimal
 
-from claims_kit.personas import ViewExpect
+from claims_kit.personas import SideChannelProbe, ViewExpect
 
 ACCESS = ("role", "scope_id")
 PARTICIPANT = ("participant_id",)
@@ -48,3 +48,37 @@ def genie_values(data: dict) -> dict[str, Decimal]:
     return {"maya_total_balance": by_participant["P-1001"], "james_total_balance": by_participant["P-1002"],
             "linda_total_balance": by_participant["P-2001"], "plan_a_total": by_plan["PLAN-A"],
             "plan_b_total": by_plan["PLAN-B"], "plan_c_total": by_plan["PLAN-C"]}
+
+
+def _absent_money(values) -> Decimal:
+    """The smallest x.01 amount that appears in no row, so a probe for it can only ever match nothing."""
+    n = 1
+    while Decimal(f"{n}.01") in values:
+        n += 1
+    return Decimal(f"{n}.01")
+
+
+def side_channel_probes(data: dict) -> list[SideChannelProbe]:
+    """Error probes: each value exists only in rows the persona may not see, and each control value exists nowhere."""
+    balances = data["account_balances"]
+    maya_own = {b["balance"] for b in balances if b["participant_id"] == "P-1001"}
+    other_balance = min(b["balance"] for b in balances if b["participant_id"] != "P-1001" and b["balance"] not in maya_own)
+    plan_b = min(p["participant_id"] for p in data["participants"] if p["plan_id"] == "PLAN-B")
+    contributions = data["contributions"]
+    linda_own = {c["amount"] for c in contributions if c["participant_id"] == "P-2001"}
+    plan_a_amount = min(c["amount"] for c in contributions
+                        if c["plan_id"] == "PLAN-A" and c["participant_id"] != "P-2001" and c["amount"] not in linda_own)
+    return [
+        SideChannelProbe("maya-balance-in-my_accounts", "maya", "my_accounts",
+                         (("balance", str(other_balance)),), (("balance", str(_absent_money({b["balance"] for b in balances}))),),
+                         source="another participant's balance"),
+        SideChannelProbe("raj-participant-in-plan_roster", "raj", "plan_roster",
+                         (("participant_id", plan_b),), (("participant_id", "P-9999"),), error="CAST_INVALID_INPUT",
+                         source="a Plan B participant, outside Raj's plans"),
+        SideChannelProbe("maya-grant-in-my_access", "maya", "my_access",
+                         (("scope_id", "PLAN-A"),), (("scope_id", "PLAN-Z"),), source="another user's grant"),
+        SideChannelProbe("linda-contribution-in-my_contributions", "linda", "my_contributions",
+                         (("amount", str(plan_a_amount)),),
+                         (("amount", str(_absent_money({c["amount"] for c in contributions}))),),
+                         source="a Plan A participant's contribution; Linda sponsors Plan A but never sees contributions"),
+    ]

@@ -37,6 +37,7 @@ class LocalEnv:
     admin_profile: str | None
     catalog: str
     examples: dict
+    enforcement: str = "layered"
 
     @classmethod
     def from_mapping(cls, m: dict) -> "LocalEnv":
@@ -45,8 +46,11 @@ class LocalEnv:
             prefix = name.upper()
             if m.get(f"{prefix}_CLIENT_ID"):
                 examples[name] = ExampleCreds(m[f"{prefix}_CLIENT_ID"], m[f"{prefix}_CLIENT_SECRET"], m.get(f"{prefix}_GENIE_SPACE_ID") or None)
+        enforcement = m.get("ENFORCEMENT") or "layered"
+        if enforcement not in ("layered", "views"):
+            raise ValueError(f"ENFORCEMENT must be layered or views, not {enforcement!r}")
         return cls(host=m["DATABRICKS_HOST"].rstrip("/"), warehouse_id=m["WAREHOUSE_ID"], admin_profile=m.get("ADMIN_PROFILE") or None,
-                   catalog=m.get("CATALOG") or "genie_claims_ref", examples=examples)
+                   catalog=m.get("CATALOG") or "genie_claims_ref", examples=examples, enforcement=enforcement)
 
 
 def admin_client(profile: str | None):

@@ -65,3 +65,34 @@ def test_household_is_a_governance_table_and_my_members_reads_it():
     assert "CREATE OR REPLACE TABLE `c`.`larkspur_governance`.household" in derived
     my_members = _view_sql("policy_views", "my_members")
     assert "`larkspur_governance`.household" in my_members and "`larkspur_base`.members" not in my_members
+
+
+def test_side_channel_probe_values_sit_only_outside_the_persona_scope():
+    from examples.larkspur import expectations
+    data = generate()
+    probes = {p.id: p for p in expectations.side_channel_probes(data)}
+    assert set(probes) == {"ana-spouse-claim-in-my_claims", "priya-other-pharmacy-in-pharmacy_remittance",
+                           "theo-cell-in-sponsor_spend_summary", "dana-sponsor-in-sponsor_spend_summary"}
+    claims = data["pharmacy_claims"]
+
+    spouse = probes["ana-spouse-claim-in-my_claims"]
+    paid = dict(spouse.match)["plan_paid"]
+    owners = {c["member_id"] for c in claims if str(c["plan_paid"]) == paid}
+    assert owners and not owners & household(data, "M-1001")
+    assert not any(str(c["plan_paid"]) == dict(spouse.absent)["plan_paid"] for c in claims)
+
+    other = probes["priya-other-pharmacy-in-pharmacy_remittance"]
+    claim = next(c for c in claims if c["claim_id"] == dict(other.match)["claim_id"])
+    assert claim["pharmacy_id"] != "PH-0007" and other.error == "CAST_INVALID_INPUT"
+
+    theo = probes["theo-cell-in-sponsor_spend_summary"]
+    key = (dict(theo.match)["sponsor_id"], dict(theo.match)["fill_quarter"], dict(theo.match)["drug_class"])
+    members = expectations._cell_members(data, {"SPN-ALDER", "SPN-BIRCH"})
+    assert 11 <= len(members[key]) < 20, "visible to an 11-member role, hidden from Theo's 20"
+    absent_key = (dict(theo.absent)["sponsor_id"], dict(theo.absent)["fill_quarter"], dict(theo.absent)["drug_class"])
+    assert absent_key not in members
+
+    dana = probes["dana-sponsor-in-sponsor_spend_summary"]
+    names = {s["sponsor_id"]: s["sponsor_name"] for s in data["sponsors"]}
+    assert dict(dana.match)["sponsor_name"] == names["SPN-BIRCH"]
+    assert dict(dana.absent)["sponsor_name"] not in names.values()
