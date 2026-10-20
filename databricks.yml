@@ -1,6 +1,7 @@
 # Genie for external users with OAuth custom identity claims: reference bundle.
 # Deploy:  databricks bundle deploy -p <profile> --var warehouse_id=<id>
 # Use an existing catalog instead of creating one:  --var catalog=<catalog> --var create_catalog=false
+# Evaluate without custom governed tags:              --var tag_set=stand_in
 bundle:
   name: genie-claims-ref
 
@@ -19,6 +20,12 @@ variables:
   secret_scope:
     description: Secret scope with each portal service principal's OAuth client id and secret
     default: genie-claims-ref
+  enforcement:
+    description: '"layered" (default) adds ABAC row policies on the base tables under the claim-keyed views. "views" deploys the claim-keyed views only; use it only when your application controls every query.'
+    default: layered
+  tag_set:
+    description: '"governed" (default) uses the custom governed tags portal_grain and portal_key, created by an account admin. "stand_in" uses platform system tags, for evaluation workspaces only.'
+    default: governed
   view_owner:
     description: Owner of the claim-keyed views. Use an account group in production. Empty means the deploying user.
     default: ""

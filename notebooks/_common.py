@@ -8,6 +8,10 @@
 # MAGIC |---|---|---|
 # MAGIC | `admin_sql(...)` | you (the job's run-as identity), no claim | schemas, tables, entitlements, grants, ownership |
 # MAGIC | `sp_runner(claim)` | the example's **portal service principal**, with a custom claim | everything the portal does |
+# MAGIC
+# MAGIC Two job parameters choose the enforcement model: `enforcement` (`layered`, the default, adds ABAC row policies
+# MAGIC under the claim-keyed views; `views` deploys the views only) and `tag_set` (`governed` custom tags, or `stand_in`
+# MAGIC platform tags for evaluation workspaces).
 
 # COMMAND ----------
 
@@ -38,6 +42,10 @@ EXAMPLE = param("example", "northwind")
 CATALOG = param("catalog", "genie_claims_ref")
 WAREHOUSE_ID = param("warehouse_id")
 SECRET_SCOPE = param("secret_scope", "genie-claims-ref")
+ENFORCEMENT = param("enforcement", "layered")
+TAG_SET = param("tag_set", "governed")
+if ENFORCEMENT not in ("layered", "views"):
+    raise ValueError(f"enforcement must be layered or views, not {ENFORCEMENT!r}")
 w = WorkspaceClient()
 HOST = w.config.host.rstrip("/")
 VIEW_OWNER = param("view_owner") or w.current_user.me().user_name

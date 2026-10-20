@@ -1,6 +1,6 @@
 # Databricks notebook source
 # MAGIC %md
-# MAGIC # 07 · Prove the isolation
+# MAGIC # 08 · Prove the isolation
 # MAGIC Mints real tokens for every persona and checks each security layer:
 # MAGIC
 # MAGIC | Layer | What is proved |

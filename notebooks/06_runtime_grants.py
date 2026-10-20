@@ -1,8 +1,9 @@
 # Databricks notebook source
 # MAGIC %md
-# MAGIC # 05 · Runtime grants: the portal service principal reads portal views, nothing else
-# MAGIC `USE CATALOG`, `USE SCHEMA` on the portal schema, and `SELECT` on each portal view. No grants on the base or
-# MAGIC governance schemas: views read those with their owner's rights. The isolation suite (step 07) proves it.
+# MAGIC # 06 · Runtime grants: the portal reads portal views, nothing else
+# MAGIC `USE CATALOG`, `USE SCHEMA` on the portal schema, and `SELECT` on each portal view, granted to the application's
+# MAGIC account group (its only member is the portal service principal). No grants on the base or governance schemas:
+# MAGIC views read those with their owner's rights. The isolation suite (step 08) proves it.
 
 # COMMAND ----------
 
