@@ -7,3 +7,17 @@ AS
 SELECT DISTINCT participant_id, plan_id FROM `{{catalog}}`.`{{base}}`.account_balances
 UNION
 SELECT DISTINCT participant_id, plan_id FROM `{{catalog}}`.`{{base}}`.contributions;
+
+-- Precomputed totals for sponsors and advisors (see 02_base_tables.sql). A row policy can only admit whole rows, so
+-- a role entitled to totals reads totals: it then never reaches the per-fund balances behind them, even through a
+-- mistaken grant or a probing question.
+INSERT OVERWRITE `{{catalog}}`.`{{base}}`.plan_fund_balances
+SELECT plan_id, fund_id, COUNT(DISTINCT participant_id), CAST(SUM(balance) AS DECIMAL(16,2)),
+       CAST(AVG(balance) AS DECIMAL(14,2)), MAX(as_of_date)
+FROM `{{catalog}}`.`{{base}}`.account_balances
+GROUP BY plan_id, fund_id;
+
+INSERT OVERWRITE `{{catalog}}`.`{{base}}`.participant_plan_balances
+SELECT participant_id, plan_id, CAST(SUM(balance) AS DECIMAL(16,2))
+FROM `{{catalog}}`.`{{base}}`.account_balances
+GROUP BY participant_id, plan_id;

@@ -82,7 +82,7 @@ def test_create_governed_tags_sends_the_allowed_values():
     create_governed_tags(do, load_tag_set("governed"))
     bodies = {c[3]["tag_key"]: c[3] for c in do.calls if c[:2] == ("POST", TAG_POLICIES)}
     assert set(bodies) == {"portal_grain", "portal_key"}
-    assert {v["name"] for v in bodies["portal_key"]["values"]} == {"member", "tenant", "pharmacy", "cell_count"}
+    assert {v["name"] for v in bodies["portal_key"]["values"]} == {"member", "tenant", "pharmacy", "cell_count", "birth_date"}
 
 
 def test_create_governed_tags_prints_instructions_when_denied():

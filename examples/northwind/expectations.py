@@ -68,7 +68,14 @@ def side_channel_probes(data: dict) -> list[SideChannelProbe]:
     linda_own = {c["amount"] for c in contributions if c["participant_id"] == "P-2001"}
     plan_a_amount = min(c["amount"] for c in contributions
                         if c["plan_id"] == "PLAN-A" and c["participant_id"] != "P-2001" and c["amount"] not in linda_own)
+    linda_row = min((b for b in balances if b["plan_id"] == "PLAN-A" and b["participant_id"] != "P-2001"
+                     and b["balance"] not in {x["balance"] for x in balances if x["participant_id"] == "P-2001"}),
+                    key=lambda b: (b["participant_id"], b["fund_id"]))
     return [
+        SideChannelProbe("linda-fund-balance-in-my_accounts", "linda", "my_accounts",
+                         (("participant_id", linda_row["participant_id"]), ("balance", str(linda_row["balance"]))),
+                         (("participant_id", linda_row["participant_id"]), ("balance", str(_absent_money({b["balance"] for b in balances})))),
+                         source="a Plan A participant's per-fund balance; Linda sponsors Plan A but sees only totals"),
         SideChannelProbe("maya-balance-in-my_accounts", "maya", "my_accounts",
                          (("balance", str(other_balance)),), (("balance", str(_absent_money({b["balance"] for b in balances}))),),
                          source="another participant's balance"),

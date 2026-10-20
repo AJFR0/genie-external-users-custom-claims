@@ -326,3 +326,31 @@ def test_wait_for_access_gives_up_after_the_timeout():
     slept = []
     assert wait_for_access(ctx_with(handler), FX, timeout_s=25, sleep=slept.append) is False
     assert sum(slept) >= 20
+
+
+
+from claims_kit.validate import enforcement_case
+
+
+class PolicyAdmin(Admin):
+    def __init__(self, names):
+        super().__init__()
+        self.names = names
+
+    def execute(self, sql, parameters=None):
+        if sql.startswith("SHOW POLICIES"):
+            return StatementResult("s", ["name"], [[n] for n in self.names])
+        return super().execute(sql, parameters)
+
+
+def test_enforcement_case_fails_when_layered_policies_are_missing():
+    """Review #8/#9: the deployment, not .env, decides; a layered run with no policies must fail."""
+    from claims_kit.policies import expected_policy_names
+    ok = SuiteContext(example=EX, catalog="cat", host="h", warehouse_id="wh", provider=Provider(),
+                      admin=PolicyAdmin(expected_policy_names(EX)))
+    assert [r.passed for r in enforcement_case(ok, FX)] == [True]
+    missing = SuiteContext(example=EX, catalog="cat", host="h", warehouse_id="wh", provider=Provider(), admin=PolicyAdmin([]))
+    assert [r.passed for r in enforcement_case(missing, FX)] == [False]
+    views = SuiteContext(example=EX, catalog="cat", host="h", warehouse_id="wh", provider=Provider(),
+                         admin=PolicyAdmin(expected_policy_names(EX)), enforcement="views")
+    assert [r.passed for r in enforcement_case(views, FX)] == [False]

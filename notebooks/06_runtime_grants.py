@@ -22,5 +22,5 @@ dbutils.library.restartPython()  # noqa: F821
 from claims_kit.deploy import apply_runtime_grants
 
 print("\n".join(apply_runtime_grants(ex, catalog=CATALOG, portal_sp=portal_sp(), view_owner=VIEW_OWNER, admin_sql=admin_sql)))
-for logical in ("base", "governance", "portal"):
-    display(spark.sql(f"SHOW GRANTS `{portal_sp()}` ON SCHEMA `{CATALOG}`.`{ex.schemas[logical]}`"))  # noqa: F821
+for logical in ("base", "governance", "portal"):  # the group holds grants on the portal schema only
+    display(spark.sql(f"SHOW GRANTS `{ex.portal_group}` ON SCHEMA `{CATALOG}`.`{ex.schemas[logical]}`"))  # noqa: F821

@@ -31,9 +31,9 @@ from claims_kit.tags import load_tag_set
 
 
 def test_row_policies_keep_argument_order():
-    rp = next(r for r in load_example("northwind").row_policies if r.table == "base.account_balances")
-    assert (rp.grain, rp.function, rp.schema) == ("accounts", "rf_accounts", "base")
-    assert rp.columns == (("participant_id", "member"), ("plan_id", "tenant"))
+    rp = next(r for r in load_example("larkspur").row_policies if r.table == "base.pharmacy_claims")
+    assert (rp.grain, rp.function, rp.schema) == ("claims", "rf_claims", "base")
+    assert rp.columns == (("member_id", "member"), ("pharmacy_id", "pharmacy"))
 
 
 def test_every_grain_and_key_exists_in_the_tag_file():
@@ -87,3 +87,25 @@ def test_drills_name_a_protected_table_and_a_portal_view():
         ex = load_example(name)
         rp = next(r for r in ex.row_policies if r.table == ex.drills["table"])
         assert ex.drills["key_column"] in dict(rp.columns) and ex.drills["view"] in ex.portal_views
+
+
+from claims_kit.config import ColumnMask
+
+
+def test_aggregate_and_roster_roles_never_reach_member_balance_rows():
+    """Review #1: a policy admits only rows some view exposes at that granularity, so sponsors and advisors read
+    precomputed totals and the balances table admits the participant's own rows only."""
+    ex = load_example("northwind")
+    rp = next(r for r in ex.row_policies if r.table == "base.account_balances")
+    assert rp.columns == (("participant_id", "member"),)
+    assert {"base.plan_fund_balances", "base.participant_plan_balances"} <= {r.table for r in ex.row_policies}
+
+
+def test_masks_live_in_the_policy_layer():
+    nw, lk = load_example("northwind"), load_example("larkspur")
+    assert nw.column_masks == (ColumnMask("base.participants", "roster", "cm_date_of_birth", ("date_of_birth", "birth_date"),
+                                          (("plan_id", "tenant"),)),)
+    assert lk.column_masks[0].table == "base.pharmacy_claims" and lk.column_masks[0].column == ("member_id", "member")
+    for ex in (nw, lk):
+        for m in ex.column_masks:
+            assert m.function in ex.claim_functions

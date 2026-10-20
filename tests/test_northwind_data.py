@@ -49,8 +49,8 @@ def _probes():
 
 def test_side_channel_probe_values_sit_only_outside_the_persona_scope():
     data, probes = _probes()
-    assert set(probes) == {"maya-balance-in-my_accounts", "raj-participant-in-plan_roster", "maya-grant-in-my_access",
-                           "linda-contribution-in-my_contributions"}
+    assert set(probes) == {"linda-fund-balance-in-my_accounts", "maya-balance-in-my_accounts", "raj-participant-in-plan_roster",
+                           "maya-grant-in-my_access", "linda-contribution-in-my_contributions"}
     bal = probes["maya-balance-in-my_accounts"]
     value = dict(bal.match)["balance"]
     owners = {r["participant_id"] for r in data["account_balances"] if str(r["balance"]) == value}
@@ -71,3 +71,12 @@ def test_side_channel_probe_values_sit_only_outside_the_persona_scope():
 
     access = probes["maya-grant-in-my_access"]
     assert dict(access.match) == {"scope_id": "PLAN-A"} and dict(access.absent) == {"scope_id": "PLAN-Z"}
+
+
+def test_linda_probe_targets_plan_a_rows_she_sees_only_as_totals():
+    data, probes = _probes()
+    p = probes["linda-fund-balance-in-my_accounts"]
+    match = dict(p.match)
+    row = next(r for r in data["account_balances"] if r["participant_id"] == match["participant_id"]
+               and str(r["balance"]) == match["balance"])
+    assert row["plan_id"] == "PLAN-A" and row["participant_id"] != "P-2001"

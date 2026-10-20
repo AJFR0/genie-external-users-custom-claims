@@ -5,7 +5,9 @@
 # MAGIC
 # MAGIC | Layer | What is proved |
 # MAGIC |---|---|
+# MAGIC | Deployment | the row policies on the base schema match the enforcement model (all of them in layered mode, none in views mode) |
 # MAGIC | Unity Catalog grants | the portal service principal can't read base or governance objects, change entitlements or run DDL; another application's service principal can't read these views |
+# MAGIC | Row and mask policies | error probes can't reveal values in rows or columns the persona may not see (layered mode; recorded as documented in views mode) |
 # MAGIC | Service principal binding | even with a mistaken grant, a view answers only for its own application |
 # MAGIC | Claim → entitlements | each persona sees exactly the rows its grants allow; forged and malformed claims see nothing |
 # MAGIC | Role policies | masking and other role rules hold |

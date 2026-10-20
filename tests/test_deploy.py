@@ -184,7 +184,9 @@ def test_policy_functions_in_throw_mode_run_as_sp_then_change_owner():
     assert all(x.startswith("CREATE OR REPLACE FUNCTION") for x in sp.statements)
     owners = [s for s in admin.statements if s.startswith("ALTER FUNCTION")]
     assert owners == [f"ALTER FUNCTION `cat`.`northwind_governance`.`{f}` OWNER TO `owner@example.com`" for f in EX.claim_functions]
-    assert admin.statements[-len(REVOKES):] == REVOKES
+    gov_only = revoke_temporary_grants(EX, "cat", "app-id", schemas=("governance",))
+    assert all(r in admin.statements for r in gov_only)
+    assert all(s.startswith("REVOKE MANAGE ON FUNCTION") for s in admin.statements[-len(EX.claim_functions):])
 
 
 def test_policy_functions_in_null_mode_are_created_by_the_admin():
@@ -198,7 +200,8 @@ def test_policy_functions_revoke_even_when_creation_fails():
     admin, sp = Recorder(), FakeSP(fail_at=2)
     with pytest.raises(StatementError):
         deploy_policy_functions(EX, mode="throws", admin_sql=admin, sp_runner=sp, **KW)
-    assert admin.statements[-len(REVOKES):] == REVOKES
+    assert all(r in admin.statements for r in revoke_temporary_grants(EX, "cat", "app-id", schemas=("governance",)))
+    assert sum(s.startswith("REVOKE MANAGE ON FUNCTION") for s in admin.statements) == len(EX.claim_functions)
 
 
 def test_apply_row_policies_tags_before_policies():
@@ -212,7 +215,8 @@ def test_apply_row_policies_tags_before_policies():
 def test_remove_row_policies_tolerates_missing():
     admin = FailingRecorder("DROP POLICY", "[POLICY_NOT_FOUND] Cannot execute deletePolicy command because the policy cannot be found.")
     log = remove_row_policies(EX, catalog="cat", admin_sql=admin)
-    assert len(log) == 5 and all(line.startswith("skipped (absent)") for line in log)
+    from claims_kit.policies import drop_statements
+    assert len(log) == len(drop_statements(EX, "cat")) and all(line.startswith("skipped (absent)") for line in log)
 
 
 def test_remove_row_policies_raises_other_errors():
@@ -235,10 +239,22 @@ def test_revoking_temporary_grants_leaves_the_service_principal_no_direct_grants
     assert granted == revoked
 
 
-def test_redeploy_drops_policy_functions_before_the_claim_session_recreates_them():
-    """After the first deploy the admin owns the functions, so the service principal can't replace them in place."""
+def test_policy_functions_are_replaced_in_place_with_temporary_manage_and_no_base_access():
+    """Review #2: the policies stay attached during a redeploy. The service principal gets MANAGE on each existing
+    function and governance-only rights, replaces the functions in place, and loses both again."""
     admin, sp = Recorder(), FakeSP()
     deploy_policy_functions(EX, mode="throws", admin_sql=admin, sp_runner=sp, **KW)
-    drops = [s for s in admin.statements if s.startswith("DROP FUNCTION IF EXISTS")]
-    assert drops == [f"DROP FUNCTION IF EXISTS `cat`.`northwind_governance`.`{f}`" for f in reversed(EX.claim_functions)]
-    assert admin.statements.index(drops[-1]) < next(i for i, s in enumerate(admin.statements) if s.startswith("GRANT"))
+    assert not any(s.startswith("DROP FUNCTION") for s in admin.statements)
+    grants = [s for s in admin.statements if s.startswith("GRANT")]
+    assert not any("northwind_base" in g or "northwind_portal" in g for g in grants)
+    for f in EX.claim_functions:
+        fq = f"`cat`.`northwind_governance`.`{f}`"
+        assert f"GRANT MANAGE ON FUNCTION {fq} TO `app-id`" in admin.statements
+        assert f"REVOKE MANAGE ON FUNCTION {fq} FROM `app-id`" in admin.statements
+    revokes = [s for s in admin.statements if s.startswith("REVOKE")]
+    assert any("CREATE FUNCTION" in r and "northwind_governance" in r for r in revokes)
+
+
+def test_missing_functions_on_a_first_deploy_are_not_an_error():
+    admin = FailingRecorder("GRANT MANAGE ON FUNCTION", "[ROUTINE_NOT_FOUND] The routine cannot be found.")
+    deploy_policy_functions(EX, mode="throws", admin_sql=admin, sp_runner=FakeSP(), **KW)

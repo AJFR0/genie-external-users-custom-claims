@@ -1,8 +1,8 @@
 # Logical tags used by the row policies (layered enforcement). A tag set maps each one to a real governed tag.
 #   grains  one table-level tag value per kind of protected table; each row-filter policy selects one grain
 #   keys    column-level tags that bind a table's columns to the policy function's arguments
-grains: [accounts, contributions, roster, tenant, reference, members, claims, accumulators, cells]
-keys: [member, tenant, pharmacy, cell_count]
+grains: [accounts, contributions, roster, tenant, reference, members, claims, accumulators, cells, plan_totals, roster_totals]
+keys: [member, tenant, pharmacy, cell_count, birth_date]
 
 sets:
   governed:
@@ -23,8 +23,11 @@ sets:
       claims: class.br_rg
       accumulators: class.in_pan
       cells: class.in_voter_id
+      plan_totals: class.br_titulo_eleitor
+      roster_totals: class.in_aadhaar
     keys:
       member: class.jp_my_number
       tenant: class.ca_pr_card
       pharmacy: class.br_pis
       cell_count: class.de_svnr
+      birth_date: class.ca_social_insurance_number

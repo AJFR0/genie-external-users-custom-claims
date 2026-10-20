@@ -50,7 +50,11 @@ def test_common_reads_enforcement_and_tag_set():
     assert 'param("enforcement", "layered")' in common and 'param("tag_set", "governed")' in common
 
 
-def test_row_policies_notebook_removes_policies_before_replacing_their_functions():
+def test_row_policies_notebook_never_removes_policies_in_layered_mode():
+    """Review #2: tags and coverage first, then replace functions in place, then the policies, then check them."""
     nb = (ROOT / "notebooks" / "05_row_policies.py").read_text()
     layered = nb.split('dbutils.notebook.exit("enforcement=views: no row policies")', 1)[1]
-    assert layered.index("remove_row_policies(") < layered.index("deploy_policy_functions(") < layered.index("apply_row_policies(")
+    assert "remove_row_policies(" not in layered
+    order = [layered.index(k) for k in ("apply_tags(", "coverage_problems(", "deploy_policy_functions(", "apply_policies(",
+                                         "policy_problems(")]
+    assert order == sorted(order)

@@ -29,6 +29,24 @@ class RowPolicy:
         return self.table.split(".", 1)[0]
 
 
+@dataclass(frozen=True)
+class ColumnMask:
+    table: str          # logical dotted name, e.g. base.participants
+    grain: str          # the table's grain tag (the mask policy selects the same tables as its row policy)
+    function: str       # column-mask function in the governance schema
+    column: tuple       # (column, logical key tag) of the masked column; it is the function's first argument
+    using: tuple = ()   # ((column, logical key tag), ...) passed as further arguments
+
+    @property
+    def schema(self) -> str:
+        return self.table.split(".", 1)[0]
+
+
+def parse_column_masks(raw: list) -> tuple:
+    return tuple(ColumnMask(m["table"], m["grain"], m["function"], tuple(m["column"]), tuple((c, k) for c, k in m.get("using", ())))
+                 for m in raw)
+
+
 def parse_row_policies(raw: list) -> tuple:
     out = []
     for item in raw:
@@ -57,6 +75,7 @@ class Example:
     scope_types: tuple
     base_probe_table: str
     row_policies: tuple = ()
+    column_masks: tuple = ()
     claim_functions: tuple = ()
     drills: dict | None = None
 
@@ -100,6 +119,7 @@ def load_example(name: str, examples_dir: Path = EXAMPLES_DIR) -> Example:
         claim_views=tuple(raw["claim_views"]), public_views=tuple(raw["public_views"]),
         role_policy_fields=dict(raw["role_policy_fields"]), grant_roles=tuple(raw["grant_roles"]),
         scope_types=tuple(raw["scope_types"]), base_probe_table=raw["base_probe_table"],
-        row_policies=parse_row_policies(raw["row_policies"]), claim_functions=tuple(raw["claim_functions"]),
+        row_policies=parse_row_policies(raw["row_policies"]), column_masks=parse_column_masks(raw.get("column_masks", [])),
+        claim_functions=tuple(raw["claim_functions"]),
         drills=dict(raw["drills"]),
     )

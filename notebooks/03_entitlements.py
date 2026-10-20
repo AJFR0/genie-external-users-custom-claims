@@ -34,7 +34,7 @@ display(spark.table(f"`{CATALOG}`.`{ex.schemas['governance']}`.`role_policies`")
 # MAGIC Row-filter functions may read only tables that carry no policy of their own, so the facts the rules need are
 # MAGIC copied into the governance schema: which plans a participant's accounts are in (Northwind) and each member's
 # MAGIC household (Larkspur). Larkspur also precomputes its spend cells here, so aggregate-only roles never reach
-# MAGIC member rows. Groups smaller than every role's minimum are never stored. In production, refresh these with
+# MAGIC member rows. Groups smaller than the smallest minimum of any aggregate role are never stored. In production, refresh these with
 # MAGIC the pipeline that loads the base tables.
 
 # COMMAND ----------

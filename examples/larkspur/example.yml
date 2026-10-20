@@ -19,6 +19,7 @@ sql:
 # Created from a claim-carrying session when the workspace raises without a claim. Order matters.
 claim_views:
   - governance.my_effective_grants
+  - governance.policy_members
   - governance.my_members
   - portal.my_access
   - portal.my_claims
@@ -46,7 +47,11 @@ row_policies:
   - {table: base.sponsor_spend_cells, grain: cells, function: rf_cells, columns: [[sponsor_id, tenant], [members, cell_count]]}
   - {table: base.drugs, grain: reference}
   - {table: base.pharmacies, grain: reference}
-# Row-filter functions, created from a claim-carrying session when the workspace raises without a claim. Order matters.
-claim_functions: [rf_members, rf_claims, rf_accumulators, rf_sponsors, rf_cells, rf_deny]
+# Column masks in the policy layer: pharmacy staff never reach a raw member id, even through a mistaken grant.
+column_masks:
+  - {table: base.pharmacy_claims, grain: claims, function: cm_member_id, column: [member_id, member], using: [[pharmacy_id, pharmacy]]}
+# Row-filter and mask functions, created from a claim-carrying session when the workspace raises without a claim. Order matters.
+claim_functions: [rf_members, rf_claims, rf_accumulators, rf_sponsors, rf_cells, cm_member_id, rf_deny]
 # Misconfiguration drills: which persona, protected table, key column and portal view they exercise.
-drills: {persona: ana, table: base.pharmacy_claims, key_column: member_id, view: my_claims}
+drills: {persona: ana, table: base.pharmacy_claims, key_column: member_id, view: my_claims,
+         mask: {persona: priya, table: base.pharmacy_claims, view: pharmacy_remittance, raw_where: "member_id LIKE 'M-%'"}}

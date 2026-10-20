@@ -63,16 +63,18 @@ def test_cells_are_rebuilt_with_the_smallest_role_threshold_as_a_floor():
 def test_household_is_a_governance_table_and_my_members_reads_it():
     derived = _LK.read_sql("derived_tables", _V)
     assert "CREATE OR REPLACE TABLE `c`.`larkspur_governance`.household" in derived
-    my_members = _view_sql("policy_views", "my_members")
-    assert "`larkspur_governance`.household" in my_members and "`larkspur_base`.members" not in my_members
+    policy_members = _view_sql("policy_views", "policy_members")
+    assert "`larkspur_governance`.household" in policy_members and "`larkspur_base`.members" not in policy_members
 
 
 def test_side_channel_probe_values_sit_only_outside_the_persona_scope():
     from examples.larkspur import expectations
     data = generate()
     probes = {p.id: p for p in expectations.side_channel_probes(data)}
-    assert set(probes) == {"ana-spouse-claim-in-my_claims", "priya-other-pharmacy-in-pharmacy_remittance",
-                           "theo-cell-in-sponsor_spend_summary", "dana-sponsor-in-sponsor_spend_summary"}
+    assert set(probes) == {"priya-member-in-my_claims", "ana-spouse-claim-in-my_claims",
+                           "priya-other-pharmacy-in-pharmacy_remittance", "theo-cell-in-sponsor_spend_summary",
+                           "dana-sponsor-in-sponsor_spend_summary"}
+    assert not any(c["member_id"] == "M-9999" for c in data["pharmacy_claims"])
     claims = data["pharmacy_claims"]
 
     spouse = probes["ana-spouse-claim-in-my_claims"]
@@ -96,3 +98,18 @@ def test_side_channel_probe_values_sit_only_outside_the_persona_scope():
     names = {s["sponsor_id"]: s["sponsor_name"] for s in data["sponsors"]}
     assert dict(dana.match)["sponsor_name"] == names["SPN-BIRCH"]
     assert dict(dana.absent)["sponsor_name"] not in names.values()
+
+
+def test_cell_floor_counts_aggregate_roles_only():
+    """Review #3: roles without a minimum (members, pharmacies) have min_cell_size 0 and must not lower the floor."""
+    sql = _LK.read_sql("derived_tables", _V)
+    floor = sql.split("HAVING", 1)[1]
+    assert "detail_level = 'aggregate'" in floor
+
+
+def test_priya_probe_targets_a_raw_member_id_at_her_pharmacy():
+    from examples.larkspur import expectations
+    data = generate()
+    p = {x.id: x for x in expectations.side_channel_probes(data)}["priya-member-in-my_claims"]
+    member = dict(p.match)["member_id"]
+    assert any(c["member_id"] == member and c["pharmacy_id"] == "PH-0007" for c in data["pharmacy_claims"])

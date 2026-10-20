@@ -121,7 +121,11 @@ def side_channel_probes(data: dict) -> list[SideChannelProbe]:
     theo_hidden = min(k for k, v in members.items() if 11 <= len(v) < 20 and "(" not in k[2])
     names = {s["sponsor_id"]: s["sponsor_name"] for s in data["sponsors"]}
     cell = (("sponsor_id", theo_hidden[0]), ("fill_quarter", theo_hidden[1]), ("drug_class", theo_hidden[2]))
+    pharmacy_member = min(c["member_id"] for c in claims if c["pharmacy_id"] == "PH-0007")
     return [
+        SideChannelProbe("priya-member-in-my_claims", "priya", "my_claims",
+                         (("member_id", pharmacy_member),), (("member_id", "M-9999"),), error="CAST_INVALID_INPUT",
+                         source="a raw member id at her own pharmacy; pharmacy staff see one-way references only"),
         SideChannelProbe("ana-spouse-claim-in-my_claims", "ana", "my_claims",
                          (("plan_paid", str(spouse_paid)),), (("plan_paid", str(_absent_money({c["plan_paid"] for c in claims}))),),
                          source="her spouse's claim; adult household members stay private"),

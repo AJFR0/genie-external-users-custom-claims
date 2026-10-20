@@ -13,8 +13,8 @@ TAGS = load_tag_set("governed")
 
 def test_five_drills_with_their_mistakes():
     drills = build_drills(NW, "c", TAGS, NW.portal_group, "other-group")
-    assert [d.id for d in drills] == ["D1", "D2", "D3", "D4", "D5"]
-    d1, d2, d3, d4, d5 = drills
+    assert [d.id for d in drills] == ["D1", "D2", "D3", "D4", "D5", "D6"]
+    d1, d2, d3, d4, d5, _ = drills
     assert "ALTER TABLE `c`.`northwind_base`.`account_balances` ALTER COLUMN `participant_id` UNSET TAGS ('portal_key')" in d1.setup
     assert ("ALTER TABLE `c`.`northwind_base`.`account_balances` ALTER COLUMN `participant_id` "
             "SET TAGS ('portal_key' = 'member')") in d1.restore
@@ -26,7 +26,7 @@ def test_five_drills_with_their_mistakes():
     assert any(s.startswith("CREATE OR REPLACE TABLE `c`.`northwind_base`.`zz_drill_new` AS SELECT") for s in d4.setup)
     assert any(s.startswith("GRANT SELECT ON TABLE `c`.`northwind_base`.`account_balances`") for s in d5.setup)
     assert any(s.startswith("REVOKE SELECT ON TABLE `c`.`northwind_base`.`account_balances`") for s in d5.restore)
-    assert [d.expect for d in drills] == ["own", "own", "reach", "zero", "reach"]
+    assert [d.expect for d in drills] == ["own", "own", "reach", "zero", "reach", "zero"]
 
 
 class Ops:
@@ -52,8 +52,11 @@ def _drill(expect="own"):
 BASE = {"own": 2, "reach": 2, "total": 50}
 
 
-def _run(ops, drills):
-    return run_drills(drills, admin=ops.admin, sp_count=ops.sp_count, baseline=BASE, verify_sql="VERIFY")
+def _run(ops, drills, verify=None):
+    def default_verify():
+        own = ops.sp_count("VERIFY")
+        return [] if own == BASE["own"] else [f"portal view returns {own}"]
+    return run_drills(drills, admin=ops.admin, sp_count=ops.sp_count, baseline=BASE, verify=verify or default_verify)
 
 
 def test_layered_count_matching_expectation_passes_and_single_layer_is_evidence():
@@ -92,8 +95,35 @@ def test_failed_restore_stops_the_drills():
 
 
 def test_restore_that_does_not_bring_back_the_baseline_stops_the_drills():
-    with pytest.raises(RuntimeError, match="restore failed"):
+    # a portal view that already disagrees with the baseline is caught before any drill runs
+    with pytest.raises(RuntimeError, match="precondition"):
         _run(Ops({"LAYERED": 2, "SINGLE": 50, "VERIFY": 7}), [_drill()])
+
+
+def test_a_policy_layer_left_broken_by_a_restore_stops_the_drills():
+    """Review #4: verification checks the policy layer too, not only the portal view the drills never break."""
+    calls = []
+
+    def verify():
+        calls.append(1)
+        return [] if len(calls) == 1 else ["reach through a plain view is 50, expected 2"]
+
+    with pytest.raises(RuntimeError, match="reach through a plain view"):
+        _run(Ops({"LAYERED": 2, "SINGLE": 50, "VERIFY": 2}), [_drill()], verify=verify)
+
+
+def test_drills_refuse_to_start_on_a_broken_deployment():
+    ops = Ops({"VERIFY": 2})
+    with pytest.raises(RuntimeError, match="precondition"):
+        _run(ops, [_drill()], verify=lambda: ["accounts: grain tag missing"])
+    assert ops.admin_log == []
+
+
+def test_mask_drill_counts_raw_values_through_an_unfiltered_view():
+    drills = build_drills(NW, "c", TAGS, NW.portal_group, "other-group")
+    d6 = next(d for d in drills if d.id == "D6")
+    assert d6.expect == "zero" and "date_of_birth IS NOT NULL" in d6.layered_sql
+    assert d6.break_layer == ("DROP POLICY portal_roster_birth_date_mask ON SCHEMA `c`.`northwind_base`",)
 
 
 def test_baseline_drops_its_plain_view_even_when_counting_fails():

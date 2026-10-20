@@ -75,4 +75,4 @@ CREATE OR REPLACE TABLE `{{catalog}}`.`{{base}}`.sponsor_spend_cells (
   plan_paid      DECIMAL(14,2)          COMMENT 'Paid by the plan in US dollars',
   member_paid    DECIMAL(14,2)          COMMENT 'Paid by members in US dollars',
   generic_claims BIGINT                 COMMENT 'Paid claims for generic drugs'
-) CLUSTER BY (sponsor_id) COMMENT 'Paid spend by sponsor, quarter and drug class, precomputed so aggregate-only roles never reach member rows. Only groups at or above the smallest role minimum group size are stored.';
+) CLUSTER BY (sponsor_id) COMMENT 'Paid spend by sponsor, quarter and drug class, precomputed so aggregate-only roles never reach member rows. Only groups at or above the smallest aggregate role minimum group size are stored.';

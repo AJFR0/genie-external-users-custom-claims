@@ -1,5 +1,6 @@
 """Isolation suite: proves every security layer with real tokens against a deployed example.
 
+  setup        the deployed row policies match the enforcement model the run assumes
   visibility   each persona sees exactly the ids its grants allow, in every portal view
   role_effect  masking and other column rules that come from role_policies
   constraint   malformed claims can't be written into the entitlements table
@@ -33,7 +34,7 @@ from .personas import ExampleFixtures, GenieCase, load_fixtures, sql_literal
 from .sql import StatementError, StatementRunner
 from .tokens import ClaimTokenProvider, TokenError, decode_jwt_unverified
 
-CATEGORIES = ("visibility", "role_effect", "constraint", "attack", "privilege", "cross_app", "binding", "token", "genie",
+CATEGORIES = ("setup", "visibility", "role_effect", "constraint", "attack", "privilege", "cross_app", "binding", "token", "genie",
               "side_channel", "documented")
 ATTACK_VARIANTS = (
     ("sql-injection", "{claim}' OR '1'='1"),
@@ -527,6 +528,20 @@ def judge_probe(case_id: str, category: str, probe, present, absent) -> CaseResu
     return CaseResult(case_id, category, probe.persona, None, want, "inconclusive: the control value also raised", absent[2])
 
 
+def enforcement_case(ctx: SuiteContext, fx: ExampleFixtures) -> list[CaseResult]:
+    """The deployment decides the model: a layered run needs every policy, a views run none of them."""
+    from .policies import policy_problems
+    case_id, want = "setup/enforcement-matches-deployment", f"{ctx.enforcement}: the deployed row policies match"
+    try:
+        res = ctx.admin.execute(f"SHOW POLICIES ON SCHEMA `{ctx.catalog}`.`{ctx.example.schemas['base']}`")
+    except StatementError as e:
+        return [CaseResult(case_id, "setup", None, None, want, f"inconclusive: {_err(e)}", e.statement_id)]
+    names = [str(row[0]) for row in res.rows]
+    problems = policy_problems(ctx.example, names, ctx.enforcement)
+    observed = "; ".join(problems) if problems else f"{len(names)} policies on the base schema"
+    return [CaseResult(case_id, "setup", None, not problems, want, observed, res.statement_id)]
+
+
 def side_channel_cases(ctx: SuiteContext, fx: ExampleFixtures) -> list[CaseResult]:
     category = "side_channel" if ctx.enforcement == "layered" else "documented"
     out = []
@@ -553,7 +568,7 @@ def wait_for_access(ctx: SuiteContext, fx: ExampleFixtures, *, timeout_s: float 
         waited += 10
 
 
-SUITE = (visibility_cases, duplicate_cases, role_effect_cases, constraint_cases, attack_cases, privilege_cases, cross_app_cases, binding_case, token_cases, side_channel_cases,
+SUITE = (enforcement_case, visibility_cases, duplicate_cases, role_effect_cases, constraint_cases, attack_cases, privilege_cases, cross_app_cases, binding_case, token_cases, side_channel_cases,
          genie_cases)
 
 
