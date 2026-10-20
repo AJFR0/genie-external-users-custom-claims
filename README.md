@@ -10,6 +10,12 @@
 
 > Community reference, not official Databricks documentation. OAuth custom identity claims are announced on the Databricks *What's coming?* page ([AWS](https://docs.databricks.com/aws/en/release-notes/whats-coming), [Azure](https://learn.microsoft.com/en-us/azure/databricks/release-notes/whats-coming)). [Check whether your workspace has them](#is-it-available-in-my-workspace).
 
+## Watch the 90-second explainer
+
+![The coat check with two locks: one counter for everyone, and a vault that checks the stamp again](docs/assets/video/explainer-teaser.gif)
+
+<!-- After publishing: drag the explainer mp4 into this README on github.com, directly below this comment, to embed the full video. -->
+
 ## The 30-second version
 
 1. **Your users sign in to your application**, with your own identity provider. Databricks never learns their names, and they never get a Databricks account.
