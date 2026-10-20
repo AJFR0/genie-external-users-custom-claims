@@ -182,21 +182,22 @@ span.linenos.special { color: #000000; background-color: #ffffc0; padding-left: 
 <tr>
 <td><code>portal_grain</code></td>
 <td>tables</td>
-<td><code>accounts</code>, <code>contributions</code>, <code>roster</code>, <code>tenant</code>, <code>reference</code>, <code>members</code>, <code>claims</code>, <code>accumulators</code>, <code>cells</code></td>
+<td><code>accounts</code>, <code>contributions</code>, <code>roster</code>, <code>tenant</code>, <code>reference</code>, <code>members</code>, <code>claims</code>, <code>accumulators</code>, <code>cells</code>, <code>plan_totals</code>, <code>roster_totals</code>, <code>remittance</code></td>
 </tr>
 <tr>
 <td><code>portal_key</code></td>
 <td>columns</td>
-<td><code>member</code>, <code>tenant</code>, <code>pharmacy</code>, <code>cell_count</code></td>
+<td><code>member</code>, <code>tenant</code>, <code>pharmacy</code>, <code>cell_count</code>, <code>birth_date</code></td>
 </tr>
 </tbody>
 </table>
 <p>An account admin creates them once per account, in the UI or with the API:</p>
 <div class="codehilite"><pre><span></span><code>databricks<span class="w"> </span>tag-policies<span class="w"> </span>create-tag-policy<span class="w"> </span>portal_grain<span class="w"> </span>--json<span class="w"> </span><span class="s1">'{"tag_key": "portal_grain",</span>
 <span class="s1">  "values": [{"name": "accounts"}, {"name": "contributions"}, {"name": "roster"}, {"name": "tenant"},</span>
-<span class="s1">             {"name": "reference"}, {"name": "members"}, {"name": "claims"}, {"name": "accumulators"}, {"name": "cells"}]}'</span>
+<span class="s1">             {"name": "reference"}, {"name": "members"}, {"name": "claims"}, {"name": "accumulators"}, {"name": "cells"},</span>
+<span class="s1">             {"name": "plan_totals"}, {"name": "roster_totals"}, {"name": "remittance"}]}'</span>
 databricks<span class="w"> </span>tag-policies<span class="w"> </span>create-tag-policy<span class="w"> </span>portal_key<span class="w"> </span>--json<span class="w"> </span><span class="s1">'{"tag_key": "portal_key",</span>
-<span class="s1">  "values": [{"name": "member"}, {"name": "tenant"}, {"name": "pharmacy"}, {"name": "cell_count"}]}'</span>
+<span class="s1">  "values": [{"name": "member"}, {"name": "tenant"}, {"name": "pharmacy"}, {"name": "cell_count"}, {"name": "birth_date"}]}'</span>
 </code></pre></div>
 
 <p>The bootstrap job tries this for you with <code>tag_set=governed</code> and prints these instructions when it isn't allowed. Then give <code>ASSIGN</code> on both tags to a small governance group only (<a href="https://docs.databricks.com/aws/en/admin/tag-policies/manage-permissions">manage tag policy permissions</a>). Tagging is a security boundary: whoever can change these tags can change which rows the portal sees.</p>
@@ -205,14 +206,15 @@ databricks<span class="w"> </span>tag-policies<span class="w"> </span>create-tag
 <p>If you can't create governed tags yet, deploy with <code>--var tag_set=stand_in</code>. It maps each logical tag to a platform system tag. Those tags aren't reserved for access control, so never use this set in production.</p>
 <h2 id="2-groups-and-service-principal-rotation">2. Groups and service principal rotation</h2>
 <p>Bootstrap creates one account group per application (<code>genie-claims-ref-&lt;example&gt;-portal-backends</code>) with the application's service principal as its only member. Grants and row policies name the group, never the service principal.</p>
-<p>To rotate or replace a service principal:</p>
+<p>Grants and policies never need to change when the service principal does. The views and policy functions do: their <code>session_user()</code> check names the application's service principal. To replace it:</p>
 <ol>
-<li>Create the new service principal and its credential.</li>
+<li>Create the new service principal and its credential, and store them in the secret scope under the example's keys.</li>
 <li>Add it to the group, and wait until it can read a portal view. New memberships can take a few minutes to reach Unity Catalog.</li>
-<li>Switch the backend to the new credential.</li>
+<li>Rerun the deploy job. Tasks 04 and 05 recreate the views and functions for the new service principal; from this point the old one gets no rows.</li>
+<li>Switch the backend to the new credential, in the same change window as step 3.</li>
 <li>Remove the old service principal from the group.</li>
 </ol>
-<p>No grant or policy changes. The views' <code>session_user()</code> check names the application's service principal, so redeploy the views (task 04) whenever the service principal itself changes.</p>
+<p>Rotating only the secret of the same service principal needs none of this: the application id stays the same.</p>
 <h2 id="3-add-a-protected-table">3. Add a protected table</h2>
 <p>Order matters. Grant last.</p>
 <ol>
@@ -224,7 +226,7 @@ databricks<span class="w"> </span>tag-policies<span class="w"> </span>create-tag
 </ol>
 <p>If someone grants a new table before it's tagged, default-deny returns no rows to the portal until a steward tags it.</p>
 <h2 id="4-change-a-policy-function">4. Change a policy function</h2>
-<p>Edit <code>sql/30_policy_functions.sql</code> and rerun the deploy job. Task 05 removes the policies, recreates the functions and applies the policies again. For the moment in between, the claim-keyed views alone protect every row, which is what they're there for.</p>
+<p>Edit <code>sql/30_policy_functions.sql</code> and rerun the deploy job. Task 05 checks the tags first, replaces each function in place, then re-applies the policies and checks that every one is deployed. The policies stay attached throughout, so no table is ever unfiltered for the portal. In workspaces that raise without a claim, the service principal does the replacing: it gets <code>MANAGE</code> on each existing function and governance-only rights for the duration, and loses both again.</p>
 <h2 id="5-guardrail-queries-for-ci">5. Guardrail queries for CI</h2>
 <p>Run these after every change to tags, policies, views or grants, and fail the build when one returns rows. Replace <code>&lt;catalog&gt;</code>, <code>&lt;base&gt;</code>, <code>&lt;governance&gt;</code> and <code>&lt;group&gt;</code>.</p>
 <p>Base tables without a grain tag. These return nothing to the portal under default-deny, so a row here usually means a forgotten step:</p>
@@ -243,25 +245,41 @@ databricks<span class="w"> </span>tag-policies<span class="w"> </span>create-tag
 <span class="k">HAVING</span><span class="w"> </span><span class="k">count</span><span class="p">(</span><span class="o">*</span><span class="p">)</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="mi">1</span><span class="p">;</span>
 </code></pre></div>
 
-<p>Any grant to the portal's group outside the portal schema:</p>
-<div class="codehilite"><pre><span></span><code><span class="k">SELECT</span><span class="w"> </span><span class="n">table_schema</span><span class="p">,</span><span class="w"> </span><span class="k">table_name</span><span class="p">,</span><span class="w"> </span><span class="n">privilege_type</span>
-<span class="k">FROM</span><span class="w"> </span><span class="o">&lt;</span><span class="k">catalog</span><span class="o">&gt;</span><span class="p">.</span><span class="n">information_schema</span><span class="p">.</span><span class="n">table_privileges</span>
-<span class="k">WHERE</span><span class="w"> </span><span class="n">grantee</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s1">'&lt;group&gt;'</span><span class="w"> </span><span class="k">AND</span><span class="w"> </span><span class="n">table_schema</span><span class="w"> </span><span class="k">IN</span><span class="w"> </span><span class="p">(</span><span class="s1">'&lt;base&gt;'</span><span class="p">,</span><span class="w"> </span><span class="s1">'&lt;governance&gt;'</span><span class="p">);</span>
+<p>Grain-tagged tables (other than reference tables) with no key tag at all, so no row policy can bind to them:</p>
+<div class="codehilite"><pre><span></span><code><span class="k">SELECT</span><span class="w"> </span><span class="k">g</span><span class="p">.</span><span class="k">table_name</span>
+<span class="k">FROM</span><span class="w"> </span><span class="o">&lt;</span><span class="k">catalog</span><span class="o">&gt;</span><span class="p">.</span><span class="n">information_schema</span><span class="p">.</span><span class="n">table_tags</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="k">g</span>
+<span class="k">LEFT</span><span class="w"> </span><span class="k">JOIN</span><span class="w"> </span><span class="o">&lt;</span><span class="k">catalog</span><span class="o">&gt;</span><span class="p">.</span><span class="n">information_schema</span><span class="p">.</span><span class="n">column_tags</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="n">k</span>
+<span class="w">  </span><span class="k">ON</span><span class="w"> </span><span class="n">k</span><span class="p">.</span><span class="k">schema_name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">g</span><span class="p">.</span><span class="k">schema_name</span><span class="w"> </span><span class="k">AND</span><span class="w"> </span><span class="n">k</span><span class="p">.</span><span class="k">table_name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">g</span><span class="p">.</span><span class="k">table_name</span><span class="w"> </span><span class="k">AND</span><span class="w"> </span><span class="n">k</span><span class="p">.</span><span class="n">tag_name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s1">'portal_key'</span>
+<span class="k">WHERE</span><span class="w"> </span><span class="k">g</span><span class="p">.</span><span class="k">schema_name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s1">'&lt;base&gt;'</span><span class="w"> </span><span class="k">AND</span><span class="w"> </span><span class="k">g</span><span class="p">.</span><span class="n">tag_name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s1">'portal_grain'</span><span class="w"> </span><span class="k">AND</span><span class="w"> </span><span class="k">g</span><span class="p">.</span><span class="n">tag_value</span><span class="w"> </span><span class="o">&lt;&gt;</span><span class="w"> </span><span class="s1">'reference'</span>
+<span class="k">GROUP</span><span class="w"> </span><span class="k">BY</span><span class="w"> </span><span class="k">g</span><span class="p">.</span><span class="k">table_name</span>
+<span class="k">HAVING</span><span class="w"> </span><span class="k">count</span><span class="p">(</span><span class="n">k</span><span class="p">.</span><span class="k">column_name</span><span class="p">)</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span>
+</code></pre></div>
+
+<p>Any grant to the portal's group, or directly to its service principal, outside the portal schema, at table, schema or catalog level:</p>
+<div class="codehilite"><pre><span></span><code><span class="k">SELECT</span><span class="w"> </span><span class="s1">'table'</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="k">level</span><span class="p">,</span><span class="w"> </span><span class="n">table_schema</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="n">name</span><span class="p">,</span><span class="w"> </span><span class="n">privilege_type</span><span class="w"> </span><span class="k">FROM</span><span class="w"> </span><span class="o">&lt;</span><span class="k">catalog</span><span class="o">&gt;</span><span class="p">.</span><span class="n">information_schema</span><span class="p">.</span><span class="n">table_privileges</span>
+<span class="k">WHERE</span><span class="w"> </span><span class="n">grantee</span><span class="w"> </span><span class="k">IN</span><span class="w"> </span><span class="p">(</span><span class="s1">'&lt;group&gt;'</span><span class="p">,</span><span class="w"> </span><span class="s1">'&lt;service principal application id&gt;'</span><span class="p">)</span><span class="w"> </span><span class="k">AND</span><span class="w"> </span><span class="n">table_schema</span><span class="w"> </span><span class="k">IN</span><span class="w"> </span><span class="p">(</span><span class="s1">'&lt;base&gt;'</span><span class="p">,</span><span class="w"> </span><span class="s1">'&lt;governance&gt;'</span><span class="p">)</span>
+<span class="k">UNION</span><span class="w"> </span><span class="k">ALL</span>
+<span class="k">SELECT</span><span class="w"> </span><span class="s1">'schema'</span><span class="p">,</span><span class="w"> </span><span class="k">schema_name</span><span class="p">,</span><span class="w"> </span><span class="n">privilege_type</span><span class="w"> </span><span class="k">FROM</span><span class="w"> </span><span class="o">&lt;</span><span class="k">catalog</span><span class="o">&gt;</span><span class="p">.</span><span class="n">information_schema</span><span class="p">.</span><span class="n">schema_privileges</span>
+<span class="k">WHERE</span><span class="w"> </span><span class="n">grantee</span><span class="w"> </span><span class="k">IN</span><span class="w"> </span><span class="p">(</span><span class="s1">'&lt;group&gt;'</span><span class="p">,</span><span class="w"> </span><span class="s1">'&lt;service principal application id&gt;'</span><span class="p">)</span><span class="w"> </span><span class="k">AND</span><span class="w"> </span><span class="k">schema_name</span><span class="w"> </span><span class="k">IN</span><span class="w"> </span><span class="p">(</span><span class="s1">'&lt;base&gt;'</span><span class="p">,</span><span class="w"> </span><span class="s1">'&lt;governance&gt;'</span><span class="p">)</span>
+<span class="k">UNION</span><span class="w"> </span><span class="k">ALL</span>
+<span class="k">SELECT</span><span class="w"> </span><span class="s1">'catalog'</span><span class="p">,</span><span class="w"> </span><span class="k">catalog_name</span><span class="p">,</span><span class="w"> </span><span class="n">privilege_type</span><span class="w"> </span><span class="k">FROM</span><span class="w"> </span><span class="o">&lt;</span><span class="k">catalog</span><span class="o">&gt;</span><span class="p">.</span><span class="n">information_schema</span><span class="p">.</span><span class="n">catalog_privileges</span>
+<span class="k">WHERE</span><span class="w"> </span><span class="n">grantee</span><span class="w"> </span><span class="k">IN</span><span class="w"> </span><span class="p">(</span><span class="s1">'&lt;group&gt;'</span><span class="p">,</span><span class="w"> </span><span class="s1">'&lt;service principal application id&gt;'</span><span class="p">)</span><span class="w"> </span><span class="k">AND</span><span class="w"> </span><span class="n">privilege_type</span><span class="w"> </span><span class="k">NOT</span><span class="w"> </span><span class="k">IN</span><span class="w"> </span><span class="p">(</span><span class="s1">'USE_CATALOG'</span><span class="p">,</span><span class="w"> </span><span class="s1">'USE CATALOG'</span><span class="p">);</span>
 </code></pre></div>
 
 <p>The policies in place:</p>
 <div class="codehilite"><pre><span></span><code><span class="k">SHOW</span><span class="w"> </span><span class="n">POLICIES</span><span class="w"> </span><span class="k">ON</span><span class="w"> </span><span class="k">SCHEMA</span><span class="w"> </span><span class="o">&lt;</span><span class="k">catalog</span><span class="o">&gt;</span><span class="p">.</span><span class="o">&lt;</span><span class="n">base</span><span class="o">&gt;</span><span class="p">;</span>
 </code></pre></div>
 
-<p>Notebook 05 runs the same coverage check (<code>claims_kit.policies.coverage_problems</code>) on every deploy. Also alert on tag changes in the <a href="https://docs.databricks.com/aws/en/admin/system-tables/audit-logs">audit log system table</a> for your catalog, made by anyone outside the governance group.</p>
+<p>Notebook 05 runs the same coverage check (<code>claims_kit.policies.coverage_problems</code>) and a check that every policy is deployed (<code>policy_problems</code>) on every deploy, and the isolation suite repeats the second one. Also alert on tag changes in the <a href="https://docs.databricks.com/aws/en/admin/system-tables/audit-logs">audit log system table</a> for your catalog, made by anyone outside the governance group.</p>
 <h2 id="6-run-the-misconfiguration-drills">6. Run the misconfiguration drills</h2>
 <p>The <code>northwind_drills</code> and <code>larkspur_drills</code> jobs (or <code>python -m claims_kit.drills --example &lt;name&gt;</code>) make five mistakes one at a time:
 - untag a key column;
 - point a policy at another group;
 - grant a view without the claim filter;
 - expose a new untagged table;
-- grant a base table directly.</p>
-<p>Each drill measures what the portal returns with the mistake in place and with one layer alone, restores the original state, and verifies it. The drills stop if a restore can't be verified. Run them on a test deployment, never one that serves real users.</p>
+- grant a base table directly;
+- expose a masked column through a view without the claim filter, read by a persona whose role masks it.</p>
+<p>Each drill measures what the portal returns with the mistake in place and with one layer alone, restores the original state, and verifies every layer: the portal view, the policy's reach, the tags and the deployed policies. The drills stop if a restore can't be verified, and don't start on a broken deployment. Run them on a test deployment, never one that serves real users.</p>
 <h2 id="7-operate-views-only-mode">7. Operate views-only mode</h2>
 <p><code>--var enforcement=views</code> deploys the claim-keyed views without row policies. It's reasonable when your application controls every query. With free-form questions, users can learn facts about other users' rows through errors (see the probe results in the enforcement model guide). If you must run it for a while:</p>
 <ul>
@@ -293,6 +311,14 @@ databricks<span class="w"> </span>tag-policies<span class="w"> </span>create-tag
 <tr>
 <td><code>UNSUPPORTED_NESTED_ROW_OR_COLUMN_ACCESS_POLICY</code></td>
 <td>A policy function reads a table that has its own policy. Read a governance table instead (step 3).</td>
+</tr>
+<tr>
+<td><code>UC_USING_REF_OF_MASKED_COLUMNS</code></td>
+<td>A column-mask policy masks a column that a row filter on the same table also reads. Mask a different column, or give the role a precomputed copy (as Larkspur does for pharmacy staff).</td>
+</tr>
+<tr>
+<td><code>UC_DEPENDENCY_DOES_NOT_EXIST</code> on a protected table during task 04</td>
+<td>A policy function still reads a governance view that task 04 is rebuilding, usually after you changed which views the functions read. Remove the example's policies once (deploy with <code>enforcement=views</code>), then redeploy layered.</td>
 </tr>
 <tr>
 <td><code>ROW_LEVEL_SECURITY_FEATURE_NOT_SUPPORTED.VIEWS</code></td>

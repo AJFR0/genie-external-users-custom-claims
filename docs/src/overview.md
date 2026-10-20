@@ -77,12 +77,12 @@ According to the announcement, the Genie Conversation API, the SQL Statement Exe
 [[ diagram("layers", "Each layer is checked separately by the isolation suite in this repo.") ]]
 
 1. **Reach: Unity Catalog grants** decide which application can read which views. Each application's account group can read its own portal views and nothing else, so another application is denied.
-2. **Row policies** on every base table those views read admit only the signed-in user's rows, and Unity Catalog applies them before any condition in the query runs. A user can't probe other users' rows through errors.
+2. **Row and mask policies** on every base table that holds user data admit only the rows and values the user's role may see, and Unity Catalog applies them before any condition in the query runs. A user can't probe other users' rows through errors. Public reference tables, such as the fund list, carry a tag instead, so default-deny skips them.
 3. **Service principal binding** inside each view (`session_user()` must be this application's service principal) means that even a mistaken grant to another application returns no rows.
 4. **Claim to entitlements** decides which end user. A forged, unknown or malformed claim matches no grant.
 5. **Role policy** decides how much that user's role may see: their own records, aggregates only, masked columns, or a minimum group size.
 
-Layers 1 and 2 cover each other's failure modes. A missing tag or a mis-targeted policy still leaves the views filtering by the claim, and a view written without its filter still sits on tables the policies protect. The misconfiguration drills in this repo make each mistake on a live deployment and show that every user still sees only their own rows.
+Layers 1 and 2 cover each other's failure modes. A missing tag or a mis-targeted policy still leaves the views filtering by the claim, and a view written without its filter still sits on tables the policies protect. The misconfiguration drills in this repo make each mistake on a live deployment and show that every user still sees only what their role may see.
 
 ## Why views and policies together
 

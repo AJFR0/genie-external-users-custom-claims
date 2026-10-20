@@ -18,17 +18,18 @@ The row policies find their tables and columns through two governed tags. They'r
 
 | Tag | Set on | Allowed values |
 |---|---|---|
-| `portal_grain` | tables | `accounts`, `contributions`, `roster`, `tenant`, `reference`, `members`, `claims`, `accumulators`, `cells` |
-| `portal_key` | columns | `member`, `tenant`, `pharmacy`, `cell_count` |
+| `portal_grain` | tables | `accounts`, `contributions`, `roster`, `tenant`, `reference`, `members`, `claims`, `accumulators`, `cells`, `plan_totals`, `roster_totals`, `remittance` |
+| `portal_key` | columns | `member`, `tenant`, `pharmacy`, `cell_count`, `birth_date` |
 
 An account admin creates them once per account, in the UI or with the API:
 
 ```bash
 databricks tag-policies create-tag-policy portal_grain --json '{"tag_key": "portal_grain",
   "values": [{"name": "accounts"}, {"name": "contributions"}, {"name": "roster"}, {"name": "tenant"},
-             {"name": "reference"}, {"name": "members"}, {"name": "claims"}, {"name": "accumulators"}, {"name": "cells"}]}'
+             {"name": "reference"}, {"name": "members"}, {"name": "claims"}, {"name": "accumulators"}, {"name": "cells"},
+             {"name": "plan_totals"}, {"name": "roster_totals"}, {"name": "remittance"}]}'
 databricks tag-policies create-tag-policy portal_key --json '{"tag_key": "portal_key",
-  "values": [{"name": "member"}, {"name": "tenant"}, {"name": "pharmacy"}, {"name": "cell_count"}]}'
+  "values": [{"name": "member"}, {"name": "tenant"}, {"name": "pharmacy"}, {"name": "cell_count"}, {"name": "birth_date"}]}'
 ```
 
 The bootstrap job tries this for you with `tag_set=governed` and prints these instructions when it isn't allowed. Then give `ASSIGN` on both tags to a small governance group only ([manage tag policy permissions](https://docs.databricks.com/aws/en/admin/tag-policies/manage-permissions)). Tagging is a security boundary: whoever can change these tags can change which rows the portal sees.
@@ -43,14 +44,15 @@ If you can't create governed tags yet, deploy with `--var tag_set=stand_in`. It 
 
 Bootstrap creates one account group per application (`genie-claims-ref-<example>-portal-backends`) with the application's service principal as its only member. Grants and row policies name the group, never the service principal.
 
-To rotate or replace a service principal:
+Grants and policies never need to change when the service principal does. The views and policy functions do: their `session_user()` check names the application's service principal. To replace it:
 
-1. Create the new service principal and its credential.
+1. Create the new service principal and its credential, and store them in the secret scope under the example's keys.
 2. Add it to the group, and wait until it can read a portal view. New memberships can take a few minutes to reach Unity Catalog.
-3. Switch the backend to the new credential.
-4. Remove the old service principal from the group.
+3. Rerun the deploy job. Tasks 04 and 05 recreate the views and functions for the new service principal; from this point the old one gets no rows.
+4. Switch the backend to the new credential, in the same change window as step 3.
+5. Remove the old service principal from the group.
 
-No grant or policy changes. The views' `session_user()` check names the application's service principal, so redeploy the views (task 04) whenever the service principal itself changes.
+Rotating only the secret of the same service principal needs none of this: the application id stays the same.
 
 ## 3. Add a protected table
 
@@ -66,7 +68,7 @@ If someone grants a new table before it's tagged, default-deny returns no rows t
 
 ## 4. Change a policy function
 
-Edit `sql/30_policy_functions.sql` and rerun the deploy job. Task 05 removes the policies, recreates the functions and applies the policies again. For the moment in between, the claim-keyed views alone protect every row, which is what they're there for.
+Edit `sql/30_policy_functions.sql` and rerun the deploy job. Task 05 checks the tags first, replaces each function in place, then re-applies the policies and checks that every one is deployed. The policies stay attached throughout, so no table is ever unfiltered for the portal. In workspaces that raise without a claim, the service principal does the replacing: it gets `MANAGE` on each existing function and governance-only rights for the duration, and loses both again.
 
 ## 5. Guardrail queries for CI
 
@@ -92,12 +94,29 @@ GROUP BY table_name, tag_value
 HAVING count(*) > 1;
 ```
 
-Any grant to the portal's group outside the portal schema:
+Grain-tagged tables (other than reference tables) with no key tag at all, so no row policy can bind to them:
 
 ```sql
-SELECT table_schema, table_name, privilege_type
-FROM <catalog>.information_schema.table_privileges
-WHERE grantee = '<group>' AND table_schema IN ('<base>', '<governance>');
+SELECT g.table_name
+FROM <catalog>.information_schema.table_tags AS g
+LEFT JOIN <catalog>.information_schema.column_tags AS k
+  ON k.schema_name = g.schema_name AND k.table_name = g.table_name AND k.tag_name = 'portal_key'
+WHERE g.schema_name = '<base>' AND g.tag_name = 'portal_grain' AND g.tag_value <> 'reference'
+GROUP BY g.table_name
+HAVING count(k.column_name) = 0;
+```
+
+Any grant to the portal's group, or directly to its service principal, outside the portal schema, at table, schema or catalog level:
+
+```sql
+SELECT 'table' AS level, table_schema AS name, privilege_type FROM <catalog>.information_schema.table_privileges
+WHERE grantee IN ('<group>', '<service principal application id>') AND table_schema IN ('<base>', '<governance>')
+UNION ALL
+SELECT 'schema', schema_name, privilege_type FROM <catalog>.information_schema.schema_privileges
+WHERE grantee IN ('<group>', '<service principal application id>') AND schema_name IN ('<base>', '<governance>')
+UNION ALL
+SELECT 'catalog', catalog_name, privilege_type FROM <catalog>.information_schema.catalog_privileges
+WHERE grantee IN ('<group>', '<service principal application id>') AND privilege_type NOT IN ('USE_CATALOG', 'USE CATALOG');
 ```
 
 The policies in place:
@@ -106,7 +125,7 @@ The policies in place:
 SHOW POLICIES ON SCHEMA <catalog>.<base>;
 ```
 
-Notebook 05 runs the same coverage check (`claims_kit.policies.coverage_problems`) on every deploy. Also alert on tag changes in the [audit log system table](https://docs.databricks.com/aws/en/admin/system-tables/audit-logs) for your catalog, made by anyone outside the governance group.
+Notebook 05 runs the same coverage check (`claims_kit.policies.coverage_problems`) and a check that every policy is deployed (`policy_problems`) on every deploy, and the isolation suite repeats the second one. Also alert on tag changes in the [audit log system table](https://docs.databricks.com/aws/en/admin/system-tables/audit-logs) for your catalog, made by anyone outside the governance group.
 
 ## 6. Run the misconfiguration drills
 
@@ -115,9 +134,10 @@ The `northwind_drills` and `larkspur_drills` jobs (or `python -m claims_kit.dril
 - point a policy at another group;
 - grant a view without the claim filter;
 - expose a new untagged table;
-- grant a base table directly.
+- grant a base table directly;
+- expose a masked column through a view without the claim filter, read by a persona whose role masks it.
 
-Each drill measures what the portal returns with the mistake in place and with one layer alone, restores the original state, and verifies it. The drills stop if a restore can't be verified. Run them on a test deployment, never one that serves real users.
+Each drill measures what the portal returns with the mistake in place and with one layer alone, restores the original state, and verifies every layer: the portal view, the policy's reach, the tags and the deployed policies. The drills stop if a restore can't be verified, and don't start on a broken deployment. Run them on a test deployment, never one that serves real users.
 
 ## 7. Operate views-only mode
 
@@ -135,6 +155,8 @@ Each drill measures what the portal returns with the mistake in place and with o
 | Task 05 reports coverage problems | A table lacks its grain tag, a key column lacks its tag, or a key tag sits on two columns. Fix the tags; never remove a tag to silence the check. |
 | `UC_ABAC_MULTIPLE_ROW_FILTERS` | Two row policies match one table. Give each table exactly one `portal_grain` value. |
 | `UNSUPPORTED_NESTED_ROW_OR_COLUMN_ACCESS_POLICY` | A policy function reads a table that has its own policy. Read a governance table instead (step 3). |
+| `UC_USING_REF_OF_MASKED_COLUMNS` | A column-mask policy masks a column that a row filter on the same table also reads. Mask a different column, or give the role a precomputed copy (as Larkspur does for pharmacy staff). |
+| `UC_DEPENDENCY_DOES_NOT_EXIST` on a protected table during task 04 | A policy function still reads a governance view that task 04 is rebuilding, usually after you changed which views the functions read. Remove the example's policies once (deploy with `enforcement=views`), then redeploy layered. |
 | `ROW_LEVEL_SECURITY_FEATURE_NOT_SUPPORTED.VIEWS` | A schema-level policy matched a view. Keep row policies on schemas that hold only tables (the base schema here). |
 | `OAUTH_CUSTOM_IDENTITY_CLAIM_NOT_PROVIDED` creating a policy function | The workspace raises without a claim; the functions must be created from a claim session, which task 05 does |
 | `INSUFFICIENT_PERMISSIONS` right after bootstrap | Group membership hasn't reached Unity Catalog yet. Wait a few minutes; the isolation suite waits up to five. |

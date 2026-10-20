@@ -1,11 +1,18 @@
 {
   "example": "northwind",
   "run_date": "2026-10-20",
-  "persona": "maya",
+  "persona": "maya, raj",
   "baseline": {
-    "own": 4,
-    "reach": 4,
-    "total": 444
+    "maya": {
+      "own": 4,
+      "reach": 4,
+      "total": 444
+    },
+    "raj": {
+      "own": 99,
+      "reach": 99,
+      "total": 150
+    }
   },
   "results": [
     {
@@ -67,6 +74,18 @@
       "restored": true,
       "passed": true,
       "observed": "held: 4 rows with the mistake in place (expected 4); one layer alone returned 444 of 444"
+    },
+    {
+      "drill_id": "D6",
+      "mistake": "a view without the claim filter exposes the masked column base.participants.date_of_birth",
+      "expect": "zero",
+      "layered_rows": 0,
+      "single_layer_rows": 99,
+      "expected_rows": 0,
+      "total_rows": 150,
+      "restored": true,
+      "passed": true,
+      "observed": "held: 0 rows with the mistake in place (expected 0); one layer alone returned 99 of 150"
     }
   ]
 }

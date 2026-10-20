@@ -161,9 +161,9 @@ span.linenos.special { color: #000000; background-color: #ffffc0; padding-left: 
 <p>Think of a coat check where one attendant serves every guest, and each guest holds a ticket stamped by the venue.</p>
 <ul>
 <li><strong>The first lock</strong> is the counter: your application can reach only the views made for it, so anything nobody exposed doesn't exist for it.</li>
-<li><strong>The second lock</strong> is the vault: every table checks the stamped ticket itself, before anything in the question is evaluated, so a clever question can't learn about anyone else's rows.</li>
+<li><strong>The second lock</strong> is the vault: every table holding user data checks the stamped ticket itself, before anything in the question is evaluated, and hides what the guest's role may not see, so a clever question can't learn about anyone else's rows.</li>
 </ul>
-<p>Each lock covers the other's failure mode. One misconfigured lock still leaves every user with only their own data.</p>
+<p>Each lock covers the other's failure mode. One misconfigured lock still leaves every user with only what they may see.</p>
 <h2 id="what-we-proved">What we proved</h2>
 <p>Two fictional companies, a retirement plan recordkeeper and a pharmacy benefit manager, deployed on a live workspace with synthetic data:</p>
 <table>
@@ -175,16 +175,16 @@ span.linenos.special { color: #000000; background-color: #ffffc0; padding-left: 
 </thead>
 <tbody>
 <tr>
-<td>Users see exactly their own rows, roles and masks, across every view</td>
-<td>138 of 138 checks passed</td>
+<td>Users see exactly their own rows, roles and masks, across every view and every Genie answer</td>
+<td>158 of 158 checks passed</td>
 </tr>
 <tr>
 <td>Questions designed to probe other users' data through errors</td>
-<td>8 of 8 blocked (7 of 8 leaked without the second lock)</td>
+<td>10 of 10 blocked (9 of 10 leaked without the second lock)</td>
 </tr>
 <tr>
-<td>Five classic setup mistakes, made on purpose</td>
-<td>10 of 10 held: users still saw only their own rows</td>
+<td>Six classic setup mistakes, made on purpose</td>
+<td>12 of 12 held: users still saw only what they may see</td>
 </tr>
 <tr>
 <td>Cost of the second lock</td>

@@ -3,9 +3,9 @@
 **Serve a Genie Agent to your application's own users (customers, members, partners), where each person sees only the data their entitlements allow, nobody needs a Databricks account, and Unity Catalog enforces it in layers.**
 
 ![Layered enforcement](https://img.shields.io/badge/enforcement-views%20%2B%20ABAC%20row%20policies-1b3139)
-![Isolation suite](https://img.shields.io/badge/isolation%20suite-138%2F138%20passed-2e7d32)
-![Side-channel probes](https://img.shields.io/badge/side--channel%20probes-8%2F8%20blocked-2e7d32)
-![Misconfiguration drills](https://img.shields.io/badge/misconfiguration%20drills-10%2F10%20held-2e7d32)
+![Isolation suite](https://img.shields.io/badge/isolation%20suite-158%2F158%20passed-2e7d32)
+![Side-channel probes](https://img.shields.io/badge/side--channel%20probes-10%2F10%20blocked-2e7d32)
+![Misconfiguration drills](https://img.shields.io/badge/misconfiguration%20drills-12%2F12%20held-2e7d32)
 ![License](https://img.shields.io/badge/license-Apache--2.0-blue)
 
 > Community reference, not official Databricks documentation. OAuth custom identity claims are announced on the Databricks *What's coming?* page ([AWS](https://docs.databricks.com/aws/en/release-notes/whats-coming), [Azure](https://learn.microsoft.com/en-us/azure/databricks/release-notes/whats-coming)). [Check whether your workspace has them](#is-it-available-in-my-workspace).
@@ -42,7 +42,7 @@ You'll recognize the need when someone says *"we want Genie in our portal, our u
 ![Five layers](docs/assets/diagrams/layers.svg)
 
 1. **Reach.** Each application's account group can read its own portal views, and nothing else.
-2. **Row policies.** Every base table those views read carries an ABAC row filter policy that admits only the signed-in user's rows. Unity Catalog applies it before any condition in the query runs, so a user can't learn about other users' rows through errors.
+2. **Row and mask policies.** Every base table that holds user data carries an ABAC row filter policy, and masked columns a column-mask policy, admitting only what the signed-in user's role may see. Unity Catalog applies them before any condition in the query runs, so a user can't learn about other users' rows through errors. Public reference tables carry a tag instead, so default-deny skips them.
 3. **Service principal binding.** Every view checks `session_user()`, so a mistaken grant to another application returns nothing.
 4. **Claim to entitlements.** The user named in the signed token. Forged, unknown or malformed claims match nothing.
 5. **Role policy.** How much that role may see: own records, totals only, masked columns, minimum group sizes.
@@ -55,11 +55,11 @@ Claim-keyed views alone stay closed when someone forgets a step, but a user who 
 
 | Proved on a live workspace | Northwind | Larkspur |
 |---|---|---|
-| Isolation suite (visibility, roles, constraints, attacks, privileges, other applications, tokens, side channels) | 67 of 67 | 71 of 71 |
-| Error probes for other users' values, layered | 4 of 4 blocked | 4 of 4 blocked |
-| The same probes against views alone | 3 of 4 leaked | 4 of 4 leaked |
-| Misconfiguration drills: users still see only their own rows | 5 of 5 held | 5 of 5 held |
-| ...while one layer alone returned | the whole table, every time | the whole table, every time |
+| Isolation suite (visibility, roles, constraints, attacks, privileges, other applications, tokens, Genie answers, side channels) | 76 of 76 | 82 of 82 |
+| Error probes for other users' values and hidden detail, layered | 5 of 5 blocked | 5 of 5 blocked |
+| The same probes against views alone | 4 of 5 leaked | 5 of 5 leaked |
+| Misconfiguration drills: users still see only what their role may see | 6 of 6 held | 6 of 6 held |
+| ...while one layer alone returned | the whole table or every raw value, every time | the whole table or every raw value, every time |
 
 [Choosing an Enforcement Model](docs/pdf/choosing-an-enforcement-model.pdf) explains the failure modes, the performance cost (about 0.15 to 0.35 seconds per query at 200 million rows), and when a single layer is enough.
 
@@ -140,11 +140,11 @@ All data is synthetic and generated from a fixed seed, so every deploy produces 
 
 Two tables hold every rule. `portal_user_grants` has one row per user, role and scope, with optional start and end dates. `role_policies` has one row per role saying what it may see. One governance view, `my_effective_grants`, reads the claim; it keeps the grants for this claim and this application's service principal that are active today and joins them to their role policy. Every portal view and every row policy function reads it.
 
-Onboarding is an insert, revoking is a delete or an end date, and a role change applies to everyone with that role on their next question. Patterns shown in the examples: per-user rows; role policies; several roles per user; relationship rules from data; totals with a minimum group size, precomputed; masking by role; time-bound grants; one service principal per application.
+Onboarding is an insert, revoking is a delete or an end date, and a role change applies to everyone with that role on their next question. Patterns shown in the examples: per-user rows; role policies; several roles per user; relationship rules from data; precomputed totals for roles that see only totals, with a minimum group size; masking by role in a column-mask policy; time-bound grants; one service principal per application.
 
 ## See it run
 
-The portal, signed in as Linda, with every step of one question traced (ids redacted for screen sharing):
+The portal, signed in as Linda, with one question traced step by step: the SQL Genie wrote, the two grants her claim resolved to, and the row-policy layer underneath (ids redacted for screen sharing):
 
 ![Portal with the request trace](docs/assets/screenshots/portal-trace.png)
 
@@ -156,7 +156,7 @@ The admin console: per-user grants (Theo's expired Cedar grant is struck through
 
 **Can the model be talked into showing someone else's data?** No. The model writes SQL; it never decides whose data it is. The user id travels inside a token Databricks signs, and Unity Catalog filters every query by it.
 
-**What happens if someone misconfigures it?** That's what the layers are for. A missing tag, a policy aimed at the wrong group, a view written without its filter, a new untagged table or a stray grant each leaves every user with only their own rows. The drills prove each one live.
+**What happens if someone misconfigures it?** That's what the layers are for. A missing tag, a policy aimed at the wrong group, a view written without its filter, a new untagged table, a stray grant or an unfiltered view over a masked column each leaves every user with only what their role may see. The drills prove each one live.
 
 **Can the claim carry roles or a list of plans?** The claim is one string. Keep it an opaque user id, and keep roles and scopes in the entitlement tables: changes apply on the next question without reissuing tokens, and every rule lives in one place you can audit.
 
@@ -197,10 +197,9 @@ Self-contained HTML versions are in `docs/site/`. The sources in `docs/src/` are
 
 On a live workspace on 2026-10-20, with the layered default and the stand-in tag set:
 
-- **Isolation suite:** 67 of 67 checks for Northwind and 71 of 71 for Larkspur. That covers per-persona visibility in every view with no duplicated rows, masking, CHECK constraints, no-claim and forged-claim attacks, privilege probes, another application's service principal, a mistaken grant, edited and unsigned tokens, and side-channel probes.
-- **Views-only mode, same data:** 7 of the 8 error probes leaked.
-- **Drills:** all ten held.
-- **Genie answer checks were inconclusive on that date.** The Genie Agent's queries didn't carry the claim in that workspace. They are recorded as inconclusive, never as passed. The views design passed them on 2026-10-19.
+- **Isolation suite:** 76 of 76 checks for Northwind and 82 of 82 for Larkspur. That covers the deployed policies matching the enforcement model, per-persona visibility in every view with no duplicated rows, masking, CHECK constraints, no-claim and forged-claim attacks, privilege probes, another application's service principal, a mistaken grant, edited and unsigned tokens, Genie answers containing the persona's own numbers and nobody else's, and side-channel probes.
+- **Views-only mode, same data:** 9 of the 10 error probes leaked.
+- **Drills:** all twelve held, including the two that read a masked or precomputed value through an unfiltered view.
 
 Every result records the reason it passed; the scrubbed results are in [`docs/evidence/`](docs/evidence/).
 

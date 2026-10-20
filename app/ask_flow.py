@@ -56,8 +56,9 @@ def run_ask(services, settings, runtime, persona, question: str, new_conversatio
         if settings.enforcement == "layered":
             with trace.step("Row policies under the views") as s:
                 s.detail = {"enforcement": "layered",
-                            "route": ["each base table the views read carries an ABAC row policy for this application's group",
-                                      "the policy admits only the rows this user's grants allow, before any condition in "
+                            "route": ["each base table holding user data carries an ABAC row policy for this application's "
+                                      "group, and masked columns a column-mask policy",
+                                      "the policies admit only what this user's role may see, before any condition in "
                                       "Genie's SQL runs, so errors can't reveal other users' values",
                                       "the views still apply their own claim check, so one mistake never opens the data"]}
         else:

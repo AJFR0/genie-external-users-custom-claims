@@ -1,11 +1,18 @@
 {
   "example": "larkspur",
   "run_date": "2026-10-20",
-  "persona": "ana",
+  "persona": "ana, priya",
   "baseline": {
-    "own": 27,
-    "reach": 27,
-    "total": 2079
+    "ana": {
+      "own": 27,
+      "reach": 27,
+      "total": 2079
+    },
+    "priya": {
+      "own": 322,
+      "reach": 0,
+      "total": 2079
+    }
   },
   "results": [
     {
@@ -67,6 +74,18 @@
       "restored": true,
       "passed": true,
       "observed": "held: 27 rows with the mistake in place (expected 27); one layer alone returned 2079 of 2079"
+    },
+    {
+      "drill_id": "D6",
+      "mistake": "a view without the claim filter exposes raw values in base.pharmacy_claims to a role that reads only a precomputed copy",
+      "expect": "zero",
+      "layered_rows": 0,
+      "single_layer_rows": 2079,
+      "expected_rows": 0,
+      "total_rows": 2079,
+      "restored": true,
+      "passed": true,
+      "observed": "held: 0 rows with the mistake in place (expected 0); one layer alone returned 2079 of 2079"
     }
   ]
 }

@@ -6,7 +6,7 @@ Neither views nor ABAC policies are fail-closed on their own, and they fail in o
 
 - **Claim-keyed views** stay closed when someone misconfigures them: the application's service principal can read only the views you created, so anything you forgot to expose does not exist for it. They can leak at query time, though. A user who can shape the SQL, which is what Genie does with every question, can learn facts about other users' rows through errors.
 - **ABAC row filter policies** block that kind of probe. They fail open when someone misconfigures them: a table or column the policy's tags don't match, or a principal the policy doesn't name, gets the whole table back unfiltered.
-- **Layered** keeps both. The views decide what the application can reach. ABAC policies on the base tables decide which rows each user gets, before any condition in the user's query runs. The views keep their own claim check. A single mistake then leaves every user with only their own rows.
+- **Layered** keeps both. The views decide what the application can reach. ABAC policies on the base tables decide which rows, and which values, each user gets, before any condition in the user's query runs. The views keep their own claim check. A single mistake then leaves every user with only what their role may see.
 
 > **Views decide what the app can reach. Policies decide which rows each user gets. Keep both, so a single mistake never opens the data.**
 
@@ -49,7 +49,7 @@ The isolation suite runs probes like this for every example. Each probe uses a v
 
 [[ diagram("failure-matrix", "Single-layer results from live runs on synthetic data; the layered column is the misconfiguration drills below.") ]]
 
-The drills make each mistake on a live deployment, measure what the portal returns, and restore the original state. With one layer alone, every drill returned the whole table. With the layers together, each persona still saw only their own rows, and a new untagged table returned nothing.
+The drills make each mistake on a live deployment, measure what the portal returns, and restore the original state. With one layer alone, every drill returned the whole table, or every raw value of a masked column. With the layers together, each persona still saw only what their role may see, and a new untagged table returned nothing.
 
 [[ drills_summary("northwind") ]]
 
@@ -100,12 +100,16 @@ Layered costs more to build: row logic lives in the views and in the policy func
 1. **The portal reads views only.** Grant the application's group `SELECT` on portal views and nothing on base or governance tables.
 2. **Every base table those views read carries a row policy** for the application's group, never for a service principal id, plus a default-deny policy for tables without a grain tag.
 3. **Views keep their claim and service principal checks**, so a mistake in tags or policies still leaves users with only their own rows.
-4. **Precompute small-group totals.** A `HAVING` clause in a view is not a privacy control (below).
+4. **Admit only what each role may see, at the grain it may see it.** Precompute totals for roles that see totals, and mask values in a column-mask policy for roles that see them masked. A `HAVING` clause or a `CASE` mask in a view is not enough on its own (below).
 5. **Lock tag assignment to a governance group, and drill each mistake** with the isolation suite and the drills job on every change.
 
-## Two subtle cases
+## Three subtle cases
 
-**Aggregate-only roles.** A benefits administrator may see spend by quarter and drug class, but never member rows, and groups with fewer members than the role's minimum stay hidden. If the view computes those totals from member-level claims, the administrator's reach has to include the member rows, and a probe on the group's own columns can reveal a hidden group. Larkspur therefore precomputes `sponsor_spend_cells`, never stores groups smaller than any role's minimum, and its row policy applies each role's own minimum. The `theo-cell` probe above is that case.
+A row policy admits whole rows, and it can only protect what it admits. So a policy must admit what the user's role may see at the grain the role may see it, or a probe, or a single mistake such as an unfiltered view, reveals the finer detail behind it.
+
+**Roles that see only totals.** A plan sponsor sees plan totals and per-participant totals, but never one participant's per-fund balances. A benefits administrator sees spend by quarter and drug class, never member rows, with small groups hidden. If the views computed those totals from detail rows, the policy would have to admit the detail rows. So the totals are precomputed: Northwind's `plan_fund_balances` and `participant_plan_balances`, and Larkspur's `sponsor_spend_cells`, which never stores groups smaller than any aggregate role's minimum and whose policy applies each role's own minimum. The balances policy then admits a participant's own rows only. The `linda-fund-balance` and `theo-cell` probes are these cases.
+
+**Roles that see masked values.** An advisor sees a roster without dates of birth, and pharmacy staff see a one-way reference instead of a member id. A `CASE` in the view hides the value from the view's output, but the row is still within the policy's reach. Northwind masks dates of birth with a column-mask policy on `participants.date_of_birth`, so a probe or an unfiltered view sees only the masked value. A column mask can't be used on a column that a row filter also reads (`UC_USING_REF_OF_MASKED_COLUMNS`), and Larkspur's claims filter reads the member id. So pharmacy staff read precomputed remittance rows that hold only the reference, and the claims policy never admits them at all. The `priya-member` probe and drill D6 are these cases.
 
 **Dimension and grant tables.** A view that joins an unprotected sponsors table answers "is this employer a client?" through the same kind of probe (the `dana-sponsor` probe above). Protect tenant lists like any other table. The governance tables that the policy functions read can't carry a policy of their own, because Unity Catalog rejects nested policies. Keep them out of every grant, and derive what the rules need (here, plan membership and households) into them.
 

@@ -4,6 +4,15 @@
   "catalog": "<catalog>",
   "results": [
     {
+      "case_id": "setup/enforcement-matches-deployment",
+      "category": "setup",
+      "persona": null,
+      "passed": true,
+      "expected": "layered: the deployed row policies match",
+      "observed": "8 policies on the base schema",
+      "statement_id": "<id>"
+    },
+    {
       "case_id": "visibility/maya/my_access",
       "category": "visibility",
       "persona": "maya",
@@ -580,6 +589,15 @@
       "statement_id": null
     },
     {
+      "case_id": "side_channel/linda-fund-balance-in-my_accounts",
+      "category": "side_channel",
+      "persona": "linda",
+      "passed": true,
+      "expected": "blocked: same outcome whether or not the value exists in rows this user can't see",
+      "observed": "blocked: no error, 4 rows both times",
+      "statement_id": "<id>"
+    },
+    {
       "case_id": "side_channel/maya-balance-in-my_accounts",
       "category": "side_channel",
       "persona": "maya",
@@ -619,64 +637,64 @@
       "case_id": "genie/maya/1",
       "category": "genie",
       "persona": "maya",
-      "passed": null,
+      "passed": true,
       "expected": "must ['maya_total_balance']; must not ['james_total_balance', 'linda_total_balance', 'plan_a_total']",
-      "observed": "inconclusive: Genie status FAILED",
-      "statement_id": null
+      "observed": "expected values present; no other user's values",
+      "statement_id": "<id>"
     },
     {
       "case_id": "genie/maya/2",
       "category": "genie",
       "persona": "maya",
-      "passed": null,
+      "passed": true,
       "expected": "must []; must not ['james_total_balance']",
-      "observed": "inconclusive: Genie status FAILED",
-      "statement_id": null
+      "observed": "expected values present; no other user's values",
+      "statement_id": "<id>"
     },
     {
       "case_id": "genie/james/1",
       "category": "genie",
       "persona": "james",
-      "passed": null,
+      "passed": true,
       "expected": "must ['james_total_balance']; must not ['maya_total_balance']",
-      "observed": "inconclusive: Genie status FAILED",
-      "statement_id": null
+      "observed": "expected values present; no other user's values",
+      "statement_id": "<id>"
     },
     {
       "case_id": "genie/linda/1",
       "category": "genie",
       "persona": "linda",
-      "passed": null,
+      "passed": true,
       "expected": "must ['linda_total_balance']; must not ['maya_total_balance', 'plan_a_total']",
-      "observed": "inconclusive: Genie status FAILED",
-      "statement_id": null
+      "observed": "expected values present; no other user's values",
+      "statement_id": "<id>"
     },
     {
       "case_id": "genie/linda/2",
       "category": "genie",
       "persona": "linda",
-      "passed": null,
+      "passed": true,
       "expected": "must ['plan_a_total']; must not ['plan_b_total', 'plan_c_total']",
-      "observed": "inconclusive: Genie status FAILED",
-      "statement_id": null
+      "observed": "expected values present; no other user's values",
+      "statement_id": "<id>"
     },
     {
       "case_id": "genie/raj/1",
       "category": "genie",
       "persona": "raj",
-      "passed": null,
+      "passed": true,
       "expected": "must ['plan_a_total', 'plan_c_total']; must not ['plan_b_total']",
-      "observed": "inconclusive: Genie status FAILED",
-      "statement_id": null
+      "observed": "expected values present; no other user's values",
+      "statement_id": "<id>"
     },
     {
       "case_id": "genie/unknown/1",
       "category": "genie",
       "persona": "unknown",
-      "passed": null,
+      "passed": true,
       "expected": "must []; must not ['maya_total_balance', 'james_total_balance', 'linda_total_balance']",
-      "observed": "inconclusive: Genie status FAILED",
-      "statement_id": null
+      "observed": "expected values present; no other user's values",
+      "statement_id": "<id>"
     },
     {
       "case_id": "documented/conversation-binding",

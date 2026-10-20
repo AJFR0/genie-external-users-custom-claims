@@ -21,9 +21,9 @@ Your backend asks Databricks for a short-lived token for its one service princip
 Think of a coat check where one attendant serves every guest, and each guest holds a ticket stamped by the venue.
 
 - **The first lock** is the counter: your application can reach only the views made for it, so anything nobody exposed doesn't exist for it.
-- **The second lock** is the vault: every table checks the stamped ticket itself, before anything in the question is evaluated, so a clever question can't learn about anyone else's rows.
+- **The second lock** is the vault: every table holding user data checks the stamped ticket itself, before anything in the question is evaluated, and hides what the guest's role may not see, so a clever question can't learn about anyone else's rows.
 
-Each lock covers the other's failure mode. One misconfigured lock still leaves every user with only their own data.
+Each lock covers the other's failure mode. One misconfigured lock still leaves every user with only what they may see.
 
 ## What we proved
 
@@ -31,9 +31,9 @@ Two fictional companies, a retirement plan recordkeeper and a pharmacy benefit m
 
 | Check | Result |
 |---|---|
-| Users see exactly their own rows, roles and masks, across every view | 138 of 138 checks passed |
-| Questions designed to probe other users' data through errors | 8 of 8 blocked (7 of 8 leaked without the second lock) |
-| Five classic setup mistakes, made on purpose | 10 of 10 held: users still saw only their own rows |
+| Users see exactly their own rows, roles and masks, across every view and every Genie answer | 158 of 158 checks passed |
+| Questions designed to probe other users' data through errors | 10 of 10 blocked (9 of 10 leaked without the second lock) |
+| Six classic setup mistakes, made on purpose | 12 of 12 held: users still saw only what they may see |
 | Cost of the second lock | about 0.15 to 0.35 seconds per question at 200 million rows |
 
 Roles come from a simple table, so one person can be a plan sponsor and a participant, an administrator can see totals but never individuals, a consultant's access can end on a date, and a parent can see a young child's claims. A change applies on the user's next question.

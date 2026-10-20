@@ -125,7 +125,7 @@ None of these mentions the claim. Each joins to `my_effective_grants`, groups th
 
 ### Row policies (layered mode)
 
-Each base table a portal view reads carries one ABAC row filter policy. A table's policy admits exactly the rows that some portal view exposes from it, for the signed-in user. Contributions, for example, admit only the participant's own rows, even though a sponsor's role reaches the plan's balances. The functions read the claim through `my_effective_grants`, so the claim is still read in one place:
+Each base table that holds user data carries one ABAC row filter policy, and masked columns a column-mask policy. A table's policy admits exactly the rows some portal view exposes from it, for the signed-in user, at the grain the view exposes them. Balances, for example, admit only the participant's own rows: sponsors and advisors see plan and roster totals, so they read the precomputed `plan_fund_balances` and `participant_plan_balances`. The functions read the claim through `my_effective_grants`, so the claim is still read in one place:
 
 [[ sql("northwind", "policy_functions") ]]
 
@@ -133,7 +133,7 @@ The policies are generated from `row_policies` in `example.yml` and a tag set. E
 
 [[ policy_example("northwind", "base.account_balances") ]]
 
-A default-deny policy on the base schema returns no rows to the portal from any table without a grain tag, so a table granted before anyone tags it stays closed. Two Unity Catalog rules shape the layout:
+Dates of birth are masked in `participants` itself by `cm_date_of_birth`, with the same rule as the roster view (the least restrictive roster grant for the plan wins), so a probe or an unfiltered view never sees an advisor-masked date. A default-deny policy on the base schema returns no rows to the portal from any table without a grain tag, so a table granted before anyone tags it stays closed. Two Unity Catalog rules shape the layout:
 
 - **A policy function may read only tables that carry no policy of their own** (`UNSUPPORTED_NESTED_ROW_OR_COLUMN_ACCESS_POLICY` otherwise). The governance tables are the policies' inputs, so they stay unprotected and ungranted, and facts the rules need from protected tables are derived into them:
 
@@ -187,7 +187,7 @@ CASE WHEN r.mask_dob THEN NULL ELSE p.date_of_birth END AS date_of_birth
 
 [[ trace_card("northwind", "raj") ]]
 
-When grants disagree, the least restrictive one wins (`bool_and(mask_dob)` across the user's grants for a plan). Change that to `bool_or` if you want the most restrictive grant to win.
+When grants disagree, the least restrictive one wins (`bool_and(mask_dob)` across the user's grants for a plan). Change that to `bool_or` if you want the most restrictive grant to win. In layered mode the same rule also runs in the column-mask policy on `participants.date_of_birth`, so the masked value is all a probe or an unfiltered view can ever see. Change both together.
 
 ### 5. Relationship rules derived from data
 
@@ -205,7 +205,7 @@ WHERE e.include_minor_dependents AND m.relationship = 'child'
 
 ### 6. Aggregates with a minimum group size
 
-Benefits administrators see spend by quarter and drug class, never member rows. Groups with fewer distinct members than the role's `min_cell_size` disappear. The totals are precomputed into `sponsor_spend_cells`, so a user's query is never evaluated against the member rows behind a hidden group. Groups smaller than every role's minimum are never stored, and the table's row policy applies each role's own minimum:
+Benefits administrators see spend by quarter and drug class, never member rows. Groups with fewer distinct members than the role's `min_cell_size` disappear. The totals are precomputed into `sponsor_spend_cells`, so a user's query is never evaluated against the member rows behind a hidden group. Groups smaller than the smallest minimum of any aggregate role are never stored, and the table's row policy applies each role's own minimum:
 
 ```sql
 WHERE c.members >= ms.min_cell_size   -- in the view; rf_cells applies the same rule in the row policy
@@ -228,12 +228,12 @@ Theo's consulting engagement with Cedar Logistics ended on June 30, so that gran
 Pharmacy staff reconcile claims filled at their pharmacy. The member id becomes a one-way reference:
 
 ```sql
-CASE WHEN mp.mask_identity THEN substr(sha2(concat('larkspur-demo:', c.member_id), 256), 1, 16) ELSE c.member_id END
+substr(sha2(concat('larkspur-demo:', c.member_id), 256), 1, 16) AS member_ref   -- in 05_derived_tables.sql
 ```
 
 [[ trace_card("larkspur", "priya") ]]
 
-This hash is demo grade. In production use a keyed hash or a token vault so a reference can't be reversed by hashing every member id.
+The reference is computed when the remittance rows are built (`pharmacy_remittance_rows`), and the view reads those rows, so pharmacy staff never reach a raw member id, even through a mistaken grant: the claims policy admits members only. A column mask on `member_id` wouldn't work here, because the claims row filter reads that column (`UC_USING_REF_OF_MASKED_COLUMNS`). This hash is demo grade. In production use a keyed hash or a token vault so a reference can't be reversed by hashing every member id.
 
 ### 9. Nothing for unknown users, and one service principal per application
 
@@ -289,10 +289,11 @@ The local app in `app/` is a working reference. The parts that matter in product
 | binding | Even with a mistaken grant, the view answers only for its own service principal |
 | token | Edited, unsigned and corrupted tokens are rejected |
 | genie | Answers contain the persona's own numbers and nobody else's |
-| side_channel | Error probes can't reveal values in rows the persona may not see (layered mode). In views mode the same probes are recorded under documented. |
+| setup | The row and mask policies on the base schema match the enforcement model the run assumes |
+| side_channel | Error probes can't reveal values in rows or columns the persona may not see (layered mode). In views mode the same probes are recorded under documented. |
 | documented | Platform behaviors your backend must handle (trimming, conversation ownership); never fails the run |
 
-The drills (`python -m claims_kit.drills --example <name>`, or the drills jobs) make five misconfigurations one at a time and show that each persona still sees only their own rows, while one layer alone returns the whole table. See [Choosing an Enforcement Model](choosing-an-enforcement-model.html#the-failure-matrix) for the live results.
+The drills (`python -m claims_kit.drills --example <name>`, or the drills jobs) make six misconfigurations one at a time and show that each persona still sees only what their role may see, while one layer alone returns the whole table or every raw value of a masked column. See [Choosing an Enforcement Model](choosing-an-enforcement-model.html#the-failure-matrix) for the live results.
 
 Results from the live runs behind this guide:
 

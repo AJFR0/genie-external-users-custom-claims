@@ -4,6 +4,15 @@
   "catalog": "<catalog>",
   "results": [
     {
+      "case_id": "setup/enforcement-matches-deployment",
+      "category": "setup",
+      "persona": null,
+      "passed": true,
+      "expected": "layered: the deployed row policies match",
+      "observed": "7 policies on the base schema",
+      "statement_id": "<id>"
+    },
+    {
       "case_id": "visibility/ana/my_access",
       "category": "visibility",
       "persona": "ana",
@@ -616,6 +625,15 @@
       "statement_id": null
     },
     {
+      "case_id": "side_channel/priya-member-in-my_claims",
+      "category": "side_channel",
+      "persona": "priya",
+      "passed": true,
+      "expected": "blocked: same outcome whether or not the value exists in rows this user can't see",
+      "observed": "blocked: no error, 0 rows both times",
+      "statement_id": "<id>"
+    },
+    {
       "case_id": "side_channel/ana-spouse-claim-in-my_claims",
       "category": "side_channel",
       "persona": "ana",
@@ -655,82 +673,82 @@
       "case_id": "genie/ana/1",
       "category": "genie",
       "persona": "ana",
-      "passed": null,
+      "passed": true,
       "expected": "must ['ana_household_member_paid']; must not ['marco_member_paid', 'noah_member_paid']",
-      "observed": "inconclusive: Genie status FAILED",
-      "statement_id": null
+      "observed": "expected values present; no other user's values",
+      "statement_id": "<id>"
     },
     {
       "case_id": "genie/ana/2",
       "category": "genie",
       "persona": "ana",
-      "passed": null,
+      "passed": true,
       "expected": "must []; must not ['marco_member_paid']",
-      "observed": "inconclusive: Genie status FAILED",
-      "statement_id": null
+      "observed": "expected values present; no other user's values",
+      "statement_id": "<id>"
     },
     {
       "case_id": "genie/marco/1",
       "category": "genie",
       "persona": "marco",
-      "passed": null,
+      "passed": true,
       "expected": "must ['marco_member_paid']; must not ['ana_household_member_paid']",
-      "observed": "inconclusive: Genie status FAILED",
-      "statement_id": null
+      "observed": "expected values present; no other user's values",
+      "statement_id": "<id>"
     },
     {
       "case_id": "genie/dana/1",
       "category": "genie",
       "persona": "dana",
-      "passed": null,
+      "passed": true,
       "expected": "must ['alder_visible_plan_paid_11']; must not ['alder_total_plan_paid']",
-      "observed": "inconclusive: Genie status FAILED",
-      "statement_id": null
+      "observed": "expected values present; no other user's values",
+      "statement_id": "<id>"
     },
     {
       "case_id": "genie/dana/2",
       "category": "genie",
       "persona": "dana",
-      "passed": null,
+      "passed": true,
       "expected": "must ['dana_member_paid']; must not []",
-      "observed": "inconclusive: Genie status FAILED",
-      "statement_id": null
+      "observed": "expected values present; no other user's values",
+      "statement_id": "<id>"
     },
     {
       "case_id": "genie/theo/1",
       "category": "genie",
       "persona": "theo",
-      "passed": null,
+      "passed": true,
       "expected": "must []; must not ['cedar_total_plan_paid']",
-      "observed": "inconclusive: Genie status FAILED",
-      "statement_id": null
+      "observed": "expected values present; no other user's values",
+      "statement_id": "<id>"
     },
     {
       "case_id": "genie/theo/2",
       "category": "genie",
       "persona": "theo",
-      "passed": null,
+      "passed": true,
       "expected": "must ['alder_visible_plan_paid_20']; must not ['alder_total_plan_paid', 'alder_visible_plan_paid_11']",
-      "observed": "inconclusive: Genie status FAILED",
-      "statement_id": null
+      "observed": "expected values present; no other user's values",
+      "statement_id": "<id>"
     },
     {
       "case_id": "genie/priya/1",
       "category": "genie",
       "persona": "priya",
-      "passed": null,
+      "passed": true,
       "expected": "must ['priya_pharmacy_plan_paid']; must not []",
-      "observed": "inconclusive: Genie status FAILED",
-      "statement_id": null
+      "observed": "expected values present; no other user's values",
+      "statement_id": "<id>"
     },
     {
       "case_id": "genie/unknown/1",
       "category": "genie",
       "persona": "unknown",
-      "passed": null,
+      "passed": true,
       "expected": "must []; must not ['ana_household_member_paid', 'marco_member_paid', 'dana_member_paid']",
-      "observed": "inconclusive: Genie status FAILED",
-      "statement_id": null
+      "observed": "expected values present; no other user's values",
+      "statement_id": "<id>"
     },
     {
       "case_id": "documented/conversation-binding",
