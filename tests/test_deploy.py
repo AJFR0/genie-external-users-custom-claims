@@ -233,3 +233,12 @@ def test_revoking_temporary_grants_leaves_the_service_principal_no_direct_grants
     granted = privileges(temporary_grants(EX, "cat", "app-id"), "GRANT")
     revoked = privileges(revoke_temporary_grants(EX, "cat", "app-id"), "REVOKE")
     assert granted == revoked
+
+
+def test_redeploy_drops_policy_functions_before_the_claim_session_recreates_them():
+    """After the first deploy the admin owns the functions, so the service principal can't replace them in place."""
+    admin, sp = Recorder(), FakeSP()
+    deploy_policy_functions(EX, mode="throws", admin_sql=admin, sp_runner=sp, **KW)
+    drops = [s for s in admin.statements if s.startswith("DROP FUNCTION IF EXISTS")]
+    assert drops == [f"DROP FUNCTION IF EXISTS `cat`.`northwind_governance`.`{f}`" for f in reversed(EX.claim_functions)]
+    assert admin.statements.index(drops[-1]) < next(i for i, s in enumerate(admin.statements) if s.startswith("GRANT"))

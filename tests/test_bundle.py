@@ -48,3 +48,9 @@ def test_row_policies_notebook_exits_in_views_mode_and_checks_coverage():
 def test_common_reads_enforcement_and_tag_set():
     common = (ROOT / "notebooks" / "_common.py").read_text()
     assert 'param("enforcement", "layered")' in common and 'param("tag_set", "governed")' in common
+
+
+def test_row_policies_notebook_removes_policies_before_replacing_their_functions():
+    nb = (ROOT / "notebooks" / "05_row_policies.py").read_text()
+    layered = nb.split('dbutils.notebook.exit("enforcement=views: no row policies")', 1)[1]
+    assert layered.index("remove_row_policies(") < layered.index("deploy_policy_functions(") < layered.index("apply_row_policies(")

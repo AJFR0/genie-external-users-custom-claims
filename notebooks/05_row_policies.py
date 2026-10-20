@@ -52,7 +52,10 @@ if problems:
 
 behavior = classify_no_claim(lambda q: spark.sql(q).collect()[0][0])  # noqa: F821
 mode = "null" if behavior == "null" else "throws"
-log = deploy_policy_functions(ex, catalog=CATALOG, portal_sp=portal_sp(), view_owner=VIEW_OWNER, mode=mode,
+# Replace the policies in three steps: remove them, recreate their functions, apply them again. For the few seconds
+# in between, the claim-keyed views alone protect every row, which is what they are there for.
+log = remove_row_policies(ex, catalog=CATALOG, admin_sql=admin_sql)
+log += deploy_policy_functions(ex, catalog=CATALOG, portal_sp=portal_sp(), view_owner=VIEW_OWNER, mode=mode,
                               admin_sql=admin_sql, sp_runner=sp_runner(DEPLOY_CLAIM) if mode == "throws" else None)
 log += apply_row_policies(ex, catalog=CATALOG, tags=tags, group=ex.portal_group, admin_sql=admin_sql)
 print("\n".join(line[:160] for line in log))

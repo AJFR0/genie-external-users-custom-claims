@@ -133,22 +133,30 @@ def _claim_session(ex: Example, *, catalog: str, portal_sp: str, view_owner: str
 
 def deploy_policy_functions(ex: Example, *, catalog: str, portal_sp: str, view_owner: str, mode: str,
                             admin_sql: AdminSql, sp_runner=None) -> list[str]:
-    """Create the row-filter functions. They read the claim, so in throw mode a claim session creates them."""
+    """Create the row-filter functions. They read the claim, so in throw mode a claim session creates them.
+
+    After a first deploy the admin owns the functions, and the service principal can't replace them in place, so they
+    are dropped first. Call remove_row_policies before this: a policy should never point at a missing function.
+    """
     if mode not in ("null", "throws"):
         raise ValueError(f"unknown deploy mode {mode!r}")
     values = ex.template_values(catalog, portal_sp, view_owner)
     statements = split_sql(ex.read_sql("policy_functions", values))
     owned = [("FUNCTION", ex.fq(catalog, f"governance.{f}")) for f in ex.claim_functions]
+    drops = [f"DROP FUNCTION IF EXISTS {fq}" for _, fq in reversed(owned)]
+    for stmt in drops:
+        admin_sql(stmt)
     if mode == "null":
-        log = []
+        log = [f"admin: {stmt}" for stmt in drops]
         for stmt in statements + [f"ALTER FUNCTION {fq} OWNER TO `{view_owner}`" for _, fq in owned]:
             log.append(f"admin: {stmt}")
             admin_sql(stmt)
         return log
     if sp_runner is None:
         raise ValueError("throw mode needs a claim-carrying sp_runner")
-    return _claim_session(ex, catalog=catalog, portal_sp=portal_sp, view_owner=view_owner, admin_sql=admin_sql,
-                          sp_runner=sp_runner, statements=statements, owned=owned)
+    return [f"admin: {stmt}" for stmt in drops] + _claim_session(
+        ex, catalog=catalog, portal_sp=portal_sp, view_owner=view_owner, admin_sql=admin_sql, sp_runner=sp_runner,
+        statements=statements, owned=owned)
 
 
 def apply_row_policies(ex: Example, *, catalog: str, tags, group: str, admin_sql: AdminSql) -> list[str]:
